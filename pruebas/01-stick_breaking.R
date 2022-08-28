@@ -53,7 +53,7 @@ curve(pnorm, add = TRUE, lwd = 1.5)
 
 
 # Multiple samples ------------------------------------------------------------------
-rdp <- function(M, tol){
+rdp <- function(M, G0, G0_params, tol=1e-6){
   ## Components of the distribution
   ups_aux <- c(0)
   probs <- c()
@@ -69,7 +69,7 @@ rdp <- function(M, tol){
     ups_aux <- c(ups_aux, ups)
     
     # Location
-    location <- rnorm(1, mean = 0, sd = 1)
+    location <- do.call(G0, args = G0_params)
     locations <- c(locations, location)
   }
   
@@ -84,17 +84,38 @@ dp_cdf <- function(results){
 }
 
 ## Plot of samples
+#### Normal base measure
 ### M = 1
-dp_samples_1 <- replicate(30, rdp(1, eps))
+dp_samples_1 <- replicate(15, rdp(1, 'rnorm', list(n = 1, mean = 0, sd = 1)))
 curve(pnorm, lwd = 1.5, xlim = c(-3, 3))
 invisible(apply(dp_samples_1, 2, dp_cdf))
 
 ### M = 20
-dp_samples_20 <- replicate(30, rdp(20, eps))
+dp_samples_20 <- replicate(15, rdp(20, 'rnorm', list(n = 1, mean = 0, sd = 1)))
 curve(pnorm, lwd = 1.5, xlim = c(-3, 3))
 invisible(apply(dp_samples_20, 2, dp_cdf))
 
 ### M = 500
-dp_samples_500 <- replicate(15, rdp(500, eps))
+dp_samples_500 <- replicate(15, rdp(500, 'rnorm', list(n = 1, mean = 0, sd = 1)))
 curve(pnorm, lwd = 1.5, xlim = c(-3, 3))
 invisible(apply(dp_samples_500, 2, dp_cdf))
+
+#### Poisson base measure
+### M = 1
+dp_samples_1 <- replicate(15, rdp(1, 'rpois', list(n = 1, lambda = 5)))
+plot(stepfun(0:11, c(0, ppois(0:11, lambda = 5))), do.points = FALSE, lwd = 2,
+     main = '', ylab = 'F(x)')
+invisible(apply(dp_samples_1, 2, dp_cdf))
+
+### M = 20
+dp_samples_20 <- replicate(15, rdp(20, 'rpois', list(n = 1, lambda = 5)))
+plot(stepfun(0:11, c(0, ppois(0:11, lambda = 5))), do.points = FALSE, lwd = 2,
+     main = '', ylab = 'F(x)')
+invisible(apply(dp_samples_20, 2, dp_cdf))
+
+### M = 500
+dp_samples_500 <- replicate(15, rdp(500, 'rpois', list(n = 1, lambda = 5)))
+plot(stepfun(0:11, c(0, ppois(0:11, lambda = 5))), do.points = FALSE, lwd = 2,
+     main = '', ylab = 'F(x)')
+invisible(apply(dp_samples_500, 2, dp_cdf))
+
