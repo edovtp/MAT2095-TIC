@@ -54,16 +54,23 @@ curve(pnorm, add = TRUE, lwd = 1.5)
 
 # Multiple samples ------------------------------------------------------------------
 rdp <- function(M, G0, G0_params, tol=1e-6){
+  # M        : precision parameter
+  # G0       : sampling function of the desired base measure
+  # G0_params: parameters for G0
+  
+  # We add the number of samples
+  G0_params <- c(G0_params, n = 1)
+  
   ## Components of the distribution
   ups_aux <- c(0)
   probs <- c()
   locations <- c()
   
-  while (sum(probs) < 1 - eps) {
+  while (sum(probs) < 1 - tol) {
     # Auxiliar eta ~ Beta(1, M)
     ups <- rbeta(1, shape1 = 1, shape2 = M)
     
-    # Probability
+    # Probability (or weight)
     prob <- ups * prod(1 - ups_aux)
     probs <- c(probs, prob)
     ups_aux <- c(ups_aux, ups)
@@ -73,6 +80,7 @@ rdp <- function(M, G0, G0_params, tol=1e-6){
     locations <- c(locations, location)
   }
   
+  # Return ordered values of the (discrete) distribution
   ord_locations <- sort(locations)
   ord_probs <- probs[order(locations)]
   return(list(locations = ord_locations, probs = ord_probs))
@@ -86,36 +94,46 @@ dp_cdf <- function(results){
 ## Plot of samples
 #### Normal base measure
 ### M = 1
-dp_samples_1 <- replicate(15, rdp(1, 'rnorm', list(n = 1, mean = 0, sd = 1)))
+dp_samples_1 <- replicate(15, rdp(1, 'rnorm', list(mean = 0, sd = 1)))
 curve(pnorm, lwd = 1.5, xlim = c(-3, 3))
 invisible(apply(dp_samples_1, 2, dp_cdf))
 
 ### M = 20
-dp_samples_20 <- replicate(15, rdp(20, 'rnorm', list(n = 1, mean = 0, sd = 1)))
+dp_samples_20 <- replicate(15, rdp(20, 'rnorm', list(mean = 0, sd = 1)))
 curve(pnorm, lwd = 1.5, xlim = c(-3, 3))
 invisible(apply(dp_samples_20, 2, dp_cdf))
 
 ### M = 500
-dp_samples_500 <- replicate(15, rdp(500, 'rnorm', list(n = 1, mean = 0, sd = 1)))
+dp_samples_500 <- replicate(15, rdp(500, 'rnorm', list(mean = 0, sd = 1)))
 curve(pnorm, lwd = 1.5, xlim = c(-3, 3))
 invisible(apply(dp_samples_500, 2, dp_cdf))
 
 #### Poisson base measure
 ### M = 1
-dp_samples_1 <- replicate(15, rdp(1, 'rpois', list(n = 1, lambda = 5)))
+dp_samples_1 <- replicate(15, rdp(1, 'rpois', list(lambda = 5)))
 plot(stepfun(0:11, c(0, ppois(0:11, lambda = 5))), do.points = FALSE, lwd = 2,
      main = '', ylab = 'F(x)')
 invisible(apply(dp_samples_1, 2, dp_cdf))
 
 ### M = 20
-dp_samples_20 <- replicate(15, rdp(20, 'rpois', list(n = 1, lambda = 5)))
+dp_samples_20 <- replicate(15, rdp(20, 'rpois', list(lambda = 5)))
 plot(stepfun(0:11, c(0, ppois(0:11, lambda = 5))), do.points = FALSE, lwd = 2,
      main = '', ylab = 'F(x)')
 invisible(apply(dp_samples_20, 2, dp_cdf))
 
 ### M = 500
-dp_samples_500 <- replicate(15, rdp(500, 'rpois', list(n = 1, lambda = 5)))
+dp_samples_500 <- replicate(15, rdp(500, 'rpois', list(lambda = 5)))
 plot(stepfun(0:11, c(0, ppois(0:11, lambda = 5))), do.points = FALSE, lwd = 2,
      main = '', ylab = 'F(x)')
 invisible(apply(dp_samples_500, 2, dp_cdf))
 
+# Execution time --------------------------------------------------------------------
+
+system.time(rdp(1, 'rnorm', list(mean = 0, sd = 1)))     # 0.000
+system.time(rdp(10, 'rnorm', list(mean = 0, sd = 1)))    # 0.002
+system.time(rdp(100, 'rnorm', list(mean = 0, sd = 1)))   # 0.031
+system.time(rdp(500, 'rnorm', list(mean = 0, sd = 1)))   # 0.455
+system.time(rdp(1000, 'rnorm', list(mean = 0, sd = 1)))  # 2.193
+system.time(rdp(10000, 'rnorm', list(mean = 0, sd = 1))) # 228.962
+
+## Execution time appears to be non-linear
