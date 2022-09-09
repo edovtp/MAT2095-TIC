@@ -4,7 +4,7 @@ library(collections)
 # Dirichlet process simulation ------------------------------------------------------
 rdp <- function(M, G0, G0_params, tol=1e-6){
   # M        : precision parameter
-  # G0       : sampling function of the desired base measure
+  # G0       : sampling function of the desired centering measure
   # G0_params: parameters for G0
   
   # We add the number of samples
@@ -39,7 +39,7 @@ rdp <- function(M, G0, G0_params, tol=1e-6){
 rdp_data <- function(n, M, G0, G0_params){
   # n        : length of the sample 
   # M        : precision parameter
-  # G0       : sampling function of the desired base measure
+  # G0       : sampling function of the desired centering measure
   # G0_params: parameters for G0
   
   # We add the number of samples

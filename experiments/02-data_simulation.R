@@ -1,5 +1,5 @@
 set.seed(219)
-source('pruebas/00-helpers.R')
+source('experiments/00-helpers.R')
 
 
 # Data simulation - Simulated DP ----------------------------------------------------
@@ -115,7 +115,7 @@ k
 rdp_data <- function(n, M, G0, G0_params){
   # n        : length of the sample 
   # M        : precision parameter
-  # G0       : sampling function of the desired base measure
+  # G0       : sampling function of the desired centering measure
   # G0_params: parameters for G0
   
   # We add the number of samples
@@ -202,3 +202,43 @@ lines(density(sim_data_3_n), xlim = c(-3, 3), col = 'green', lwd = 2)
 lines(density(sim_data_4_n), xlim = c(-3, 3), col = 'purple', lwd = 2)
 lines(density(sim_data_5_n), xlim = c(-3, 3), col = 'brown', lwd = 2)
 curve(dnorm, add = TRUE, lwd = 2)
+
+## Replicate simulation - Gamma centering measure
+set.seed(219)
+
+sim_data_1_n <- rdp_data(500, 1, 'rgamma', list(shape = 3, rate = 10))
+sim_data_2_n <- rdp_data(500, 10, 'rgamma', list(shape = 3, rate = 10))
+sim_data_3_n <- rdp_data(500, 50, 'rgamma', list(shape = 3, rate = 10))
+sim_data_4_n <- rdp_data(500, 100, 'rgamma', list(shape = 3, rate = 10))
+sim_data_5_n <- rdp_data(500, 1000, 'rgamma', list(shape = 3, rate = 10))
+sim_data_6_n <- rdp_data(500, 10000, 'rgamma', list(shape = 3, rate = 10))
+
+par(mfrow = c(2, 3))
+plot(density(sim_data_1_n), xlim = c(0, 1), col = 'red', lwd = 2,
+     main = 'Simulated data from marginal distribution - M = 1')
+curve(dgamma(x, shape = 3, rate = 10), add = TRUE, lwd = 2)
+
+plot(density(sim_data_2_n), xlim = c(0, 1), col = 'red', lwd = 2,
+     main = 'Simulated data from marginal distribution - M = 10',
+     ylim = c(0, 2.8))
+curve(dgamma(x, shape = 3, rate = 10), add = TRUE, lwd = 2)
+
+plot(density(sim_data_3_n), xlim = c(0, 1), col = 'red', lwd = 2,
+     main = 'Simulated data from marginal distribution - M = 50',
+     ylim = c(0, 2.8))
+curve(dgamma(x, shape = 3, rate = 10), add = TRUE, lwd = 2)
+
+plot(density(sim_data_4_n), xlim = c(0, 1), col = 'red', lwd = 2,
+     main = 'Simulated data from marginal distribution - M = 100',
+     ylim = c(0, 2.8))
+curve(dgamma(x, shape = 3, rate = 10), add = TRUE, lwd = 2)
+
+plot(density(sim_data_5_n), xlim = c(0, 1), col = 'red', lwd = 2,
+     main = 'Simulated data from marginal distribution - M = 1000',
+     ylim = c(0, 2.8))
+curve(dgamma(x, shape = 3, rate = 10), add = TRUE, lwd = 2)
+
+plot(density(sim_data_6_n), xlim = c(0, 1), col = 'red', lwd = 2,
+     main = 'Simulated data from marginal distribution - M = 10000',
+     ylim = c(0, 2.8))
+curve(dgamma(x, shape = 3, rate = 10), add = TRUE, lwd = 2)
