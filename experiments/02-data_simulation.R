@@ -1,5 +1,5 @@
-set.seed(219)
 source('experiments/00-helpers.R')
+set.seed(219)
 
 
 # Data simulation - Simulated DP ----------------------------------------------------
@@ -111,54 +111,13 @@ for (i in 1:n) {
 k <- length(unique(aux))
 k
 
-## Function for data simulation
-rdp_data <- function(n, M, G0, G0_params){
-  # n        : length of the sample 
-  # M        : precision parameter
-  # G0       : sampling function of the desired centering measure
-  # G0_params: parameters for G0
-  
-  # We add the number of samples
-  G0_params <- c(G0_params, n = 1)
-  
-  # Sample vector
-  dp_sample <- vector(mode = 'numeric', length = n)
-  
-  # Frequency counter
-  counter <- dict()
-  
-  # aux function - See https://stackoverflow.com/questions/13990125/
-  # sample-from-vector-of-varying-length-including-1
-  sample.vec <- function(x, ...){x[sample(length(x), ...)]}
-  
-  for (i in 1:n){
-    norm_term <- 1/(M + i - 1)
-    new_value <- do.call(G0, G0_params)
-    
-    old_values <- unlist(counter$keys())
-    old_freq <- unlist(counter$values())
-    
-    values <- c(old_values, new_value)
-    probs <- c(old_freq * norm_term, M * norm_term)
-    
-    new_value <- sample.vec(x = values, size = 1, prob = probs)
-    dp_sample[i] <- new_value
-    
-    # Update frequencies
-    freq <- counter$get(new_value, 0)
-    counter$set(new_value, freq + 1)
-  }
-  
-  return(dp_sample)
-}
-
 ## Replicate simulation
-sim_data_1_n <- rdp_data(500, 1, 'rnorm', list(mean = 0, sd = 1))
-sim_data_2_n <- rdp_data(500, 10, 'rnorm', list(mean = 0, sd = 1))
-sim_data_3_n <- rdp_data(500, 50, 'rnorm', list(mean = 0, sd = 1))
-sim_data_4_n <- rdp_data(500, 100, 'rnorm', list(mean = 0, sd = 1))
-sim_data_5_n <- rdp_data(500, 1000, 'rnorm', list(mean = 0, sd = 1))
-sim_data_6_n <- rdp_data(500, 10000, 'rnorm', list(mean = 0, sd = 1))
+sim_data_1_n <- rdp_data(5000, 1, 'rnorm', list(mean = 0, sd = 1))
+sim_data_2_n <- rdp_data(5000, 10, 'rnorm', list(mean = 0, sd = 1))
+sim_data_3_n <- rdp_data(5000, 50, 'rnorm', list(mean = 0, sd = 1))
+sim_data_4_n <- rdp_data(5000, 100, 'rnorm', list(mean = 0, sd = 1))
+sim_data_5_n <- rdp_data(5000, 1000, 'rnorm', list(mean = 0, sd = 1))
+sim_data_6_n <- rdp_data(5000, 10000, 'rnorm', list(mean = 0, sd = 1))
 
 par(mfrow = c(2, 3))
 plot(density(sim_data_1_n), xlim = c(-3, 3), col = 'red', lwd = 2,
