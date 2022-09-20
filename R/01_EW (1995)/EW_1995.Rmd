@@ -1,0 +1,159 @@
+---
+title: "Escobar & West (1995)"
+output:
+  rmdformats::downcute:
+    self_contained: true
+    default_style: "light"
+    downcute_theme: "default"
+---
+
+```{=html}
+<style type="text/css">
+.Wrap {
+  max-width: 1800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+```
+
+```{r setup, include=FALSE}
+library(here)
+
+
+## Global options
+knitr::opts_chunk$set(cache = TRUE)
+here::i_am("01_EW (1995)/EW_1995.Rmd")
+set.seed(2211)
+
+## Extra functions
+source('code/00_extras.R')
+source('code/01_dirichlet_process.R')
+source('code/02_dirichlet_process_mixtures.R')
+
+# extra_functions_files <- list.files('code/')
+# sapply(extra_functions_files, 
+#        function(filename) source(here('R', 'code', filename),
+#                                  .GlobalEnv)
+# )
+```
+
+This notebook contains replications and implementations of the results given in *Bayesian Density Estimation and Inference Using Mixtures* by Escobar & West (1995).
+
+In this paper they consider the following model:
+
+$$
+\begin{align*}
+  Y_i | \pi_i &\overset{ind.}{\sim} \text{N}(\mu_i, V_i), \quad i = 1, ..., n \\
+  \pi_1, ..., \pi_n &\overset{i.i.d.}{\sim} G  \\
+  G &\sim DP(\alpha, G_0)
+\end{align*}
+$$
+
+Where $G_0$ is the Normal-Inverse-Gamma distribution where (if we replace $G$ with $G_0$),
+
+$$
+\begin{align*}
+  \mu_j | V_j &\sim \text{N}(m, \tau V_j) \\
+  V_j &\sim \Gamma^{-1}(s/2, 2/S)
+\end{align*}
+$$
+
+For use in the following notebook, we define a function named `tic_rdpm_data()` in the file `/code/02_dirichlet_process_mixtures.R` which simulates data from this model returning the values of $\pi$, the value of $k$ (distinct number of components), and the sampled values $y_1, ..., y_n$.
+
+# 1. Antoniak & Hollander
+
+In the paper the authors presents the result of Antoniak (1994) which states that the prior for $k$, the number of disctint values among the elements of \$\\pi\$, satisfies that $\text{E}(k|\alpha, n) \approx \alpha \log (1 + n/\alpha)$. On the other hand,
+
+# 2. Posterior simulation
+
+The main goal here is to obtain the posterior predictive distribution $P(Y_{n+1}|D_n)$ which involves an integral that is extremely computational involved. For this reason, we can use the results for the full posterior conditionals (?) to implement a Gibbs Sampler.
+
+The first result stated in the paper is the following: For each $i$, the conditional posterior for $(\pi_i|\pi^{(i)}, D_n)$ is the mixture
+
+$$
+\pi_i|\pi^{(i)}, D_n \sim q_0G_i(\pi_i) + \sum_{j\neq i}
+q_j \delta_{\pi_j}(\pi_i)
+$$
+
+or, equivalently,
+
+$$
+\pi_i|\pi^{(i)}, D_n ~ \sim q_0G_i(\pi_i) + \sum_{j=1}^{k_i} q_j^{*}\delta_{\pi_j^*}(\pi_i)
+$$
+
+where,
+
+-   $G_i(\pi_i)$ is the Normal-inverse-gamma with 
+  $$
+    \begin{align*}
+        \mu_i|V_i &\sim N(x_i, XV_i) \\
+        V_i^{-1} &\sim G((1+s)/2, 2/S_i)
+    \end{align*}
+  $$
+
+-   The weights $q_0$ are defined as
+
+  $$
+    \begin{align*}
+    q_0 &\propto \alpha c(s)[1 + (y_i - m)^2/(sM)]^{-(1 + s)/2}/M^{1/2} \\
+    q_j &\propto \exp[-(y_i - \mu_j)^2/(2V_j)](2V_j)^{-1/2} \\
+    \sum_{j=0, j\neq i}^n q_j &= 1 
+    \end{align*}
+  $$
+
+**Note**: the parameters are
+
+-   $x_i = (m + \tau y_i)/(1 + \tau)$
+
+-   $X = \tau/(1 + \tau)$
+
+-   $S_i = S + (y_i - m)^2/(1 + \tau)$
+
+-   $M = (1 + \tau)S/s$
+
+-   $c(s) = \Gamma((1 + s)/2)\Gamma(s/2)^{-1}s^{-1/2}$
+
+## Algorithm 1
+
+We can use these results to implement a Gibbs sampler with the following algorithm:
+
+1.  Choose starting values for $\pi$, which can be samples from the individual conditional posteriors $G_i$.
+2.  Sample elements of $\pi$ sequentially.
+
+The algorithm is implemented in `01_Escobar (1995)/algorithm1.R`
+
+### Recovering parameters
+
+To illustrate this algorithm, first we'll use a sample from a DPM model and see if we can recover the true parameters, which include the values of $\pi$ and $k$.
+
+We simulate a sample of size 100 from a Dirichlet Process Mixture Model with parameters $M = 1$, $m = 0$, $\tau = 100$, $s = 10$ and $S = 2$. The reason for this is:
+
+-   For S I just fix the scale parameter of the inverse gamma distribution to 1. Now, a high value of s (relatively to S) gives us both low and less variable values for the variances. This is done so the data drawn from each cluster is close to each other
+
+-   Now, to better illustrate the different clusters, we have to make the means $\mu$ distant from each other. This is done by setting a large value of $\tau$.
+
+We present the sampled values in the following figure.
+
+```{r data from a dpm, echo=FALSE}
+n <- 100
+
+a1_data <- tic_rdpm_data(
+  n, M = 1,
+  m = 0, tau = 100,
+  s = 10, S = 2
+)
+
+# Plot of the data
+plot(density(a1_data$y),
+  main = "Simulated data from a Dirichlet Process Mixture",
+  xlab = "y"
+)
+abline(v = unique(a1_data$params[, 1]), col = "red", lwd = 2, lty = "dashed")
+```
+
+
+
+
+
+### Recovering density

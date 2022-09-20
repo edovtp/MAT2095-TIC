@@ -1,4 +1,4 @@
-source("experiments/00-helpers.R")
+source("R/experiments/00-helpers.R")
 
 
 set.seed(219)
