@@ -3,7 +3,7 @@ title: "Bayesian Nonparametric Data Analysis"
 output:
   rmdformats::downcute:
     self_contained: true
-    default_style: "light"
+    default_style: "dark"
     downcute_theme: "default"
 ---
 
@@ -22,11 +22,11 @@ library(here)
 
 ## Global options
 knitr::opts_chunk$set(cache = TRUE, fig.align = 'center', out.width = '90%')
-here::i_am("R/00_BNPDA/BNPDA.Rmd")
+here::i_am("00_BNPDA/BNPDA.Rmd")
 set.seed(2211)
 
 ## Extra functions
-source(here::here('R', 'code', '01_dirichlet_process.R'))
+source(here::here('code', '01_dirichlet_process.R'))
 ```
 
 This notebook contains some replications of the results presented in the book *Bayesian Nonparametric Data Analysis*. This includes the implementation of general functions, which are saved in the folder `R/code/` for use in other scripts.

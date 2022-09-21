@@ -1,5 +1,8 @@
-source('code/00_extras.R')
-source('code/01_dirichlet_process.R')
+library(here)
+
+
+source(here('code', '00_extras.R'))
+source(here('code', '01_dirichlet_process.R'))
 
 
 # Data simulation from a DPM with Normal model for the data --------------------------
@@ -16,6 +19,7 @@ tic_rdpm_data <- function(n, M, m, tau, s, S){
     )
   )
   
+  # TODO: I should check that both are unique
   # Number of distinct components
   k <- length(unique(pi_vector[, 1]))
   

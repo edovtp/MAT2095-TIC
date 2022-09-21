@@ -3,7 +3,7 @@ title: "Escobar & West (1995)"
 output:
   rmdformats::downcute:
     self_contained: true
-    default_style: "light"
+    default_style: "dark"
     downcute_theme: "default"
 ---
 
@@ -16,29 +16,45 @@ output:
 }
 </style>
 ```
-
 ```{r setup, include=FALSE}
 library(here)
 
 
 ## Global options
-knitr::opts_chunk$set(cache = TRUE)
-here::i_am("01_EW (1995)/EW_1995.Rmd")
-set.seed(2211)
+knitr::opts_chunk$set(cache = TRUE, fig.align = 'center')
+here::i_am("01_EW_1995/EW_1995.Rmd")
+set.seed(219)
 
 ## Extra functions
-source('code/00_extras.R')
-source('code/01_dirichlet_process.R')
-source('code/02_dirichlet_process_mixtures.R')
+source(here('code', '00_extras.R'))
+source(here('code', '01_dirichlet_process.R'))
+source(here('code', '02_dirichlet_process_mixtures.R'))
 
-# extra_functions_files <- list.files('code/')
-# sapply(extra_functions_files, 
-#        function(filename) source(here('R', 'code', filename),
-#                                  .GlobalEnv)
-# )
+## Algorithms
+source(here('01_EW_1995', 'algorithms.R'))
 ```
 
 This notebook contains replications and implementations of the results given in *Bayesian Density Estimation and Inference Using Mixtures* by Escobar & West (1995).
+
+## TODO:
+
+-   [ ] Complete with the results of Antoniak (1994) and Korwar & Hollander
+
+-   [ ] Use simplification for the algorithms
+
+-   [ ] Implement algorithm 1
+
+    -   [ ] Recover parameters
+
+    -   [ ] Recover density
+
+-   [ ] Implement algorithm 2
+
+    -   [ ] Recover parameters
+
+    -   [ ] Recover density
+
+------------------------------------------------------------------------
 
 In this paper they consider the following model:
 
@@ -61,7 +77,7 @@ $$
 
 For use in the following notebook, we define a function named `tic_rdpm_data()` in the file `/code/02_dirichlet_process_mixtures.R` which simulates data from this model returning the values of $\pi$, the value of $k$ (distinct number of components), and the sampled values $y_1, ..., y_n$.
 
-# 1. Antoniak & Hollander
+# 1. Antoniak, Korwar & Hollander
 
 In the paper the authors presents the result of Antoniak (1994) which states that the prior for $k$, the number of disctint values among the elements of \$\\pi\$, satisfies that $\text{E}(k|\alpha, n) \approx \alpha \log (1 + n/\alpha)$. On the other hand,
 
@@ -84,17 +100,16 @@ $$
 
 where,
 
--   $G_i(\pi_i)$ is the Normal-inverse-gamma with 
-  $$
+-   $G_i(\pi_i)$ is the Normal-inverse-gamma with $$
     \begin{align*}
         \mu_i|V_i &\sim N(x_i, XV_i) \\
         V_i^{-1} &\sim G((1+s)/2, 2/S_i)
     \end{align*}
-  $$
+      $$
 
 -   The weights $q_0$ are defined as
 
-  $$
+$$
     \begin{align*}
     q_0 &\propto \alpha c(s)[1 + (y_i - m)^2/(sM)]^{-(1 + s)/2}/M^{1/2} \\
     q_j &\propto \exp[-(y_i - \mu_j)^2/(2V_j)](2V_j)^{-1/2} \\
@@ -121,13 +136,13 @@ We can use these results to implement a Gibbs sampler with the following algorit
 1.  Choose starting values for $\pi$, which can be samples from the individual conditional posteriors $G_i$.
 2.  Sample elements of $\pi$ sequentially.
 
-The algorithm is implemented in `01_Escobar (1995)/algorithm1.R`
+The algorithm is implemented in `01_Escobar (1995)/algorithms.R`
 
 ### Recovering parameters
 
 To illustrate this algorithm, first we'll use a sample from a DPM model and see if we can recover the true parameters, which include the values of $\pi$ and $k$.
 
-We simulate a sample of size 100 from a Dirichlet Process Mixture Model with parameters $M = 1$, $m = 0$, $\tau = 100$, $s = 10$ and $S = 2$. The reason for this is:
+We simulate a sample of size 50 from a Dirichlet Process Mixture Model with parameters $M = 2$, $m = 0$, $\tau = 100$, $s = 50$ and $S = 2$. The reason for this is:
 
 -   For S I just fix the scale parameter of the inverse gamma distribution to 1. Now, a high value of s (relatively to S) gives us both low and less variable values for the variances. This is done so the data drawn from each cluster is close to each other
 
@@ -136,12 +151,13 @@ We simulate a sample of size 100 from a Dirichlet Process Mixture Model with par
 We present the sampled values in the following figure.
 
 ```{r data from a dpm, echo=FALSE}
-n <- 100
+set.seed(219)
+n <- 50
 
 a1_data <- tic_rdpm_data(
-  n, M = 1,
+  n, M = 2,
   m = 0, tau = 100,
-  s = 10, S = 2
+  s = 50, S = 2
 )
 
 # Plot of the data
@@ -152,8 +168,56 @@ plot(density(a1_data$y),
 abline(v = unique(a1_data$params[, 1]), col = "red", lwd = 2, lty = "dashed")
 ```
 
+First, we take a sample using the same priors used to simulate the data.
+
+```{r}
+# alpha is the precision parameter of the DP
+prior_params <- list(alpha = 2, m = 0, tau = 100, s = 50, S = 2)
+test_a1 <- ew_algorithm1(a1_data, prior_params, n_samples = 10000)
+
+# Parameters
+sample_means <- colMeans(test_a1, dims = 1)
+# cbind(sample_means, a1_data$params)
+
+# Number of components
+aux <- test_a1[, , 1]
+k_sim <- apply(aux, 1, function(x) length(unique(x)))
+hist(k_sim)
+# mean(k_sim)
+```
+
+Now, we take a sample using different values for the priors.
+
+```{r}
+## First: different precision parameter
+prior_params <- list(alpha = 5, m = 0, tau = 100, s = 50, S = 2)
+test_a1 <- ew_algorithm1(a1_data, prior_params, n_samples = 1000)
+sample_means <- colMeans(test_a1, dims = 1)
+# cbind(sample_means, a1_data$params)
+
+k_sim <- apply(test_a1[, , 1], 1, function(x) length(unique(x)))
+# mean(k_sim)
+
+## Second: different values for G0
+prior_params <- list(alpha = 2, m = 3, tau = 10, s = 5, S = 5)
+test_a1 <- ew_algorithm1(a1_data, prior_params, n_samples = 1000)
+sample_means <- colMeans(test_a1, dims = 1)
+# cbind(sample_means, a1_data$params)
+
+k_sim <- apply(test_a1[, , 1], 1, function(x) length(unique(x)))
+# mean(k_sim)
 
 
+## Third: all values different
+prior_params <- list(alpha = 5, m = 3, tau = 10, s = 5, S = 5)
+test_a1 <- ew_algorithm1(a1_data, prior_params, n_samples = 1000)
+sample_means <- colMeans(test_a1, dims = 1)
+# cbind(sample_means, a1_data$params)
 
+k_sim <- apply(test_a1[, , 1], 1, function(x) length(unique(x)))
+# mean(k_sim)
+```
+
+**Note (21/09)**: I can't seem to retrieve $k$ correctly.
 
 ### Recovering density

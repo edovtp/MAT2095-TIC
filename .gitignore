@@ -1,3 +1,4 @@
 .Rhistory
 renv/
 .Rproj.user/
+*_cache/
