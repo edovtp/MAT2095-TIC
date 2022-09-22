@@ -4,9 +4,7 @@ source(here('code', '00_extras.R'))
 
 # EW (1995) - Algorithm 1 -----------------------------------------------------------
 ew_algorithm1 <- function(data, prior_par, n_samples, warmup = floor(n_samples/2)){
-  # data should contain: params and y
-  list2env(data, envir = environment())
-  
+  y <- data
   # prior_par should contain: M, m, tau, s and S
   list2env(prior_par, envir = environment())
   
@@ -62,7 +60,13 @@ ew_algorithm1 <- function(data, prior_par, n_samples, warmup = floor(n_samples/2
     }
   }
   
-  return(samples[warmup:n_samples, , ])
+  # Sum 2 because of the initial values
+  return(samples[(warmup + 2):(n_samples + 1), , ])
 }
 
 # EW (1995) - Algorithm 2 -----------------------------------------------------------
+ew_algorithm2 <- function(data, prior_par, n_samples, warmup = floor(n_samples/2)){
+  1
+}
+
+

@@ -16,12 +16,13 @@ output:
 }
 </style>
 ```
+
 ```{r setup, include=FALSE}
 library(here)
 
 
 ## Global options
-knitr::opts_chunk$set(cache = TRUE, fig.align = 'center')
+knitr::opts_chunk$set(cache = TRUE, fig.align = 'center', out.width = "70%")
 here::i_am("01_EW_1995/EW_1995.Rmd")
 set.seed(219)
 
@@ -38,15 +39,15 @@ This notebook contains replications and implementations of the results given in 
 
 ## TODO:
 
--   [ ] Complete with the results of Antoniak (1994) and Korwar & Hollander
+-   [X] Complete with the results of Antoniak (1974) and Korwar & Hollander
 
 -   [ ] Use simplification for the algorithms
 
--   [ ] Implement algorithm 1
+-   [X] Implement algorithm 1
 
-    -   [ ] Recover parameters
+    -   [X] Recover parameters
 
-    -   [ ] Recover density
+    -   [X] Recover density
 
 -   [ ] Implement algorithm 2
 
@@ -74,12 +75,91 @@ $$
   V_j &\sim \Gamma^{-1}(s/2, 2/S)
 \end{align*}
 $$
+**Note**: in the paper they mention that $V_j^{-1} \sim G(s/2, S/2)$ with **scale** $S/2$, but it should be the rate.
 
 For use in the following notebook, we define a function named `tic_rdpm_data()` in the file `/code/02_dirichlet_process_mixtures.R` which simulates data from this model returning the values of $\pi$, the value of $k$ (distinct number of components), and the sampled values $y_1, ..., y_n$.
 
 # 1. Antoniak, Korwar & Hollander
 
-In the paper the authors presents the result of Antoniak (1994) which states that the prior for $k$, the number of disctint values among the elements of \$\\pi\$, satisfies that $\text{E}(k|\alpha, n) \approx \alpha \log (1 + n/\alpha)$. On the other hand,
+In the paper the authors presents the result of Antoniak (1974) which states that the prior for $k$, the number of distinct values among the elements of $\pi$, satisfies that $\text{E}(k|\alpha, n) \approx \alpha \log (1 + n/\alpha)$. On the other hand, Korwar & Hollander (1973), shows that as $n \to infty$ the expected value of $k$ grows as $M \log(n)$. That is,
+
+$$
+\text{E}(k|\alpha, n) \approx \alpha \log(1 + n/\alpha) \to \alpha \log(n)
+$$
+
+We illustrate both these results in the following figures.
+
+## M = 1
+
+```{r akh m1, echo=FALSE}
+n_unique_fun <- function(n, M){
+  n <- floor(n)
+  sim_data <- tic_rdp_data(n, M, 'rnorm', list(mean = 0, sd = 1))
+  n_unique <- length(unique(sim_data))
+}
+
+antoniak_fun <- function(n_values, M, plot = TRUE){
+  # Vector for the approximate expectations of k
+  ek_values <- vector(mode = 'numeric', length = length(n_values))
+  
+  for (i in seq_along(n_values)){
+    k_sim <- replicate(20, n_unique_fun(n_values[i], M), simplify = 'vector')
+    ek_values[i] <- mean(k_sim)
+  }
+  
+  if (plot){
+    curve(M * log(x), from = 1, to = max(n_values) + 100,
+          col = 'purple', lwd = 2)
+    curve(M * log(1 + x/M), from = 1, to = max(n_values) + 100,
+          col = 'blue', lwd = 2, add = TRUE)
+    points(n_values, ek_values, pch = 16, col = 'red')
+    legend(x = 'bottomright', legend = c('Korwar & Hollander', 'Antoniak'),
+           col = c('purple', 'blue'), lwd = c(2, 2))
+  }
+  
+  return(list(n_values = n_values, ek_values = ek_values))
+}
+
+# Values of n
+# n_values <- c(100, 500, seq(1000, 21000, by = 2000))
+
+# M = 1
+# antoniak_fun(n_values, 1)
+
+knitr::include_graphics(
+  here("images", "04-Antoniak_M1.png")
+)
+```
+
+
+## M = 50
+
+```{r akh m50, echo=FALSE}
+# M = 50
+# antoniak_fun(n_values, 50)
+knitr::include_graphics(
+  here("images", "04-Antoniak_M50.png")
+)
+```
+
+## M = 100
+
+```{r akh m100, echo=FALSE}
+# M = 100
+knitr::include_graphics(
+  here("images", "04-Antoniak_M100.png")
+)
+```
+
+## M = 1000
+
+```{r akh m1000, echo=FALSE}
+# M = 1000
+knitr::include_graphics(
+  here("images", "04-Antoniak_M1000.png")
+)
+```
+
 
 # 2. Posterior simulation
 
@@ -115,7 +195,7 @@ $$
     q_j &\propto \exp[-(y_i - \mu_j)^2/(2V_j)](2V_j)^{-1/2} \\
     \sum_{j=0, j\neq i}^n q_j &= 1 
     \end{align*}
-  $$
+$$
 
 **Note**: the parameters are
 
@@ -152,7 +232,7 @@ We present the sampled values in the following figure.
 
 ```{r data from a dpm, echo=FALSE}
 set.seed(219)
-n <- 50
+n <- 100
 
 a1_data <- tic_rdpm_data(
   n, M = 2,
@@ -171,53 +251,126 @@ abline(v = unique(a1_data$params[, 1]), col = "red", lwd = 2, lty = "dashed")
 First, we take a sample using the same priors used to simulate the data.
 
 ```{r}
-# alpha is the precision parameter of the DP
-prior_params <- list(alpha = 2, m = 0, tau = 100, s = 50, S = 2)
-test_a1 <- ew_algorithm1(a1_data, prior_params, n_samples = 10000)
-
-# Parameters
-sample_means <- colMeans(test_a1, dims = 1)
-# cbind(sample_means, a1_data$params)
-
-# Number of components
-aux <- test_a1[, , 1]
-k_sim <- apply(aux, 1, function(x) length(unique(x)))
-hist(k_sim)
-# mean(k_sim)
+# # alpha is the precision parameter of the DP
+# prior_params <- list(alpha = 2, m = 0, tau = 100, s = 50, S = 2)
+# # test_a1 <- ew_algorithm1(a1_data, prior_params, n_samples = 1000)
+# 
+# # Parameters
+# sample_means <- colMeans(test_a1, dims = 1)
+# # cbind(sample_means, a1_data$params)
+# 
+# # Number of components
+# aux <- test_a1[, , 1]
+# k_sim <- apply(aux, 1, function(x) length(unique(x)))
+# # hist(k_sim)
+# # abline(v = a1_data$k, col = "red", lty = 'dashed', lwd = 2)
+# # mean(k_sim)
+1
 ```
 
 Now, we take a sample using different values for the priors.
 
 ```{r}
-## First: different precision parameter
-prior_params <- list(alpha = 5, m = 0, tau = 100, s = 50, S = 2)
-test_a1 <- ew_algorithm1(a1_data, prior_params, n_samples = 1000)
-sample_means <- colMeans(test_a1, dims = 1)
-# cbind(sample_means, a1_data$params)
-
-k_sim <- apply(test_a1[, , 1], 1, function(x) length(unique(x)))
-# mean(k_sim)
-
-## Second: different values for G0
-prior_params <- list(alpha = 2, m = 3, tau = 10, s = 5, S = 5)
-test_a1 <- ew_algorithm1(a1_data, prior_params, n_samples = 1000)
-sample_means <- colMeans(test_a1, dims = 1)
-# cbind(sample_means, a1_data$params)
-
-k_sim <- apply(test_a1[, , 1], 1, function(x) length(unique(x)))
-# mean(k_sim)
-
-
-## Third: all values different
-prior_params <- list(alpha = 5, m = 3, tau = 10, s = 5, S = 5)
-test_a1 <- ew_algorithm1(a1_data, prior_params, n_samples = 1000)
-sample_means <- colMeans(test_a1, dims = 1)
-# cbind(sample_means, a1_data$params)
-
-k_sim <- apply(test_a1[, , 1], 1, function(x) length(unique(x)))
-# mean(k_sim)
+# ## First: different precision parameter
+# prior_params <- list(alpha = 5, m = 0, tau = 100, s = 50, S = 2)
+# # test_a1 <- ew_algorithm1(a1_data, prior_params, n_samples = 1000)
+# sample_means <- colMeans(test_a1, dims = 1)
+# # cbind(sample_means, a1_data$params)
+# 
+# k_sim <- apply(test_a1[, , 1], 1, function(x) length(unique(x)))
+# # mean(k_sim)
+# 
+# ## Second: different values for G0
+# prior_params <- list(alpha = 2, m = 3, tau = 10, s = 5, S = 5)
+# # test_a1 <- ew_algorithm1(a1_data, prior_params, n_samples = 1000)
+# sample_means <- colMeans(test_a1, dims = 1)
+# # cbind(sample_means, a1_data$params)
+# 
+# k_sim <- apply(test_a1[, , 1], 1, function(x) length(unique(x)))
+# # mean(k_sim)
+# 
+# 
+# ## Third: all values different
+# prior_params <- list(alpha = 5, m = 3, tau = 10, s = 5, S = 5)
+# # test_a1 <- ew_algorithm1(a1_data, prior_params, n_samples = 1000)
+# sample_means <- colMeans(test_a1, dims = 1)
+# # cbind(sample_means, a1_data$params)
+# 
+# k_sim <- apply(test_a1[, , 1], 1, function(x) length(unique(x)))
+# # mean(k_sim)
+1
 ```
 
 **Note (21/09)**: I can't seem to retrieve $k$ correctly.
 
 ### Recovering density
+
+Now, we simulate data not directly from a DPM, and then try to recover the density. For this, we simulate data from the following model:
+
+$$
+y_1, ..., y_n \overset{i.i.d}{\sim} p_1 N(-5, 1) + p_2 N(-1, 1) + p_3 N(0, 1) + p_4N(5, 1)
+$$
+
+such that $p_1 + ... + p_4 = 1$. We simulate data from this mixture and then plot the true density in blue,
+
+```{r a1 - density - data}
+n <- 100
+probs <- c(0.15, 0.25, 0.3, 0.2)
+nmeans <- c(-5, -1, 0, 5)
+components <- sample(1:4, prob = probs, size = n, replace = TRUE)
+samples <- rnorm(n) + nmeans[components]
+
+
+true_dens <- function(x){
+  probs[1] * dnorm(x, nmeans[1]) + probs[2] * dnorm(x, nmeans[2]) +
+    probs[3] * dnorm(x, nmeans[3]) + probs[4] * dnorm(x, nmeans[4])
+}
+
+hist(samples, main = "", breaks = 20, freq = FALSE, col = 'white')
+curve(true_dens, add = TRUE, col = 'blue', lwd = 2)
+abline(v = nmeans, col = 'red', lty = 'dashed', lwd = 3)
+```
+
+```{r}
+prior_par <- list(alpha = 1, m = 0, tau = 1, s = 8, S = 2)
+
+aux <- ew_algorithm1(samples, prior_par, 1000)
+colMeans(aux, dims = 1)[, 1]
+nmeans[components]
+
+n_samples <- 501
+y_grid <- seq(-5, 5, length.out = 100)
+
+cond_dens <- function(y, pi){
+  n = 100
+  alpha = 1
+  m = 0
+  tau = 1
+  s = 8
+  S = 2
+  
+  aux <- alpha * 1 / (alpha + n) * dstudent(
+    y, nu = s, mu = m, sigma = sqrt((1 + tau) * S / s)
+  )
+  
+  for (i in 1:n){
+    aux <- aux + 1 / (alpha + n) * dnorm(y, pi[i, 1], sqrt(pi[i, 2]))
+  }
+  
+  return(aux)
+}
+
+dens_est <- vector(mode = "numeric", length = 100)
+
+for (j in seq_along(y_grid)){
+  dens <- 0
+  for (i in 1:nrow(aux)){
+    dens <- dens + cond_dens(y_grid[j], aux[i, , ])
+  }
+  
+  dens_est[j] <- dens / nrow(aux)
+}
+
+curve(true_dens, col = 'blue', lwd = 2, from = -8, to = 8)
+lines(y_grid, dens_est, col = "red")
+```
