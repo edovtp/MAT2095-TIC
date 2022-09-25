@@ -59,8 +59,8 @@ tic_rdp_data <- function(n, M, G0, G0_params) {
     # All values
     candidate <- do.call(G0, G0_params)
     all_values <- counter$keys()
-    prev_n <- length(all_values)
-    all_values[[prev_n + 1]] <- candidate
+    k <- length(all_values)
+    all_values[[k + 1]] <- candidate
     
     # Probabilities
     norm_term <- 1 / (M + i - 1)
@@ -68,7 +68,7 @@ tic_rdp_data <- function(n, M, G0, G0_params) {
     probs <- c(old_freq * norm_term, M * norm_term)
     
     # Select value
-    value_index <- sample(prev_n + 1, size = 1, prob = probs)
+    value_index <- sample(k + 1, size = 1, prob = probs)
     new_value <- all_values[[value_index]]
     dp_sample[[i]] <- new_value
     

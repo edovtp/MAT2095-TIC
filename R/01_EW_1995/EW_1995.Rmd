@@ -19,6 +19,7 @@ output:
 
 ```{r setup, include=FALSE}
 library(here)
+library(latex2exp)
 
 
 ## Global options
@@ -67,14 +68,16 @@ $$
 \end{align*}
 $$
 
-Where $G_0$ is the Normal-Inverse-Gamma distribution where (if we replace $G$ with $G_0$),
+Where $G_0$ is the Normal-Inverse-Gamma distribution such that (if we replace $G$ with $G_0$),
 
 $$
 \begin{align*}
   \mu_j | V_j &\sim \text{N}(m, \tau V_j) \\
-  V_j &\sim \Gamma^{-1}(s/2, 2/S)
+  V_j &\sim \Gamma^{-1}(s/2, S/2)
 \end{align*}
 $$
+that is, $G_0 \equiv N-\Gamma^{-1}(m, 1/\tau, s/2, S/2)$.
+
 **Note**: in the paper they mention that $V_j^{-1} \sim G(s/2, S/2)$ with **scale** $S/2$, but it should be the rate.
 
 For use in the following notebook, we define a function named `tic_rdpm_data()` in the file `/code/02_dirichlet_process_mixtures.R` which simulates data from this model returning the values of $\pi$, the value of $k$ (distinct number of components), and the sampled values $y_1, ..., y_n$.
@@ -175,24 +178,25 @@ $$
 or, equivalently,
 
 $$
-\pi_i|\pi^{(i)}, D_n ~ \sim q_0G_i(\pi_i) + \sum_{j=1}^{k_i} q_j^{*}\delta_{\pi_j^*}(\pi_i)
+\pi_i|\pi^{(i)}, D_n ~ \sim q_0G_i(\pi_i) + \sum_{j=1}^{k_i} q_j^{*}\delta_{\pi_j^*}(\pi_i), \quad q^*_j = n_j q_j
 $$
 
 where,
 
--   $G_i(\pi_i)$ is the Normal-inverse-gamma with $$
+-   $G_i(\pi_i) \equiv N-\Gamma^{-1}(x_i, 1/X; (1 + s)/2, S_i/2)$, that is,
+  $$
     \begin{align*}
         \mu_i|V_i &\sim N(x_i, XV_i) \\
-        V_i^{-1} &\sim G((1+s)/2, 2/S_i)
+        V_i &\sim \Gamma^{-1}((1+s)/2,\, S_i/2)
     \end{align*}
-      $$
+  $$
 
 -   The weights $q_0$ are defined as
 
 $$
     \begin{align*}
-    q_0 &\propto \alpha c(s)[1 + (y_i - m)^2/(sM)]^{-(1 + s)/2}/M^{1/2} \\
-    q_j &\propto \exp[-(y_i - \mu_j)^2/(2V_j)](2V_j)^{-1/2} \\
+    q_0 &\propto \alpha c(s)[1 + (y_i - m)^2/(sM)]^{-(1 + s)/2}/M^{1/2} & \propto \alpha \cdot t_s(m, \sqrt{M})\\
+    q_j &\propto \exp[-(y_i - \mu_j)^2/(2V_j)](2V_j)^{-1/2} &\propto N(\mu_j, V_j) \\
     \sum_{j=0, j\neq i}^n q_j &= 1 
     \end{align*}
 $$
@@ -222,7 +226,7 @@ The algorithm is implemented in `01_Escobar (1995)/algorithms.R`
 
 To illustrate this algorithm, first we'll use a sample from a DPM model and see if we can recover the true parameters, which include the values of $\pi$ and $k$.
 
-We simulate a sample of size 50 from a Dirichlet Process Mixture Model with parameters $M = 2$, $m = 0$, $\tau = 100$, $s = 50$ and $S = 2$. The reason for this is:
+We simulate a sample of size 50 from a Dirichlet Process Mixture Model with parameters $M = 1$, $m = 0$, $\tau = 100$, $s = 50$ and $S = 2$. The reason for this is:
 
 -   For S I just fix the scale parameter of the inverse gamma distribution to 1. Now, a high value of s (relatively to S) gives us both low and less variable values for the variances. This is done so the data drawn from each cluster is close to each other
 
@@ -230,12 +234,12 @@ We simulate a sample of size 50 from a Dirichlet Process Mixture Model with para
 
 We present the sampled values in the following figure.
 
-```{r data from a dpm, echo=FALSE}
+```{r a1 - rp data, echo=FALSE}
 set.seed(219)
-n <- 100
+n <- 50
 
 a1_data <- tic_rdpm_data(
-  n, M = 2,
+  n, M = 1,
   m = 0, tau = 100,
   s = 50, S = 2
 )
@@ -248,60 +252,123 @@ plot(density(a1_data$y),
 abline(v = unique(a1_data$params[, 1]), col = "red", lwd = 2, lty = "dashed")
 ```
 
-First, we take a sample using the same priors used to simulate the data.
+Next, we run the algorithm using the same priors used to simulate the data.
 
-```{r}
-# # alpha is the precision parameter of the DP
-# prior_params <- list(alpha = 2, m = 0, tau = 100, s = 50, S = 2)
-# # test_a1 <- ew_algorithm1(a1_data, prior_params, n_samples = 1000)
-# 
-# # Parameters
-# sample_means <- colMeans(test_a1, dims = 1)
-# # cbind(sample_means, a1_data$params)
-# 
-# # Number of components
-# aux <- test_a1[, , 1]
-# k_sim <- apply(aux, 1, function(x) length(unique(x)))
-# # hist(k_sim)
-# # abline(v = a1_data$k, col = "red", lty = 'dashed', lwd = 2)
-# # mean(k_sim)
-1
+```{r a1 - rp algorithm (same priors), echo = FALSE}
+# alpha is the precision parameter of the DP
+prior_params <- list(alpha = 1, m = 0, tau = 100, s = 50, S = 2)
+test_a1 <- ew_algorithm1(a1_data$y, prior_params, iter = 1000)
+
+# Parameters
+sample_means <- colMeans(test_a1, dims = 1)
+aux <- cbind(sample_means, a1_data$params)
+
+## Mu
+plot(aux[, 3], aux[, 1], main = latex2exp::TeX(r"(Simulated values of \mu)"),
+     pch = 16, xlab = "Real values", ylab = "Simulated values")
+abline(0, 1, col = 'red')
+
+## V
+plot(aux[, 4], aux[, 2], main = latex2exp::TeX(r"(Simulated values of $V$)"),
+     pch = 16, xlab = "Real values", ylab = "Simulated values")
+abline(0, 1, col = 'red')
+
+# Number of components
+aux <- test_a1[, , 1]
+k_sim <- apply(aux, 1, function(x) length(unique(x)))
+k_mean <- mean(k_sim)
+hist(k_sim, breaks = 1:10, col = 'black', main = 'Sampled values of k')
+abline(v = a1_data$k + 0.01, col = "red", lty = 'dashed', lwd = 3)
+legend("topright", paste0("real k = ", a1_data$k),
+       col = "red", lty = "dashed", lwd = 3)
 ```
 
-Now, we take a sample using different values for the priors.
+From the figures we can see that it retrieves correctly the mean for the component to the right, and that it tends to clump together the components that are near. On the other hand, the algorithm seems to overestimate the values of $V$.
 
-```{r}
-# ## First: different precision parameter
-# prior_params <- list(alpha = 5, m = 0, tau = 100, s = 50, S = 2)
-# # test_a1 <- ew_algorithm1(a1_data, prior_params, n_samples = 1000)
-# sample_means <- colMeans(test_a1, dims = 1)
-# # cbind(sample_means, a1_data$params)
-# 
-# k_sim <- apply(test_a1[, , 1], 1, function(x) length(unique(x)))
-# # mean(k_sim)
-# 
-# ## Second: different values for G0
-# prior_params <- list(alpha = 2, m = 3, tau = 10, s = 5, S = 5)
-# # test_a1 <- ew_algorithm1(a1_data, prior_params, n_samples = 1000)
-# sample_means <- colMeans(test_a1, dims = 1)
-# # cbind(sample_means, a1_data$params)
-# 
-# k_sim <- apply(test_a1[, , 1], 1, function(x) length(unique(x)))
-# # mean(k_sim)
-# 
-# 
-# ## Third: all values different
-# prior_params <- list(alpha = 5, m = 3, tau = 10, s = 5, S = 5)
-# # test_a1 <- ew_algorithm1(a1_data, prior_params, n_samples = 1000)
-# sample_means <- colMeans(test_a1, dims = 1)
-# # cbind(sample_means, a1_data$params)
-# 
-# k_sim <- apply(test_a1[, , 1], 1, function(x) length(unique(x)))
-# # mean(k_sim)
-1
+Finally, we take a sample using different values for the priors.
+
+```{r a1 - rp algorithm (different priors), include=FALSE}
+## First: different precision parameter
+prior_params <- list(alpha = 10, m = 0, tau = 100, s = 50, S = 2)
+test_a1 <- ew_algorithm1(a1_data$y, prior_params, iter = 1000)
+
+# Parameters
+sample_means <- colMeans(test_a1, dims = 1)
+aux <- cbind(sample_means, a1_data$params)
+
+## Mu
+plot(aux[, 3], aux[, 1], main = latex2exp::TeX(r"(Simulated values of \mu)"),
+     pch = 16, xlab = "Real values", ylab = "Simulated values")
+abline(0, 1, col = 'red')
+
+## V
+plot(aux[, 4], aux[, 2], main = latex2exp::TeX(r"(Simulated values of $V$)"),
+     pch = 16, xlab = "Real values", ylab = "Simulated values")
+abline(0, 1, col = 'red')
+
+# Number of components
+aux <- test_a1[, , 1]
+k_sim <- apply(aux, 1, function(x) length(unique(x)))
+k_mean <- mean(k_sim)
+hist(k_sim, breaks = 1:30, col = 'black', main = 'Sampled values of k')
+abline(v = a1_data$k + 0.01, col = "red", lty = 'dashed', lwd = 3)
+legend("topright", paste0("real k = ", a1_data$k),
+       col = "red", lty = "dashed", lwd = 3)
+
+## Second: different values for G0
+prior_params <- list(alpha = 1, m = 3, tau = 10, s = 5, S = 5)
+test_a1 <- ew_algorithm1(a1_data$y, prior_params, iter = 1000)
+
+# Parameters
+sample_means <- colMeans(test_a1, dims = 1)
+aux <- cbind(sample_means, a1_data$params)
+
+## Mu
+plot(aux[, 3], aux[, 1], main = latex2exp::TeX(r"(Simulated values of \mu)"),
+     pch = 16, xlab = "Real values", ylab = "Simulated values")
+abline(0, 1, col = 'red')
+
+## V
+plot(aux[, 4], aux[, 2], main = latex2exp::TeX(r"(Simulated values of $V$)"),
+     pch = 16, xlab = "Real values", ylab = "Simulated values")
+abline(0, 1, col = 'red')
+
+# Number of components
+aux <- test_a1[, , 1]
+k_sim <- apply(aux, 1, function(x) length(unique(x)))
+k_mean <- mean(k_sim)
+hist(k_sim, breaks = 1:10, col = 'black', main = 'Sampled values of k')
+abline(v = a1_data$k + 0.01, col = "red", lty = 'dashed', lwd = 3)
+legend("topright", paste0("real k = ", a1_data$k),
+       col = "red", lty = "dashed", lwd = 3)
+
+## Third: all values different
+prior_params <- list(alpha = 5, m = 3, tau = 10, s = 5, S = 5)
+test_a1 <- ew_algorithm1(a1_data$y, prior_params, iter = 1000)
+
+# Parameters
+sample_means <- colMeans(test_a1, dims = 1)
+aux <- cbind(sample_means, a1_data$params)
+
+## Mu
+plot(aux[, 3], aux[, 1], main = latex2exp::TeX(r"(Simulated values of \mu)"),
+     pch = 16, xlab = "Real values", ylab = "Simulated values")
+abline(0, 1, col = 'red')
+
+## V
+plot(aux[, 4], aux[, 2], main = latex2exp::TeX(r"(Simulated values of $V$)"),
+     pch = 16, xlab = "Real values", ylab = "Simulated values")
+abline(0, 1, col = 'red')
+
+# Number of components
+aux <- test_a1[, , 1]
+k_sim <- apply(aux, 1, function(x) length(unique(x)))
+k_mean <- mean(k_sim)
+hist(k_sim, breaks = 1:20, col = 'black', main = 'Sampled values of k')
+abline(v = a1_data$k + 0.01, col = "red", lty = 'dashed', lwd = 3)
+legend("topright", paste0("real k = ", a1_data$k),
+       col = "red", lty = "dashed", lwd = 3)
 ```
-
-**Note (21/09)**: I can't seem to retrieve $k$ correctly.
 
 ### Recovering density
 
@@ -311,66 +378,69 @@ $$
 y_1, ..., y_n \overset{i.i.d}{\sim} p_1 N(-5, 1) + p_2 N(-1, 1) + p_3 N(0, 1) + p_4N(5, 1)
 $$
 
-such that $p_1 + ... + p_4 = 1$. We simulate data from this mixture and then plot the true density in blue,
+such that $p_1 + ... + p_4 = 1$. We simulate data from this mixture and then plot the true density in blue.
 
-```{r a1 - density - data}
+```{r a1 - rd data, echo=FALSE}
+set.seed(219)
 n <- 100
 probs <- c(0.15, 0.25, 0.3, 0.2)
 nmeans <- c(-5, -1, 0, 5)
 components <- sample(1:4, prob = probs, size = n, replace = TRUE)
 samples <- rnorm(n) + nmeans[components]
 
-
 true_dens <- function(x){
   probs[1] * dnorm(x, nmeans[1]) + probs[2] * dnorm(x, nmeans[2]) +
     probs[3] * dnorm(x, nmeans[3]) + probs[4] * dnorm(x, nmeans[4])
 }
 
+# Samples from the mixture and true density
 hist(samples, main = "", breaks = 20, freq = FALSE, col = 'white')
 curve(true_dens, add = TRUE, col = 'blue', lwd = 2)
 abline(v = nmeans, col = 'red', lty = 'dashed', lwd = 3)
 ```
 
-```{r}
-prior_par <- list(alpha = 1, m = 0, tau = 1, s = 8, S = 2)
+Now, we try to see if we can retrieve both the number of components and the real density.
 
-aux <- ew_algorithm1(samples, prior_par, 1000)
-colMeans(aux, dims = 1)[, 1]
-nmeans[components]
+```{r a1 - rd algorithm, echo=FALSE}
+# Algorithm
+prior_par <- list(alpha = 1, m = 0, tau = 10, s = 50, S = 2)
+test_a1_rd <- ew_algorithm1(samples, prior_par, iter = 1000)
 
-n_samples <- 501
-y_grid <- seq(-5, 5, length.out = 100)
+## See if we can retrieve the components
+plot(nmeans[components], colMeans(test_a1_rd, dims = 1)[, 1],
+     main = latex2exp::TeX(r"(Simulated values of \mu)"),
+     pch = 16, xlab = "Real values", ylab = "Simulated values")
+abline(0, 1, col = 'red')
+
+## See if we can retrive the density
+y_grid <- seq(-8, 8, length.out = 500)
 
 cond_dens <- function(y, pi){
-  n = 100
-  alpha = 1
-  m = 0
-  tau = 1
-  s = 8
-  S = 2
+  # Density of y_(n + 1) | pi
+  list2env(prior_par, envir = environment())
+  n <- nrow(pi)
   
-  aux <- alpha * 1 / (alpha + n) * dstudent(
-    y, nu = s, mu = m, sigma = sqrt((1 + tau) * S / s)
-  )
+  dens <- alpha * dstudent(
+      y, nu = s, mu = m, sigma = sqrt((1 + tau) * S / s)
+    ) + sum(dnorm(y, pi[, 1], sqrt(pi[, 2])))
   
-  for (i in 1:n){
-    aux <- aux + 1 / (alpha + n) * dnorm(y, pi[i, 1], sqrt(pi[i, 2]))
-  }
-  
-  return(aux)
+  return(dens / (alpha + n))
 }
 
-dens_est <- vector(mode = "numeric", length = 100)
+dens_est <- vector(mode = "numeric", length = n)
 
 for (j in seq_along(y_grid)){
-  dens <- 0
-  for (i in 1:nrow(aux)){
-    dens <- dens + cond_dens(y_grid[j], aux[i, , ])
-  }
-  
-  dens_est[j] <- dens / nrow(aux)
+  dens_est[j] <- mean(
+    apply(test_a1_rd, 1, function(x, y){cond_dens(y, x)}, y = y_grid[j])
+  )
 }
 
-curve(true_dens, col = 'blue', lwd = 2, from = -8, to = 8)
-lines(y_grid, dens_est, col = "red")
+curve(true_dens, col = 'blue', lwd = 2, from = -8, to = 8, ylim = c(0, 0.3))
+lines(y_grid, dens_est, col = "red", lwd = 2)
 ```
+
+
+# Notes (edited 22/09)
+
+1. I can't seem to retrieve $k$ correctly.
+
