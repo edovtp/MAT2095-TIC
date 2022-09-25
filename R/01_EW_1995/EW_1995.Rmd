@@ -18,6 +18,8 @@ output:
 ```
 
 ```{r setup, include=FALSE}
+library(tidyverse)
+library(collections)
 library(here)
 library(latex2exp)
 
@@ -42,7 +44,7 @@ This notebook contains replications and implementations of the results given in 
 
 -   [X] Complete with the results of Antoniak (1974) and Korwar & Hollander
 
--   [ ] Use simplification for the algorithms
+-   [X] Use simplification for the algorithms
 
 -   [X] Implement algorithm 1
 
@@ -257,10 +259,10 @@ Next, we run the algorithm using the same priors used to simulate the data.
 ```{r a1 - rp algorithm (same priors), echo = FALSE}
 # alpha is the precision parameter of the DP
 prior_params <- list(alpha = 1, m = 0, tau = 100, s = 50, S = 2)
-test_a1 <- ew_algorithm1(a1_data$y, prior_params, iter = 1000)
+test_a1_rp <- ew_algorithm1(a1_data$y, prior_params, iter = 1000)
 
 # Parameters
-sample_means <- colMeans(test_a1, dims = 1)
+sample_means <- colMeans(test_a1_rp, dims = 1)
 aux <- cbind(sample_means, a1_data$params)
 
 ## Mu
@@ -274,10 +276,10 @@ plot(aux[, 4], aux[, 2], main = latex2exp::TeX(r"(Simulated values of $V$)"),
 abline(0, 1, col = 'red')
 
 # Number of components
-aux <- test_a1[, , 1]
+aux <- test_a1_rp[, , 1]
 k_sim <- apply(aux, 1, function(x) length(unique(x)))
 k_mean <- mean(k_sim)
-hist(k_sim, breaks = 1:10, col = 'black', main = 'Sampled values of k')
+hist(k_sim, breaks = 1:15, col = 'black', main = 'Sampled values of k')
 abline(v = a1_data$k + 0.01, col = "red", lty = 'dashed', lwd = 3)
 legend("topright", paste0("real k = ", a1_data$k),
        col = "red", lty = "dashed", lwd = 3)
@@ -403,18 +405,16 @@ Now, we try to see if we can retrieve both the number of components and the real
 
 ```{r a1 - rd algorithm, echo=FALSE}
 # Algorithm
-prior_par <- list(alpha = 1, m = 0, tau = 10, s = 50, S = 2)
+prior_par <- list(alpha = 1, m = 0, tau = 10, s = 4, S = 2)
 test_a1_rd <- ew_algorithm1(samples, prior_par, iter = 1000)
 
 ## See if we can retrieve the components
-plot(nmeans[components], colMeans(test_a1_rd, dims = 1)[, 1],
+plot(nmeans[components], colMeans(test_a1_rd, dims = 1)[, 1], ylim = c(-7, 7),
      main = latex2exp::TeX(r"(Simulated values of \mu)"),
      pch = 16, xlab = "Real values", ylab = "Simulated values")
 abline(0, 1, col = 'red')
 
 ## See if we can retrive the density
-y_grid <- seq(-8, 8, length.out = 500)
-
 cond_dens <- function(y, pi){
   # Density of y_(n + 1) | pi
   list2env(prior_par, envir = environment())
@@ -427,6 +427,7 @@ cond_dens <- function(y, pi){
   return(dens / (alpha + n))
 }
 
+y_grid <- seq(-8, 8, length.out = 500)
 dens_est <- vector(mode = "numeric", length = n)
 
 for (j in seq_along(y_grid)){
@@ -435,12 +436,35 @@ for (j in seq_along(y_grid)){
   )
 }
 
-curve(true_dens, col = 'blue', lwd = 2, from = -8, to = 8, ylim = c(0, 0.3))
+curve(true_dens, col = 'blue', lwd = 2, from = -8, to = 8, ylim = c(0, 0.3),
+      main = "Posterior predictive density", ylab = "Density")
 lines(y_grid, dens_est, col = "red", lwd = 2)
+legend("topright", c("Real", "Estimation"), col = c("blue", "red"),
+       lwd = 2)
+```
+
+Finally, we repeat the example when trying to recover the real parameters, and check if the density estimate is close to the one that R gives (here we don't know the real density)
+
+```{r a1 - rd for rp, echo=FALSE}
+y_grid <- seq(-8, 8, length.out = 500)
+dens_est <- vector(mode = "numeric", length = n)
+prior_par <- prior_params
+
+for (j in seq_along(y_grid)){
+  dens_est[j] <- mean(
+    apply(test_a1_rp, 1, function(x, y){cond_dens(y, x)}, y = y_grid[j])
+  )
+}
+
+plot(density(a1_data$y), col = 'blue', lwd = 2, ylim = c(0, 1),
+     main = "Posterior predictive density", ylab = "Density")
+lines(y_grid, dens_est, col = "red", lwd = 2)
+legend("topright", c("Real", "Estimation"), col = c("blue", "red"),
+       lwd = 2)
 ```
 
 
-# Notes (edited 22/09)
+# Notes (edited 25/09)
 
 1. I can't seem to retrieve $k$ correctly.
-
+2. I implemented the first algorithm using the k different values, but now it takes much more time to get a sample.

@@ -1,10 +1,3 @@
-library(here)
-
-
-source(here('code', '00_extras.R'))
-source(here('code', '01_dirichlet_process.R'))
-
-
 # Data simulation from a DPM with Normal model for the data --------------------------
 tic_rdpm_data <- function(n, M, m, tau, s, S){
   # TODO: Use any model for the data

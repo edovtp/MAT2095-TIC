@@ -1,6 +1,3 @@
-library(collections)
-
-
 # Dirichlet process simulation ------------------------------------------------------
 tic_rdp <- function(M, G0, G0_params, tol = 1e-6) {
   
