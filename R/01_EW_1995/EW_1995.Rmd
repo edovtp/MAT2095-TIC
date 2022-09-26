@@ -54,7 +54,7 @@ This notebook contains replications and implementations of the results given in 
 
 -   [ ] Implement algorithm 2
 
-    -   [ ] Recover parameters
+    -   [X] Recover parameters
 
     -   [ ] Recover density
 
@@ -222,7 +222,7 @@ We can use these results to implement a Gibbs sampler with the following algorit
 1.  Choose starting values for $\pi$, which can be samples from the individual conditional posteriors $G_i$.
 2.  Sample elements of $\pi$ sequentially.
 
-The algorithm is implemented in `01_Escobar (1995)/algorithms.R`
+The algorithm is implemented in `01_EW_1995/algorithms.R`
 
 ### Recovering parameters
 
@@ -464,7 +464,168 @@ legend("topright", c("Real", "Estimation"), col = c("blue", "red"),
 ```
 
 
-# Notes (edited 25/09)
+### Notes (edited 25/09)
 
 1. I can't seem to retrieve $k$ correctly.
 2. I implemented the first algorithm using the k different values, but now it takes much more time to get a sample.
+
+## Algorithm 2
+
+Now we consider an extension of the model to include learning about the prior parameters $m$ and $\tau$. The model is:
+
+$$
+\begin{align*}
+  Y_i | \pi_i &\overset{ind.}{\sim} \text{N}(\mu_i, V_i), \quad i = 1, ..., n \\
+  \pi_1, ..., \pi_n &\overset{i.i.d.}{\sim} G  \\
+  G &\sim DP(\alpha, G_0) \\
+  G_0 &= N-\Gamma^{-1}(m, 1/\tau, s/2, S/2) \\
+  \tau &\sim \Gamma^{-1}(w/2, W/2) \\
+  m &\sim N(a, A)
+\end{align*}
+$$
+
+It follows that
+
+* Given $\tau$ and $\pi$, $m$ is conditionally independent of $D_n$ with distribution
+
+$$
+m | \tau, \pi \sim N\Big[(1 - x)a + x\bar{V}\sum(V_j^*)^{-1}\mu_j^*\,;\, x\tau\bar{V}\Big] 
+$$
+where $x = A/(A + \tau \bar{V})$ and $\bar{V}^{-1} = \sum(V_j^*)^{-1}$.
+
+* Given $m$ and $\pi$, $\tau$ is conditionally independent of $D_n$ with distribution
+
+$$
+\tau \sim \Gamma^{-1}((w + k)/2, (W + K)/2)
+$$
+where $K = \sum_{j=1}^k (\mu_j^* - m)^2/V_j^*$. The algorithm is implemented in `01_EW_1995/algorithms.R`.
+
+Now we repeat the same experiments that we did with the first algorithm.
+
+### Recovering Parameters
+
+```{r a2 - rp data, echo=FALSE}
+set.seed(219)
+n <- 50
+real_m   <- 0
+real_tau <- 100
+
+a2_data <- tic_rdpm_data(
+  n, M = 1,
+  m = real_m, tau = real_tau,
+  s = 50, S = 2
+)
+
+plot(density(a2_data$y),
+  main = "Simulated data from a Dirichlet Process Mixture",
+  xlab = "y"
+)
+abline(v = unique(a2_data$params[, 1]), col = "red", lwd = 2, lty = "dashed")
+```
+
+```{r a2 - rp algorithm (same priors), echo=FALSE}
+# Algorithm
+prior_params <- list(alpha = 1, a = 0, A = 100, w = 0.01, W = 0.01, s = 50, S = 2)
+test_a2_rp <- ew_algorithm2(a2_data$y, prior_params, iter = 10000)
+
+# Parameters
+## m
+hist(test_a2_rp$mt[, 1], col = "gray", main = TeX(r"(Sampled values of m)"),
+     xlab = "m")
+abline(v = real_m, lty = "dashed", col = "red", lwd = 3)
+
+## tau
+hist(test_a2_rp$mt[, 2], col = "gray", main = TeX(r"(Sampled values of \tau)"),
+     xlab = TeX(r"(\tau)"))
+abline(v = real_tau, lty = "dashed", col = "red", lwd = 3)
+
+## mu_j
+sample_means <- colMeans(test_a2_rp$pi, dims = 1)
+plot(a2_data$params[, 1], sample_means[, 1],
+     main = latex2exp::TeX(r"(Simulated values of \mu)"),
+     pch = 16, xlab = "Real values", ylab = "Simulated values")
+abline(0, 1, col = 'red')
+
+## V_j
+plot(a2_data$params[, 2], sample_means[, 2],
+     main = latex2exp::TeX(r"(Simulated values of $V$)"),
+     pch = 16, xlab = "Real values", ylab = "Simulated values")
+abline(0, 1, col = "red")
+
+# Number of components
+k_sim <- apply(test_a2_rp$pi[, , 1], 1, function(x) length(unique(x)))
+k_mean <- mean(k_sim)
+hist(k_sim, breaks = 1:15, col = 'black', main = 'Sampled values of k', xlab = "k")
+abline(v = a2_data$k + 0.01, col = "red", lty = 'dashed', lwd = 3)
+legend("topright", paste0("real k = ", a2_data$k),
+       col = "red", lty = "dashed", lwd = 3)
+```
+
+### Recovering Density
+
+```{r a2 - rd data, echo=FALSE}
+set.seed(219)
+n <- 100
+probs <- c(0.15, 0.25, 0.3, 0.2)
+nmeans <- c(-5, -1, 0, 5)
+components <- sample(1:4, prob = probs, size = n, replace = TRUE)
+samples <- rnorm(n) + nmeans[components]
+
+true_dens <- function(x){
+  probs[1] * dnorm(x, nmeans[1]) + probs[2] * dnorm(x, nmeans[2]) +
+    probs[3] * dnorm(x, nmeans[3]) + probs[4] * dnorm(x, nmeans[4])
+}
+
+# Samples from the mixture and true density
+hist(samples, main = "", breaks = 20, freq = FALSE, col = 'white')
+curve(true_dens, add = TRUE, col = 'blue', lwd = 2)
+abline(v = nmeans, col = 'red', lty = 'dashed', lwd = 3)
+```
+
+Now, we try to see if we can retrieve both the number of components and the real density.
+
+```{r a2 - rd algorithm, echo=FALSE}
+# Algorithm
+prior_par <- list(alpha = 1, a = 0, A = 100, w = 0.1, W = 0.1, s = 4, S = 2)
+test_a2_rd <- ew_algorithm2(samples, prior_par, iter = 1000)
+
+## See if we can retrieve the components
+plot(nmeans[components], colMeans(test_a2_rd$pi, dims = 1)[, 1], ylim = c(-7, 7),
+     main = latex2exp::TeX(r"(Simulated values of \mu)"),
+     pch = 16, xlab = "Real values", ylab = "Simulated values")
+abline(0, 1, col = 'red')
+
+## See if we can retrive the density
+cond_dens <- function(y, pi, mt){
+  # Density of y_(n + 1) | pi, m, tau
+  list2env(prior_par, envir = environment())
+  n <- nrow(pi)
+  
+  dens <- alpha * dstudent(
+      y, nu = s, mu = mt[1], sigma = sqrt((1 + mt[2]) * S / s)
+    ) + sum(dnorm(y, pi[, 1], sqrt(pi[, 2])))
+  
+  return(dens / (alpha + n))
+}
+
+y_grid <- seq(-8, 8, length.out = 500)
+dens_est <- vector(mode = "numeric", length = n)
+
+for (j in seq_along(y_grid)){
+  iter <- nrow(test_a2_rd$pi)
+  all_dens <- vector(mode = "numeric", length = iter)
+  for (i in seq_len(iter)) {
+    all_dens[i] <- cond_dens(y_grid[j], test_a2_rd$pi[i, , ], test_a2_rd$mt[i, ])
+  }
+  
+  dens_est[j] <- mean(all_dens)
+}
+
+curve(true_dens, col = 'blue', lwd = 2, from = -8, to = 8, ylim = c(0, 0.3),
+      main = "Posterior predictive density", ylab = "Density")
+lines(y_grid, dens_est, col = "red", lwd = 2)
+legend("topright", c("Real", "Estimation"), col = c("blue", "red"),
+       lwd = 2)
+```
+
+The results are almost the same.
