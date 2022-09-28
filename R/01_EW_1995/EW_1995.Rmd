@@ -52,11 +52,15 @@ This notebook contains replications and implementations of the results given in 
 
     -   [X] Recover density
 
--   [ ] Implement algorithm 2
+-   [X] Implement algorithm 2
 
     -   [X] Recover parameters
 
-    -   [ ] Recover density
+    -   [X] Recover density
+    
+-   [X] Initial Illustration
+
+-   [X] Implement algorithm 3
 
 ------------------------------------------------------------------------
 
@@ -168,7 +172,7 @@ knitr::include_graphics(
 
 # 2. Posterior simulation
 
-The main goal here is to obtain the posterior predictive distribution $P(Y_{n+1}|D_n)$ which involves an integral that is extremely computational involved. For this reason, we can use the results for the full posterior conditionals (?) to implement a Gibbs Sampler.
+The main goal here is to obtain the posterior predictive distribution $P(Y_{n+1}|D_n)$ which involves an integral that is extremely computational involved. For this reason, we can use the results for the full conditionals of the posterior distribution to implement a Gibbs Sampler.
 
 The first result stated in the paper is the following: For each $i$, the conditional posterior for $(\pi_i|\pi^{(i)}, D_n)$ is the mixture
 
@@ -259,7 +263,7 @@ Next, we run the algorithm using the same priors used to simulate the data.
 ```{r a1 - rp algorithm (same priors), echo = FALSE}
 # alpha is the precision parameter of the DP
 prior_params <- list(alpha = 1, m = 0, tau = 100, s = 50, S = 2)
-test_a1_rp <- ew_algorithm1(a1_data$y, prior_params, iter = 1000)
+test_a1_rp <- ew_algorithm1(a1_data$y, prior_params, iter = 10000)
 
 # Parameters
 sample_means <- colMeans(test_a1_rp, dims = 1)
@@ -463,12 +467,6 @@ legend("topright", c("Real", "Estimation"), col = c("blue", "red"),
        lwd = 2)
 ```
 
-
-### Notes (edited 25/09)
-
-1. I can't seem to retrieve $k$ correctly.
-2. I implemented the first algorithm using the k different values, but now it takes much more time to get a sample.
-
 ## Algorithm 2
 
 Now we consider an extension of the model to include learning about the prior parameters $m$ and $\tau$. The model is:
@@ -489,14 +487,14 @@ It follows that
 * Given $\tau$ and $\pi$, $m$ is conditionally independent of $D_n$ with distribution
 
 $$
-m | \tau, \pi \sim N\Big[(1 - x)a + x\bar{V}\sum(V_j^*)^{-1}\mu_j^*\,;\, x\tau\bar{V}\Big] 
+m | \tau, \pi \sim N\Big[(1 - x)a + x\bar{V}\sum(V_j^*)^{-1}\mu_j^*\,;\, x\tau\bar{V}\Big]
 $$
 where $x = A/(A + \tau \bar{V})$ and $\bar{V}^{-1} = \sum(V_j^*)^{-1}$.
 
 * Given $m$ and $\pi$, $\tau$ is conditionally independent of $D_n$ with distribution
 
 $$
-\tau \sim \Gamma^{-1}((w + k)/2, (W + K)/2)
+\tau | m, \pi \sim \Gamma^{-1}((w + k)/2, (W + K)/2)
 $$
 where $K = \sum_{j=1}^k (\mu_j^* - m)^2/V_j^*$. The algorithm is implemented in `01_EW_1995/algorithms.R`.
 
@@ -629,3 +627,251 @@ legend("topright", c("Real", "Estimation"), col = c("blue", "red"),
 ```
 
 The results are almost the same.
+
+# Initial Illustration (Roeder 1990)
+
+Now we try to reproduce the results presented in the paper about the data given by Roeder 1990.
+
+# Final algorithm
+
+To finalize the article, the authors present a final extension of the previous algorithm that now includes learning about the precision parameter $\alpha$.
+
+This final model is represented as,
+
+$$
+\begin{align*}
+  Y_i | \pi_i &\overset{ind.}{\sim} \text{N}(\mu_i, V_i), \quad i = 1, ..., n \\
+  \pi_1, ..., \pi_n &\overset{i.i.d.}{\sim} G  \\
+  G &\sim DP(\alpha, G_0) \\
+  G_0 &= N-\Gamma^{-1}(m, 1/\tau, s/2, S/2) \\
+  \tau &\sim \Gamma^{-1}(w/2, W/2) \\
+  m &\sim N(0, A), \quad A \to \infty \\
+  \alpha & \sim \Gamma(a, b) 
+\end{align*}
+$$
+
+It follows that,
+
+* The full conditional of $\alpha$ is given by,
+
+$$
+\alpha | \pi, m, \tau, D_n \equiv \alpha | \eta, k \sim \pi_\eta \Gamma(a + k, b - \log \eta) + (1 - \pi_\eta)\Gamma(a + k - 1, b - \log \eta)
+$$
+
+where $\pi_\eta/(1 - \pi_\eta) = (a + k - 1)/[n (b - \log \eta)]$. Here we introduced an auxiliary variable $\eta$ that satisfies
+
+$$
+\eta | \alpha, k \sim \text{Beta}(\alpha + 1, n)
+$$
+
+* The full conditional of $m$ is given by,
+
+$$
+m | \tau, \pi, \alpha, D_n \equiv m | \pi, \tau \sim N\Big[ x\bar{V}\sum(V_j^*)^{-1}\mu_j^*\,;\, x\tau\bar{V}\Big]
+$$
+
+  where $x = A/(A + \tau \bar{V})$ and $\bar{V}^{-1} = \sum(V_j^*)^{-1}$.
+
+* The full conditional of $\tau$ is given by,
+
+$$
+\tau | \pi, m, \alpha, D_n \equiv \tau | \pi, m \sim \Gamma^{-1}((w + k)/2, (W + K)/2)
+$$
+
+  where $K = \sum_{j=1}^k (\mu_j^* - m)^2/V_j^*$.
+
+* The full conditionals of $\pi$ are given by,
+
+$$
+\pi_i|\pi^{(i)}, m, \tau, \alpha, D_n \sim q_0G_i(\pi_i) + \sum_{j\neq i}
+q_j \delta_{\pi_j}(\pi_i)
+$$
+
+  where $G_i(\pi_i) \equiv N-\Gamma^{-1}(x_i, 1/X; (1 + s)/2, S_i/2)$ and 
+
+$$
+    \begin{align*}
+    q_0 &\propto \alpha c(s)[1 + (y_i - m)^2/(sM)]^{-(1 + s)/2}/M^{1/2} & \propto \alpha \cdot t_s(m, \sqrt{M})\\
+    q_j &\propto \exp[-(y_i - \mu_j)^2/(2V_j)](2V_j)^{-1/2} &\propto N(\mu_j, V_j) \\
+    \sum_{j=0, j\neq i}^n q_j &= 1 
+    \end{align*}
+$$
+
+  with
+
+  -   $x_i = (m + \tau y_i)/(1 + \tau)$
+  
+  -   $X = \tau/(1 + \tau)$
+  
+  -   $S_i = S + (y_i - m)^2/(1 + \tau)$
+  
+  -   $M = (1 + \tau)S/s$
+  
+  -   $c(s) = \Gamma((1 + s)/2)\Gamma(s/2)^{-1}s^{-1/2}$
+
+Thus, the algorithm proceeds as follows:
+
+1. Sample initial values in the following way:
+    * Sample $\alpha \sim \Gamma(a, b)$
+    * Sample $\tau \sim \Gamma^{-1}(w/2, W/2)$
+    * Sample $m \sim N(0, 1)$
+    * Sample $\pi$ given $m, \tau$
+2. For $t = 1, ..., N$:
+    * Sample $\eta_{(t)}|\alpha_{(t-1)}, k_{(t-1)}$
+    * Sample $\alpha_{(t)} | \eta_{(t)}, k_{(t-1)}$
+    * Sample $m_{(t)} | \pi_{(t-1)}, \tau_{(t-1)}$
+    * Sample $\tau_{(t)} | \pi_{(t-1)}, m_{(t)}$
+    * Sample $\pi_{i, (t)} | \pi^{(i)}_{(t-1)}, m_{(t)}, \tau_{(t)}, \alpha_{(t)}, D_n$ from its full conditional. Be aware that $\pi^{(i)}_{(t-1)}$ may contain already updated values of the form $\pi_{1, (t)}, ..., \pi_{i-1, (t)}, \pi_{i+1, (t-1)}, ..., \pi_{n, (t-1)}$.
+
+The algorithm is implemented at `01_EW_1995/algorithms.R`.
+
+First, we visualize the data of the galaxy velocities.
+
+
+```{r galaxies data, echo=FALSE}
+velocities <- c(9172, 9558, 10406, 18419, 18927, 19330, 19440, 19541,
+                19846, 19914, 19989, 20179, 20221, 20795, 20875, 21492,
+                21921, 22209, 22314, 22746, 22914, 23263, 23542, 23711,
+                24289, 24990, 26995, 34279, 9350, 9775, 16084, 18552,
+                19052, 19343, 19473, 19547, 19856, 19918, 20166, 20196,
+                20415, 20821, 20986, 21701, 21960, 22242, 22374, 22747,
+                23206, 23484, 23666, 24129, 24366, 25633, 32065, 9483,
+                10227, 16170, 18600, 19070, 19349, 19529, 19663, 19863,
+                19973, 20175, 20215, 20629, 20846, 21137, 21814, 22185,
+                22249, 22495, 22888, 23241, 23538, 23706, 24285, 24717,
+                26960, 32789)/1000
+
+hist(velocities, breaks = 1:40)
+```
+
+Next, we start the algorithm with the values given in the paper.
+
+```{r algorithm}
+# Prior parameters
+n <- length(velocities)
+prior_par <- list(
+  a = 2, b = 4,
+  w = 1, W = 100,
+  s = 4, S = 2,
+  A = 1000
+)
+
+# Algorithm
+set.seed(219)
+N <- 10000
+warmup <- 2000
+
+galaxies_inf <- ew_algorithm(velocities, prior_par, iter = N, warmup = warmup)
+```
+
+## Posterior predictive density p(y|D)
+
+```{r ppd, echo=FALSE}
+## Posterior predictive density P(y|D) (Figure 1)
+cond_dens <- function(sample, y){
+  # Density of y_(n + 1) | pi, m, tau, alpha, D
+  list2env(prior_par, envir = environment())
+  
+  mu <- sample[1:82]
+  V <- sample[83:164]
+  m <- sample[165]
+  tau <- sample[166]
+  alpha <- sample[167]
+  
+  dens <- alpha * dstudent(
+    y, nu = s, mu = m, sigma = sqrt((1 + tau) * S / s)
+  ) + sum(dnorm(y, mu, sqrt(V)))
+  
+  return(dens / (alpha + n))
+}
+
+y_grid <- seq(8, 40, length.out = 100)
+samples <- cbind(galaxies_inf$pi[, , 1], galaxies_inf$pi[, , 2],
+                 galaxies_inf$mt, galaxies_inf$alpha, galaxies_inf$eta)
+dens_est <- sapply(y_grid, function(y) mean(apply(samples, 1, cond_dens, y = y)))
+hist(velocities, breaks = 1:40, freq = FALSE, 
+     main = "Posterior predictive density estimation")
+lines(y_grid, dens_est, col = "red", lwd = 2)
+
+## Predictive cdf p(y|D) (Figure 3)
+plot(y_grid, cumsum(dens_est), type = "l")
+```
+
+## Posterior p(tau|D)
+
+```{r posterior tau, echo=FALSE}
+cond_dens <- function(sample, y){
+  # Density of tau | pi, m, alpha, D
+  list2env(prior_par, envir = environment())
+  
+  pi <- cbind(sample[1:82], sample[83:164])
+  unique_pi <- unique(pi)
+  m <- sample[165]
+  
+  k <- nrow(unique_pi)
+  K <- sum((unique_pi[, 1] - m)^2 / unique_pi[, 2])
+  
+  dens <- dgamma(1/y, (w + k)/2, rate = (W + K)/2) * y^(-2)
+  
+  return(dens)
+}
+
+y_grid <- seq(0.1, 250, length.out = 100)
+dens_est <- sapply(y_grid, function(y) mean(apply(samples, 1, cond_dens, y = y)))
+plot(y_grid, dens_est, col = "red", lwd = 3, "l", ylim = c(0, 0.008))
+curve(dgamma(1/x, prior_par$w/2, rate = prior_par$W/2)*x^(-2), from = 0, to = 250,
+      lty = "dashed", lwd = 3, col = "blue", add = TRUE)
+legend("topright", legend = c("prior", "posterior"), col = c("blue", "red"), 
+       lty = c("dashed", "solid"), lwd = 3)
+
+```
+
+## Posterior p(alpha|D)
+
+```{r posterior alpha, echo=FALSE}
+cond_dens <- function(sample, y){
+  # Density of alpha | eta, k
+  list2env(prior_par, envir = environment())
+  
+  pi <- cbind(sample[1:82], sample[83:164])
+  unique_pi <- unique(pi)
+  k <- nrow(unique_pi)
+  eta <- sample[168]
+  
+  odds_w <- (a + k - 1)/(n * (b - log(eta)))
+  weight <- odds_w / (1 + odds_w)
+  
+  dens <- weight * dgamma(y, a + k, rate = b - log(eta)) +
+    (1 - weight) * dgamma(y, a + k - 1, rate = b - log(eta))
+  
+  return(dens)
+}
+
+y_grid <- seq(0, 3, length.out = 50)
+dens_est <- sapply(y_grid, function(y) mean(apply(samples, 1, cond_dens, y = y)))
+plot(y_grid, dens_est, col = "red", lwd = 3, "l", ylim = c(0, 1.6))
+curve(dgamma(x, 2, rate = 4), from = 0, to = 3, lty = "dashed", lwd = 3, col = "blue",
+      add = TRUE)
+legend("topright", legend = c("prior", "posterior"), col = c("blue", "red"), 
+       lty = c("dashed", "solid"), lwd = 3)
+
+```
+
+## Posterior p(k|D)
+
+```{r posterior k, echo=FALSE}
+k_sim <- apply(galaxies_inf$pi[, , 1], 1, function(x) length(unique(x)))
+hist(k_sim, breaks = 1:20, col = 'black', main = 'Sampled values of k', xlab = "k")
+table(k_sim)/(N - warmup)
+```
+
+We get almost the same results that appear in the paper.
+
+# Notes (updated 28/09)
+
+1. I can't seem to retrieve $k$ correctly.
+2. I implemented the first algorithm using the k different values, but now it takes much more time to get a sample.
+3. Questions about the number of modes and prior predictive distribution
+4. Values for $k$ are inflated, looks like there is a problem with the updating of $\pi$.
+5. Mode on the initial illustration is not right
+6. On the final algorithm, the posterior full conditional of $\eta$ doesn't depend on $k$
