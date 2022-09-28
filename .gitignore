@@ -3,4 +3,4 @@ renv/
 .Rproj.user/
 *_cache/
 pruebas.R
-.html
+*.html
