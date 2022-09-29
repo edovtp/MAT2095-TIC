@@ -1,0 +1,91 @@
+include("01_dirichlet_process.jl")
+
+
+# Dirichlet process simulation
+# Example 1 - Normal centering measure
+Random.seed!(219);
+G0 = Distributions.Normal(0, 1)
+tic_rdp_example(15, 1, G0, -10, 10, (-3, 3))
+tic_rdp_example(15, 10, G0, -10, 10, (-3, 3))
+tic_rdp_example(15, 50, G0, -10, 10, (-3, 3))
+tic_rdp_example(15, 100, G0, -10, 10, (-3, 3))
+tic_rdp_example(15, 500, G0, -10, 10, (-3, 3))   # R: 4s
+tic_rdp_example(15, 1000, G0, -10, 10, (-3, 3))  # R: 14s
+
+# Example 2 - Poisson centering measure
+Random.seed!(219);
+G0 = Distributions.Poisson(5)
+tic_rdp_example(15, 1, G0, -10, 20, (0, 15))
+tic_rdp_example(15, 10, G0, -10, 20, (0, 15))
+tic_rdp_example(15, 50, G0, -10, 20, (0, 15))
+tic_rdp_example(15, 100, G0, -10, 20, (0, 15))
+tic_rdp_example(15, 500, G0, -10, 20, (0, 15))
+tic_rdp_example(15, 1000, G0, -10, 20, (0, 15))
+
+# Example 3 - Gamma distribution
+Random.seed!(219);
+G0 = Distributions.Gamma(6, 1/4)
+tic_rdp_example(15, 1, G0, -10, 10, (0, 4))
+tic_rdp_example(15, 10, G0, -10, 10, (0, 4))
+tic_rdp_example(15, 50, G0, -10, 10, (0, 4))
+tic_rdp_example(15, 100, G0, -10, 10, (0, 4))
+tic_rdp_example(15, 500, G0, -10, 10, (0, 4))
+tic_rdp_example(15, 1000, G0, -10, 10, (0, 4))
+
+
+# Data simulation from a Dirichlet Process
+# Example 1 - Normal centering measure
+Random.seed!(219);
+G0 = Distributions.Normal(0, 1);
+
+rdp_m_normal1 = tic_rdp_marginal(500, 1, G0);
+StatsPlots.plot(G0, func=pdf, size=(800, 700), label="Centering measure");
+StatsPlots.density!(rdp_m_normal1, label="Sample from a DP")
+
+rdp_m_normal2 = tic_rdp_marginal(500, 10, G0);
+StatsPlots.plot(G0, func=pdf, size=(800, 700), label="Centering measure");
+StatsPlots.density!(rdp_m_normal2, label="Sample from a DP")
+
+rdp_m_normal3 = tic_rdp_marginal(500, 50, G0);
+StatsPlots.plot(G0, func=pdf, size=(800, 700), label="Centering measure");
+StatsPlots.density!(rdp_m_normal3, label="Sample from a DP")
+
+rdp_m_normal4 = tic_rdp_marginal(500, 100, G0);
+StatsPlots.plot(G0, func=pdf, size=(800, 700), label="Centering measure");
+StatsPlots.density!(rdp_m_normal4, label="Sample from a DP")
+
+rdp_m_normal5 = tic_rdp_marginal(500, 1000, G0);
+StatsPlots.plot(G0, func=pdf, size=(800, 700), label="Centering measure");
+StatsPlots.density!(rdp_m_normal5, label="Sample from a DP")
+
+rdp_m_normal6 = tic_rdp_marginal(500, 10000, G0);
+StatsPlots.plot(G0, func=pdf, size=(800, 700), label="Centering measure");
+StatsPlots.density!(rdp_m_normal6, label="Sample from a DP")
+
+# Example 2 - Gamma centering measure
+Random.seed!(219);
+G0 = Distributions.Gamma(3, 0.1);
+
+rdp_m_gamma1 = tic_rdp_marginal(500, 1, G0);
+StatsPlots.plot(G0, func=pdf, size=(800, 700), label="Centering measure");
+StatsPlots.density!(rdp_m_gamma1, label="Sample from a DP")
+
+rdp_m_gamma2 = tic_rdp_marginal(500, 10, G0);
+StatsPlots.plot(G0, func=pdf, size=(800, 700), label="Centering measure");
+StatsPlots.density!(rdp_m_gamma2, label="Sample from a DP")
+
+rdp_m_gamma3 = tic_rdp_marginal(500, 50, G0);
+StatsPlots.plot(G0, func=pdf, size=(800, 700), label="Centering measure");
+StatsPlots.density!(rdp_m_gamma3, label="Sample from a DP")
+
+rdp_m_gamma4 = tic_rdp_marginal(500, 100, G0);
+StatsPlots.plot(G0, func=pdf, size=(800, 700), label="Centering measure");
+StatsPlots.density!(rdp_m_gamma4, label="Sample from a DP")
+
+rdp_m_gamma5 = tic_rdp_marginal(500, 1000, G0);
+StatsPlots.plot(G0, func=pdf, size=(800, 700), label="Centering measure");
+StatsPlots.density!(rdp_m_gamma5, label="Sample from a DP")
+
+rdp_m_gamma6 = tic_rdp_marginal(500, 10000, G0);
+StatsPlots.plot(G0, func=pdf, size=(800, 700), label="Centering measure");
+StatsPlots.density!(rdp_m_gamma6, label="Sample from a DP")
