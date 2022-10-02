@@ -57,7 +57,7 @@ tic_rdp_example(15, 500, G0, -10, 20, (0, 15))
 
 # Example 3 - Gamma distribution
 Random.seed!(219);
-G0 = Distributions.Gamma(6, 1/4)
+G0 = Distributions.Gamma(6, 1 / 4)
 tic_rdp_example(15, 1, G0, -10, 10, (0, 4))
 tic_rdp_example(15, 10, G0, -10, 10, (0, 4))
 tic_rdp_example(15, 50, G0, -10, 10, (0, 4))
@@ -121,3 +121,33 @@ StatsPlots.density!(rdp_m_gamma5, label="Sample from a DP")
 @time rdp_m_gamma6 = tic_rdp_marginal(500, 10000, G0);
 StatsPlots.plot(G0, func=pdf, size=(800, 600), label="Centering measure");
 StatsPlots.density!(rdp_m_gamma6, label="Sample from a DP")
+
+
+# Empirical results - Antoniak, Korwar & Hollander
+function akh_empirical(n_values, M)
+    # Expected value for k
+    ek_values = Vector{Float64}(undef, length(n_values))
+
+    function n_unique(n, M)
+        sim_data = tic_rdp_marginal(n, M, Normal(0, 1))
+        k = length(unique(sim_data))
+    end
+
+    for (i, n) in enumerate(n_values)
+        k_sim = [n_unique(n, M) for _ in 1:20]
+        ek_values[i] = mean(k_sim)
+    end
+
+    result = plot(x -> M * log(x), 1, maximum(n_values) + 100,
+        label="Korwar & Hollander", size=(800, 600))
+    plot!(result, x -> M * log(1 + x / M), label="Antoniak")
+    scatter!(result, n_values, ek_values, label="Simulation")
+end
+
+
+Random.seed!(219)
+n_values = 1000:2000:21000
+
+@time akh_empirical(n_values, 1)
+@time akh_empirical(n_values, 100)
+@time akh_empirical(n_values, 1000)
