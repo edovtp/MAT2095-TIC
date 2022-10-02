@@ -5,7 +5,7 @@ include("00_extras.jl")
 
 
 # Dirichlet process simulation -----------------------------------------------
-function tic_rdp(M::Number, G0::Distribution, tol=1e-6)
+function tic_rdp(M, G0::Distribution, tol=1e-6)
     """
     Random sample of a Dirichlet process using the stick-breaking construction
 
@@ -30,7 +30,7 @@ end
 
 
 # Data simulation from a Dirichlet Process ------------------------------------------
-function tic_rdp_marginal(n::Int64, M, G0::Distributions.Distribution)
+function tic_rdp_marginal(n, M, G0::Distribution)
     """
     Random sample from a Dirichlet process using the marginal distribution
 
@@ -39,8 +39,7 @@ function tic_rdp_marginal(n::Int64, M, G0::Distributions.Distribution)
     G0 : centering mesasure
     """
 
-    # TODO: replace with the dimension of the centering measure
-    marginal_sample = Vector{Float64}(undef, n)
+    marginal_sample = ElasticArray{Float64}(undef, length(G0), 0)
     counter = Dict{Any,Int64}()
 
     for i in 1:n
@@ -53,11 +52,11 @@ function tic_rdp_marginal(n::Int64, M, G0::Distributions.Distribution)
         probs = [old_freq .* norm_term; M * norm_term]
 
         new_value = StatsBase.sample(all_values, Weights(probs))
-        marginal_sample[i] = new_value
+        append!(marginal_sample, new_value)
 
         freq = get(counter, new_value, 0)
         counter[new_value] = freq + 1
     end
 
-    return marginal_sample
+    return marginal_sample'
 end
