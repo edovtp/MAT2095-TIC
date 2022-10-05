@@ -1,6 +1,3 @@
-using StatsBase
-using Distributions
-using ElasticArrays
 include("00_extras.jl")
 
 
@@ -45,7 +42,7 @@ function tic_rdp_marginal(n, M, G0::Distribution)
     for i in 1:n
         all_values = collect(keys(counter))
         candidate = rand(G0)
-        append!(all_values, candidate)
+        push!(all_values, candidate)
 
         norm_term = 1 / (M + i - 1)
         old_freq = collect(values(counter))

@@ -1,3 +1,7 @@
+using Random
+using StatsBase
+using Distributions
+using ElasticArrays
 using ConjugatePriors
 
 
@@ -9,3 +13,9 @@ https://github.com/JuliaStats/ConjugatePriors.jl/blob/master/src/normalinversega
 """
 
 Base.length(d::NormalInverseGamma) = 2
+
+"""
+Location-Scale t-distribution
+
+See https://github.com/JuliaStats/Distributions.jl/pull/1482#discussion_r786065465
+"""
