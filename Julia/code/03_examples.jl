@@ -1,5 +1,6 @@
 using Plots
 using StatsPlots
+using FreqTables
 
 include("03_ew.jl")
 
@@ -115,8 +116,57 @@ function cond_dens(y)
     return mean(dens)
 end
 
-y_grid = range(8, 40, length=500)
+y_grid = range(8, 40, length=500);
 @time dens_est = [cond_dens(y) for y in y_grid];
 
 histogram(velocities, bins=1:40, label="", normalize=true)
 plot!(y_grid, dens_est, label="Estimated density", linewidth=3)
+
+
+## Posterior p(tau|D)
+function cond_dens(tau)
+    function ig_pdf(i, tau)
+        unique_pi = unique(g_pi[i, :, :], dims=1)
+        k = size(unique_pi)[1]
+        K = sum((unique_pi[:, 1] .- g_mt[i, 1]) .^ 2 ./ unique_pi[:, 2])
+        pdf(InverseGamma((w + k) / 2, (W + K) / 2), tau)
+    end
+
+    dens = [ig_pdf(i, tau) for i in 1:(N-warmup)]
+
+    return mean(dens)
+end
+
+tau_grid = range(0.1, 250, length=500);
+@time dens_est = [cond_dens(tau) for tau in tau_grid];
+plot(tau_grid, dens_est, label="Estimated density", linewidth=3);
+plot!(tau_grid, pdf(InverseGamma(w / 2, W / 2), tau_grid), label="Prior density")
+
+
+## Posterior p(alpha|D)
+function cond_dens(alpha)
+    function a_dist(i, alpha)
+        eta = g_eta[i]
+
+        unique_pi = unique(g_pi[i, :, :], dims=1)
+        k = size(unique_pi)[1]
+        odds_w = (a + k - 1) / (n * (b - log(eta)))
+        weight = odds_w / (1 + odds_w)
+
+        weight * pdf(Gamma(a + k, 1 / (b - log(eta))), alpha) +
+        (1 - weight) * pdf(Gamma(a + k - 1, 1 / (b - log(eta))), alpha)
+    end
+
+    dens = [a_dist(i, alpha) for i in 1:(N-warmup)]
+    return mean(dens)
+end
+
+
+alpha_grid = range(0, 3, length=500);
+@time dens_est = [cond_dens(alpha) for alpha in alpha_grid]
+plot(alpha_grid, dens_est, label="Estimated density", linewidth=3)
+plot!(alpha_grid, pdf(Gamma(a, 1 / b), alpha_grid), label="Prior density")
+
+## Posterior p(k|D)
+k_sim = [size(unique(pi_v, dims=1))[1] for pi_v in eachslice(g_pi, dims = 1)];
+prop(freqtable(k_sim))[1:10]

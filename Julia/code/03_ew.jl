@@ -89,7 +89,7 @@ function ew_algorithm(y, prior_par, iter, warmup=floor(Int64, iter / 2))
         pi_samples[n_sample, :, :] .= prev_pi
     end
 
-    return (et_samples[(warmup+2):end],
+    return (et_samples[(warmup+1):end],
         al_samples[(warmup+2):end],
         mt_samples[(warmup+2):end, :],
         pi_samples[(warmup+2):end, :, :])
