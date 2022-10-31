@@ -40,7 +40,7 @@ function tic_rdp_marginal(n, M, G0::Distribution)
     """
 
     marginal_sample = ElasticArray{Float64}(undef, length(G0), 0)
-    counter = Dict{Any,Int64}()
+    counter = Dict{Any, Int64}()
 
     for i in 1:n
         all_values = collect(keys(counter))

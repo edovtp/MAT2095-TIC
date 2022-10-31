@@ -4,8 +4,10 @@ using StatsPlots
 include("01_dirichlet_process.jl")
 
 
+# Dirichlet process simulation
+#region
 function tic_rdp_example(n, M, G0::UnivariateDistribution, first, last, plot_lim)
-    plot_dp = StatsPlots.plot(size=(800, 700), legend=:bottomright)
+    plot_dp = StatsPlots.plot(size=(800, 700), legend=:bottomright, title="M=$M")
     xlims!(plot_dp, plot_lim)
     
     dp_samples = [tic_rdp(M, G0) for i in 1:n]
@@ -36,8 +38,6 @@ function tic_rdp_example(n, M, G0::UnivariateDistribution, first, last, plot_lim
     return plot_dp
 end
 
-
-# Dirichlet process simulation
 # Example 1 - Normal centering measure
 Random.seed!(219);
 G0 = Distributions.Normal(0, 1)
@@ -70,67 +70,43 @@ tic_rdp_example(15, 50, G0, -10, 10, (0, 4))
 tic_rdp_example(15, 100, G0, -10, 10, (0, 4))
 tic_rdp_example(15, 500, G0, -10, 10, (0, 4))
 @time tic_rdp_example(15, 1000, G0, -10, 10, (0, 4))
-
+#endregion
 
 # Data simulation from a Dirichlet Process
+#region
+function tic_rdp_marginal_example(n, M, G0::UnivariateDistribution)
+    @time rdp_marginal_sample = tic_rdp_marginal(n, M, G0);
+    StatsPlots.plot(G0, func=pdf, size=(800, 600), label="Centering measure");
+    StatsPlots.density!(rdp_marginal_sample, label="Sample from a DP")
+    StatsPlots.title!("M=$M")
+end
+
 # Example 1 - Normal centering measure
 Random.seed!(219);
 G0 = Distributions.Normal(0, 1);
 
-@time rdp_m_normal1 = tic_rdp_marginal(500, 1, G0);
-StatsPlots.plot(G0, func=pdf, size=(800, 600), label="Centering measure");
-StatsPlots.density!(rdp_m_normal1, label="Sample from a DP")
-
-@time rdp_m_normal2 = tic_rdp_marginal(500, 10, G0);
-StatsPlots.plot(G0, func=pdf, size=(800, 600), label="Centering measure");
-StatsPlots.density!(rdp_m_normal2, label="Sample from a DP")
-
-@time rdp_m_normal3 = tic_rdp_marginal(500, 50, G0);
-StatsPlots.plot(G0, func=pdf, size=(800, 600), label="Centering measure");
-StatsPlots.density!(rdp_m_normal3, label="Sample from a DP")
-
-@time rdp_m_normal4 = tic_rdp_marginal(500, 100, G0);
-StatsPlots.plot(G0, func=pdf, size=(800, 600), label="Centering measure");
-StatsPlots.density!(rdp_m_normal4, label="Sample from a DP")
-
-@time rdp_m_normal5 = tic_rdp_marginal(500, 1000, G0);
-StatsPlots.plot(G0, func=pdf, size=(800, 600), label="Centering measure");
-StatsPlots.density!(rdp_m_normal5, label="Sample from a DP")
-
-@time rdp_m_normal6 = tic_rdp_marginal(500, 10000, G0);
-StatsPlots.plot(G0, func=pdf, size=(800, 600), label="Centering measure");
-StatsPlots.density!(rdp_m_normal6, label="Sample from a DP")
+tic_rdp_marginal_example(500, 1, G0)
+tic_rdp_marginal_example(500, 10, G0)
+tic_rdp_marginal_example(500, 50, G0)
+tic_rdp_marginal_example(500, 100, G0)
+tic_rdp_marginal_example(500, 1000, G0)
+tic_rdp_marginal_example(500, 10000, G0)
 
 # Example 2 - Gamma centering measure
 Random.seed!(219);
 G0 = Distributions.Gamma(3, 0.1);
 
-rdp_m_gamma1 = tic_rdp_marginal(500, 1, G0);
-StatsPlots.plot(G0, func=pdf, size=(800, 600), label="Centering measure");
-StatsPlots.density!(rdp_m_gamma1, label="Sample from a DP")
+tic_rdp_marginal_example(500, 1, G0)
+tic_rdp_marginal_example(500, 10, G0)
+tic_rdp_marginal_example(500, 50, G0)
+tic_rdp_marginal_example(500, 100, G0)
+tic_rdp_marginal_example(500, 1000, G0)
+tic_rdp_marginal_example(500, 10000, G0)
 
-rdp_m_gamma2 = tic_rdp_marginal(500, 10, G0);
-StatsPlots.plot(G0, func=pdf, size=(800, 600), label="Centering measure");
-StatsPlots.density!(rdp_m_gamma2, label="Sample from a DP")
-
-rdp_m_gamma3 = tic_rdp_marginal(500, 50, G0);
-StatsPlots.plot(G0, func=pdf, size=(800, 600), label="Centering measure");
-StatsPlots.density!(rdp_m_gamma3, label="Sample from a DP")
-
-rdp_m_gamma4 = tic_rdp_marginal(500, 100, G0);
-StatsPlots.plot(G0, func=pdf, size=(800, 600), label="Centering measure");
-StatsPlots.density!(rdp_m_gamma4, label="Sample from a DP")
-
-rdp_m_gamma5 = tic_rdp_marginal(500, 1000, G0);
-StatsPlots.plot(G0, func=pdf, size=(800, 600), label="Centering measure");
-StatsPlots.density!(rdp_m_gamma5, label="Sample from a DP")
-
-@time rdp_m_gamma6 = tic_rdp_marginal(500, 10000, G0);
-StatsPlots.plot(G0, func=pdf, size=(800, 600), label="Centering measure");
-StatsPlots.density!(rdp_m_gamma6, label="Sample from a DP")
-
+#endregion
 
 # Empirical results - Antoniak, Korwar & Hollander
+#region
 function akh_empirical(n_values, M)
     # Expected value for k
     ek_values = Vector{Float64}(undef, length(n_values))
@@ -146,7 +122,8 @@ function akh_empirical(n_values, M)
     end
 
     result = plot(x -> M * log(x), 1, maximum(n_values) + 100,
-        label="Korwar & Hollander", size=(800, 600))
+        label="Korwar & Hollander", size=(800, 600),
+        legend=:bottomright)
     plot!(result, x -> M * log(1 + x / M), label="Antoniak")
     scatter!(result, n_values, ek_values, label="Simulation")
 end
@@ -158,3 +135,4 @@ n_values = 1000:2000:21000
 @time akh_empirical(n_values, 1)
 @time akh_empirical(n_values, 100)
 @time akh_empirical(n_values, 1000)
+#endregion
