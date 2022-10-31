@@ -4,25 +4,28 @@ include("00_extras.jl")
 # Dirichlet process simulation -----------------------------------------------
 function tic_rdp(M, G0::Distribution, tol=1e-6)
     """
-    Random sample of a Dirichlet process using the stick-breaking construction
+    Random sample of a (Finite) Dirichlet process using the stick-breaking construction
 
     M  : precision parameter
     G0 : centering measure
-    """
 
-    probs = Vector{Float64}()
-    locations = ElasticArray{Float64}(undef, length(G0), 0)
+    Note: It's necessary that we can draw a sample of size >1 from G0 with rand()
+    """
+    
+    probs = ElasticArrays.ElasticVector{Float64}(undef, 0)
 
     ups_dist = Distributions.Beta(1, M)
-    ups_aux = [0.0]
+    sum_l_ups = 0
     while sum(probs) < 1 - tol
         ups_sample = rand(ups_dist)
-        append!(probs, ups_sample * prod(1 .- ups_aux))
-        append!(ups_aux, ups_sample)
-        append!(locations, rand(G0))
+        append!(probs, exp(log(ups_sample) + sum_l_ups))
+        sum_l_ups += log(1 - ups_sample)
     end
 
-    return (locations=locations', probs=probs)
+    append!(probs, 1 - sum(probs))
+    locations = rand(G0, length(probs))
+
+    return (locations=locations, probs=probs)
 end
 
 

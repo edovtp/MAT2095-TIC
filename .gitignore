@@ -4,3 +4,4 @@ renv/
 *_cache/
 pruebas.R
 *.html
+aux/
