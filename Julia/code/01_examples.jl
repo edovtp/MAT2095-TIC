@@ -5,14 +5,10 @@ include("01_dirichlet_process.jl")
 
 
 function tic_rdp_example(n, M, G0::UnivariateDistribution, first, last, plot_lim)
-    # TODO: tic_rdp_example - Put the centering measure on top
-    # TODO: tic_rdp_example - Set opacity of samples
-
-    dp_samples = [tic_rdp(M, G0) for i in 1:n]
-
-    plot_dp = StatsPlots.plot(G0, func=cdf, size=(800, 700), label="Centering measure")
+    plot_dp = StatsPlots.plot(size=(800, 700), legend=:bottomright)
     xlims!(plot_dp, plot_lim)
-
+    
+    dp_samples = [tic_rdp(M, G0) for i in 1:n]
     for sample in dp_samples
         locations = vec(sample.locations)
         ord_locations = sort(locations)
@@ -23,8 +19,19 @@ function tic_rdp_example(n, M, G0::UnivariateDistribution, first, last, plot_lim
             [0; cumsum(ord_probs); 1],
             linetype=:steppost,
             label="",
+            alpha=0.3,
+            color="gray"
         )
     end
+
+    plot!(
+        plot_dp,
+        G0,
+        func=cdf,
+        label="Centering measure",
+        color="red",
+        linewidth=2
+    )
 
     return plot_dp
 end
@@ -63,6 +70,7 @@ tic_rdp_example(15, 50, G0, -10, 10, (0, 4))
 tic_rdp_example(15, 100, G0, -10, 10, (0, 4))
 tic_rdp_example(15, 500, G0, -10, 10, (0, 4))
 @time tic_rdp_example(15, 1000, G0, -10, 10, (0, 4))
+
 
 # Data simulation from a Dirichlet Process
 # Example 1 - Normal centering measure
