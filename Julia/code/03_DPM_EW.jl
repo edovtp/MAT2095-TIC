@@ -1,11 +1,12 @@
 include("00_extras.jl")
-include("01_dirichlet_process.jl")
-include("02_dirichlet_process_mixtures.jl")
+include("01_DP.jl")
+include("02_DPM.jl")
 
 
-function ew_algorithm(y, prior_par, iter, warmup=floor(Int64, iter / 2))
+function tic_dpm_ew(y, prior_par, iter, warmup=floor(Int64, iter / 2))
     """
-    Implementation of the final algorithm given in Escobar & West (1995)
+    Implementation of the final algorithm given in Escobar & West (1995) to sample from
+    the posterior distribution of a DPM model of normals.
 
     y         : data to fit the model
     prior_par : prior parameters (a, b, A, w, W, s, S)

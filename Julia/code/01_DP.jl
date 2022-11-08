@@ -4,14 +4,14 @@ include("00_extras.jl")
 # Dirichlet process simulation -----------------------------------------------
 function tic_rdp(M, G0::Distribution, tol=1e-6)
     """
-    Random sample of a (Finite) Dirichlet process using the stick-breaking construction
+    Random sample of a (Finite) Dirichlet Process using the stick-breaking construction
+    of Sethuraman (1994). Sampling is done until we have covered a total of 1 - tol
+    probability
 
     M  : precision parameter
     G0 : centering measure
-
-    Note: It's necessary that we can draw a sample of size >1 from G0 with rand()
     """
-    
+
     probs = ElasticArrays.ElasticVector{Float64}(undef, 0)
 
     ups_dist = Distributions.Beta(1, M)
@@ -23,7 +23,8 @@ function tic_rdp(M, G0::Distribution, tol=1e-6)
     end
 
     append!(probs, 1 - sum(probs))
-    locations = rand(G0, length(probs))
+    # Some distributions can only be drawn from one at a time
+    locations = [rand(G0) for _ in 1:length(probs)]
 
     return (locations=locations, probs=probs)
 end
@@ -32,7 +33,8 @@ end
 # Data simulation from a Dirichlet Process ------------------------------------------
 function tic_rdp_marginal(n, M, G0::Distribution)
     """
-    Random sample from a Dirichlet process using the marginal distribution
+    Data simulation from a Dirichlet process using the Polya Urn representation of Blackwell
+    and McQueen (1973)
 
     n  : sample length
     M  : precision parameter
@@ -40,7 +42,7 @@ function tic_rdp_marginal(n, M, G0::Distribution)
     """
 
     marginal_sample = ElasticArray{Float64}(undef, length(G0), 0)
-    counter = Dict{Any, Int64}()
+    counter = Dict{Any,Int64}()
 
     for i in 1:n
         all_values = collect(keys(counter))
@@ -59,4 +61,18 @@ function tic_rdp_marginal(n, M, G0::Distribution)
     end
 
     return marginal_sample'
+end
+
+
+# TODO: Dirichlet Process Model ------------------------------------------
+function tic_model_dp(y)
+    """
+    Posterior inference for the model given by (2.1), i.e.
+                    y_i | G ~ G 
+                          G ~ DP
+
+    y  : data
+    M  : precision parameter
+    G0 : centering measure
+    """
 end

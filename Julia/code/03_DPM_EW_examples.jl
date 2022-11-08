@@ -2,10 +2,11 @@ using Plots
 using StatsPlots
 using FreqTables
 
-include("03_ew.jl")
+include("03_DPM_EW.jl")
 
 
-### Recovering parameters
+# Recovering parameters
+#region
 Random.seed!(219)
 n, alpha, m, tau, s, S = 50, 1, 0, 100, 50, 2
 a1_data = tic_rdpm_normal(n, alpha, m, tau, s, S)
@@ -32,8 +33,10 @@ k_mean = mean(k_sim)
 
 bar(sort(unique(k_sim)), counts(k_sim), label="Sampled values of k")
 vline!([a1_data.k], label="Real value")
+#endregion
 
-### Recovering density
+# Recovering density
+#region
 Random.seed!(219)
 mmodel = MixtureModel(
     Normal[Normal(-5, 1), Normal(-1, 1), Normal(0, 1), Normal(5, 1)],
@@ -48,8 +51,8 @@ y = rand(Normal(0, 1), n) + nmeans[components]
 
 # See https://github.com/JuliaPlots/StatsPlots.jl/issues/458
 histogram(y, normalize=true, bins=30, alpha=0.3, label="samples")
-plot!(mmodel, components=false, label="Real density")
-vline!([-5, -1, 0, 5], c="red")
+plot!(mmodel, components=false, label="Real density", color="black", linewidth=2)
+vline!([-5, -1, 0, 5], c="red", line=:dash)
 
 alpha, m, tau, s, S = 1, 0, 100, 4, 2
 prior_par = (alpha, m, tau, s, S)
@@ -73,9 +76,10 @@ end
 
 plot(mmodel, components=false, label="Real density")
 plot!(range(-8, 8, length=500), dens_est, label="Estimated density")
+#endregion
 
-
-## Galaxies example
+# Galaxies example
+#region
 velocities = [9172, 9558, 10406, 18419, 18927, 19330, 19440, 19541,
     19846, 19914, 19989, 20179, 20221, 20795, 20875, 21492,
     21921, 22209, 22314, 22746, 22914, 23263, 23542, 23711,
@@ -96,9 +100,9 @@ prior_par = (a, b, A, w, W, s, S)
 Random.seed!(219)
 N = 10000
 warmup = 2000
-@time g_eta, g_alpha, g_mt, g_pi = ew_algorithm(velocities, prior_par, N, warmup);
+@time g_eta, g_alpha, g_mt, g_pi = tic_dpm_ew(velocities, prior_par, N, warmup);
 
-## Posterior predictive density p(y|D)
+## Figure 1 - Posterior predictive density p(y|D)
 n = length(velocities)
 function cond_dens(y)
     s1 = [
@@ -120,10 +124,10 @@ y_grid = range(8, 40, length=500);
 @time dens_est = [cond_dens(y) for y in y_grid];
 
 histogram(velocities, bins=1:40, label="", normalize=true)
-plot!(y_grid, dens_est, label="Estimated density", linewidth=3)
+plot!(y_grid, dens_est, label="Estimated density", linewidth=2)
 
 
-## Posterior p(tau|D)
+## Figure 5 - Posterior p(tau|D)
 function cond_dens(tau)
     function ig_pdf(i, tau)
         unique_pi = unique(g_pi[i, :, :], dims=1)
@@ -143,7 +147,7 @@ plot(tau_grid, dens_est, label="Estimated density", linewidth=3);
 plot!(tau_grid, pdf(InverseGamma(w / 2, W / 2), tau_grid), label="Prior density")
 
 
-## Posterior p(alpha|D)
+## Figure 6 - Posterior p(alpha|D)
 function cond_dens(alpha)
     function a_dist(i, alpha)
         eta = g_eta[i]
@@ -161,12 +165,14 @@ function cond_dens(alpha)
     return mean(dens)
 end
 
-
 alpha_grid = range(0, 3, length=500);
 @time dens_est = [cond_dens(alpha) for alpha in alpha_grid]
 plot(alpha_grid, dens_est, label="Estimated density", linewidth=3)
 plot!(alpha_grid, pdf(Gamma(a, 1 / b), alpha_grid), label="Prior density")
 
-## Posterior p(k|D)
+## Table 6 - Posterior p(k|D)
 k_sim = [size(unique(pi_v, dims=1))[1] for pi_v in eachslice(g_pi, dims = 1)];
 prop(freqtable(k_sim))[1:10]
+#endregion
+
+# Posterior inference (Example 4 of Gene Expression)

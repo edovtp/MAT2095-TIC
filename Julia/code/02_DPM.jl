@@ -1,4 +1,4 @@
-include("01_dirichlet_process.jl")
+include("01_DP.jl")
 
 
 # Data simulation from a DPM of normals
@@ -21,4 +21,8 @@ function tic_rdpm_normal(n::Int64, M, m, tau, s, S)
     y = map(params -> rand(Normal(params[1], sqrt(params[2]))), eachrow(pi_vector))
 
     return (y=y, params=pi_vector, k=k)
+end
+
+# TODO: DPM model
+function tic_model_dpm()
 end

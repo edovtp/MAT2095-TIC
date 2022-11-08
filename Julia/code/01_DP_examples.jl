@@ -1,7 +1,7 @@
 using Plots
 using StatsPlots
 
-include("01_dirichlet_process.jl")
+include("01_DP.jl")
 
 
 # Dirichlet process simulation
@@ -9,7 +9,7 @@ include("01_dirichlet_process.jl")
 function tic_rdp_example(n, M, G0::UnivariateDistribution, first, last, plot_lim)
     plot_dp = StatsPlots.plot(size=(800, 700), legend=:bottomright, title="M=$M")
     xlims!(plot_dp, plot_lim)
-    
+
     dp_samples = [tic_rdp(M, G0) for i in 1:n]
     for sample in dp_samples
         locations = vec(sample.locations)
@@ -75,8 +75,8 @@ tic_rdp_example(15, 500, G0, -10, 10, (0, 4))
 # Data simulation from a Dirichlet Process
 #region
 function tic_rdp_marginal_example(n, M, G0::UnivariateDistribution)
-    @time rdp_marginal_sample = tic_rdp_marginal(n, M, G0);
-    StatsPlots.plot(G0, func=pdf, size=(800, 600), label="Centering measure");
+    @time rdp_marginal_sample = tic_rdp_marginal(n, M, G0)
+    StatsPlots.plot(G0, func=pdf, size=(800, 600), label="Centering measure")
     StatsPlots.density!(rdp_marginal_sample, label="Sample from a DP")
     StatsPlots.title!("M=$M")
 end
@@ -136,3 +136,5 @@ n_values = 1000:2000:21000
 @time akh_empirical(n_values, 100)
 @time akh_empirical(n_values, 1000)
 #endregion
+
+# Posterior inference (example 3 of T-Cell Receptors)
