@@ -1,0 +1,200 @@
+---
+title: "MAT2035 - Taller de Iniciación Científica"
+author: "Eduardo Vásquez"
+number-sections: true
+highlight-style: pygments
+format: 
+  html:
+    toc: true
+    code-fold: true
+  pdf:
+    toc: true
+bibliography: references.bib
+---
+
+# Introducción
+
+## Paradigma Bayesiano
+
+* Diferentes tipos de incertidumbre [@ohagan_dicing_2004]
+* Definición
+
+$$
+\begin{align}
+\pi(\theta|\mathbf{y}) &= \frac{f(\mathbf{y}|\theta)\pi(\theta)}{\int_{\Theta}f(\mathbf{y}|\theta)\pi(\theta)d\theta} \\
+&\propto f(\mathbf{y}|\theta)\pi(\theta)
+\end{align}
+$$
+
+* Ejemplo práctico (Normal-Normal)
+
+* Métodos computacionales
+  * Rejection Sampling
+  * Importance Sampling
+  * MCMC: Gibbs sampler, Slice sampling
+  * MCMC: Metropolis y Metropolis-Hastings
+  * MCMC: Hamiltonian Monte Carlo and No-U-Turn Sampler
+  * MCMC: Sequential Monte Carlo
+
+* Lenguajes probabilísticos
+  * Stan
+  * Turing
+  * PyMC3
+
+## Estadística No-Paramétrica
+
+Normalmente, en estadística asumimos
+
+$$
+y_1,..., y_n | G \overset{i.i.d.}{\sim} G
+$$
+
+Suponemos que la densidad de $G$, $g$, pertenece a 
+
+$$
+\mathcal{G} = \{g_\theta\colon \theta \in \Theta \subset \mathbb{R}^p\}
+$$
+
+* Ejemplo
+
+* Figura
+
+* Nos gustaría ir un poco más allá: estimación de densidades (figura) y regresión
+
+# Procesos de Dirichlet
+
+* Definición de la distribución Dirichlet
+
+**Definición (Ferguson, 1973)**: Sea $M>0$ y $G_0$ una medida de probabilidad definida en $S$. Un *Proceso de Dirichlet (DP)* de parámetros $(M, G_0)$ es una medida de probabilidad aleatoria $G$ definida en $S$ que asigna probabilidad $G(B)$ a todo conjunto medible $B$ tal que, para toda partición medible finita $\{B_1, ..., B_k\}$ de $S$, la distribución conjunta del vector $(G(B_1), ..., G(B_k))$ es Dirichlet con parámetros
+
+$$
+(MG_0(B_1), ..., MG_0(B_k))
+$$
+
+Ferguson muestra que:
+  * G existe para todo $G_0$
+  * G es casi-seguramente discreta
+
+Ahora, lo anterior aún no nos dice mucho acerca de como trabajar con esta distribución...
+
+* Propiedades: Esperanza, Varianza
+
+* Cómo lo trabajamos en la práctica?
+
+  * Stick-breaking (Sethuraman, 1994)
+  * Marginalizar: urnas de Pólya (Blackwell & MacQueen, 1973)
+
+### Distribución Normal
+
+```{julia}
+#| label: fig-dp-normal
+#| fig-cap: Simulaciones Proceso de Dirichlet con medida de centralización Normal (en rojo)
+#| fig-subcap:
+#|   - M = 1
+#|   - M = 10
+#|   - M = 50
+#|   - M = 100
+#|   - M = 500
+#|   - M = 1000
+#| layout-ncol: 3
+#| layout-nrow: 2
+include("../src/01_DP.jl")
+
+Random.seed!(219);
+G0 = Distributions.Normal(0, 1)
+display(tic_rdp_example(15, 1, G0, -10, 10, (-3, 3)))
+display(tic_rdp_example(15, 10, G0, -10, 10, (-3, 3)))
+display(tic_rdp_example(15, 50, G0, -10, 10, (-3, 3)))
+display(tic_rdp_example(15, 100, G0, -10, 10, (-3, 3)))
+display(tic_rdp_example(15, 500, G0, -10, 10, (-3, 3)))
+display(tic_rdp_example(15, 1000, G0, -10, 10, (-3, 3)))
+```
+
+### Distribución Gamma
+
+```{julia}
+#| label: fig-dp-gamma
+#| fig-cap: Simulaciones Proceso de Dirichlet con medida de centralización Gamma (en rojo)
+#| fig-subcap:
+#|   - M = 1
+#|   - M = 10
+#|   - M = 50
+#|   - M = 100
+#|   - M = 500
+#|   - M = 1000
+#| layout-ncol: 3
+#| layout-nrow: 2
+Random.seed!(219);
+G0 = Distributions.Gamma(6, 1 / 4)
+display(tic_rdp_example(15, 1, G0, -10, 10, (0, 4)))
+display(tic_rdp_example(15, 10, G0, -10, 10, (0, 4)))
+display(tic_rdp_example(15, 50, G0, -10, 10, (0, 4)))
+display(tic_rdp_example(15, 100, G0, -10, 10, (0, 4)))
+display(tic_rdp_example(15, 500, G0, -10, 10, (0, 4)))
+display(tic_rdp_example(15, 1000, G0, -10, 10, (0, 4)))
+```
+
+## Marginal (Urnas de Polya, Proceso del Restaurante Chino)
+
+```{julia}
+# Example 1 - Normal centering measure
+Random.seed!(219);
+G0 = Distributions.Normal(0, 1);
+
+tic_rdp_marginal_example(500, 1, G0)
+tic_rdp_marginal_example(500, 10, G0)
+tic_rdp_marginal_example(500, 50, G0)
+tic_rdp_marginal_example(500, 100, G0)
+tic_rdp_marginal_example(500, 1000, G0)
+tic_rdp_marginal_example(500, 10000, G0)
+
+# Example 2 - Gamma centering measure
+Random.seed!(219);
+G0 = Distributions.Gamma(3, 0.1);
+
+tic_rdp_marginal_example(500, 1, G0)
+tic_rdp_marginal_example(500, 10, G0)
+tic_rdp_marginal_example(500, 50, G0)
+tic_rdp_marginal_example(500, 100, G0)
+tic_rdp_marginal_example(500, 1000, G0)
+tic_rdp_marginal_example(500, 10000, G0)
+
+```
+
+## Results from Antoniak, Korwar & Hollanders
+
+```{julia}
+function akh_empirical(n_values, M)
+    # Expected value for k
+    ek_values = Vector{Float64}(undef, length(n_values))
+
+    function n_unique(n, M)
+        sim_data = tic_rdp_marginal(n, M, Normal(0, 1))
+        k = length(unique(sim_data))
+    end
+
+    for (i, n) in enumerate(n_values)
+        k_sim = [n_unique(n, M) for _ in 1:20]
+        ek_values[i] = mean(k_sim)
+    end
+
+    result = plot(x -> M * log(x), 1, maximum(n_values) + 100,
+        label="Korwar & Hollander", size=(800, 600),
+        legend=:bottomright)
+    plot!(result, x -> M * log(1 + x / M), label="Antoniak")
+    scatter!(result, n_values, ek_values, label="Simulation")
+end
+
+
+Random.seed!(219)
+n_values = 1000:2000:21000
+
+# akh_empirical(n_values, 1000)
+```
+
+
+# Referencias
+---
+nocite: |
+  @*
+---

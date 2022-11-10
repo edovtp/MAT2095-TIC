@@ -1,7 +1,3 @@
-using Plots
-using StatsPlots
-using FreqTables
-
 include("03_DPM_EW.jl")
 
 

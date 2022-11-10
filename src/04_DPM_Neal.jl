@@ -99,6 +99,10 @@ function tic_dpm_neal(
     alpha       : precision parameter
     phi_sampler : custom sampler for the posterior of phi, receives phi, c and y
     """
+    # Sample arrays
+    c_samples = Array{Float64, 2}(undef, (iter + 1, 2))
+    theta_samples = Array{Float64}
+
     # Starting values
     c = ones(Int64, n)
     phi = [rand(G0)]

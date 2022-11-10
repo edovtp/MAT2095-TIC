@@ -29,6 +29,37 @@ function tic_rdp(M, G0::Distribution, tol=1e-6)
     return (locations=locations, probs=probs)
 end
 
+function tic_rdp_example(n, M, G0::UnivariateDistribution, first, last, plot_lim)
+    plot_dp = StatsPlots.plot(size=(800, 700), legend=:bottomright)
+    xlims!(plot_dp, plot_lim)
+
+    dp_samples = [tic_rdp(M, G0) for i in 1:n]
+    for sample in dp_samples
+        locations = vec(sample.locations)
+        ord_locations = sort(locations)
+        ord_probs = sample.probs[sortperm(locations)]
+        plot!(
+            plot_dp,
+            [first; ord_locations; last],
+            [0; cumsum(ord_probs); 1],
+            linetype=:steppost,
+            label="",
+            alpha=0.7,
+            color="gray"
+        )
+    end
+
+    plot!(
+        plot_dp,
+        G0,
+        func=cdf,
+        label="",
+        color="red",
+        linewidth=2.5
+    )
+
+    return plot_dp
+end
 
 # Data simulation from a Dirichlet Process ------------------------------------------
 function tic_rdp_marginal(n, M, G0::Distribution)
@@ -63,12 +94,18 @@ function tic_rdp_marginal(n, M, G0::Distribution)
     return marginal_sample'
 end
 
+function tic_rdp_marginal_example(n, M, G0::UnivariateDistribution)
+    rdp_marginal_sample = tic_rdp_marginal(n, M, G0)
+    StatsPlots.plot(G0, func=pdf, size=(800, 600), label="Centering measure")
+    StatsPlots.density!(rdp_marginal_sample, label="Sample from a DP")
+    StatsPlots.title!("M=$M")
+end
 
 # TODO: Dirichlet Process Model ------------------------------------------
-function tic_model_dp(y)
+function tic_model_dp(y, M, G0::Distribution, tol=1e-6)
     """
     Posterior inference for the model given by (2.1), i.e.
-                    y_i | G ~ G 
+                    y_i | G ~ G
                           G ~ DP
 
     y  : data

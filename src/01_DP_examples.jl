@@ -1,43 +1,8 @@
-using Plots
-using StatsPlots
-
 include("01_DP.jl")
 
 
 # Dirichlet process simulation
 #region
-function tic_rdp_example(n, M, G0::UnivariateDistribution, first, last, plot_lim)
-    plot_dp = StatsPlots.plot(size=(800, 700), legend=:bottomright, title="M=$M")
-    xlims!(plot_dp, plot_lim)
-
-    dp_samples = [tic_rdp(M, G0) for i in 1:n]
-    for sample in dp_samples
-        locations = vec(sample.locations)
-        ord_locations = sort(locations)
-        ord_probs = sample.probs[sortperm(locations)]
-        plot!(
-            plot_dp,
-            [first; ord_locations; last],
-            [0; cumsum(ord_probs); 1],
-            linetype=:steppost,
-            label="",
-            alpha=0.3,
-            color="gray"
-        )
-    end
-
-    plot!(
-        plot_dp,
-        G0,
-        func=cdf,
-        label="Centering measure",
-        color="red",
-        linewidth=2
-    )
-
-    return plot_dp
-end
-
 # Example 1 - Normal centering measure
 Random.seed!(219);
 G0 = Distributions.Normal(0, 1)
@@ -74,12 +39,6 @@ tic_rdp_example(15, 500, G0, -10, 10, (0, 4))
 
 # Data simulation from a Dirichlet Process
 #region
-function tic_rdp_marginal_example(n, M, G0::UnivariateDistribution)
-    @time rdp_marginal_sample = tic_rdp_marginal(n, M, G0)
-    StatsPlots.plot(G0, func=pdf, size=(800, 600), label="Centering measure")
-    StatsPlots.density!(rdp_marginal_sample, label="Sample from a DP")
-    StatsPlots.title!("M=$M")
-end
 
 # Example 1 - Normal centering measure
 Random.seed!(219);

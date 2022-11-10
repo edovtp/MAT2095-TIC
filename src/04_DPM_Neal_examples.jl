@@ -1,7 +1,3 @@
-using Plots
-using StatsPlots
-using Distributions
-
 include("03_DPM_EW.jl")
 include("04_DPM_Neal.jl")
 
