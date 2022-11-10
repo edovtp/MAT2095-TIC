@@ -2,20 +2,21 @@ using Plots
 using StatsPlots
 using Distributions
 
-# include("03_DPM_EW.jl")
+include("03_DPM_EW.jl")
 include("04_DPM_Neal.jl")
 
 # Pruebas
 ## Data simulation
 Random.seed!(219)
-n, alpha, m, tau, s, S = 10, 1, 0, 100, 50, 2
+n, alpha, m, tau, s, S = 1000, 1, 0, 100, 50, 2
 neal_data = tic_rdpm_normal(n, alpha, m, tau, s, S)
+prior_par = (alpha, m, tau, s, S)
 
 ## Parameters
 F_y = Normal
 alpha = 1
 G0 = NormalInverseGamma(m, tau, s, S)
-m = 2
+m = 1
 
 # Phi sampler
 function phi_sampler_nig(phi, c, y, G0)
@@ -30,8 +31,8 @@ function phi_sampler_nig(phi, c, y, G0)
         # Posterior parameters
         mu_n = (G0.mu + G0.v0 * sum_y) / (1 + G0.v0 * n)
         nu_n = G0.v0 / (n + G0.v0)
-        sh_n = G0.shape + n / 2
-        sc_n = G0.scale + sum((y_clust .- y_bar) .^ 2) / 2 +
+        sh_n = G0.shape/2 + n / 2
+        sc_n = G0.scale/2 + sum((y_clust .- y_bar) .^ 2) / 2 +
                n / (1 + n * G0.v0) * (y_bar - G0.mu)^2 / 2
 
         G_c = NormalInverseGamma(mu_n, nu_n, sh_n, sc_n)
@@ -41,6 +42,13 @@ function phi_sampler_nig(phi, c, y, G0)
     return phi
 end
 
-@time tic_dpm_neal(neal_data.y, F_y, alpha, G0, m, phi_sampler_nig, 10000)
+N = 10000
+@time tic_dpm_neal(neal_data.y, F_y, alpha, G0, m, phi_sampler_nig, N)
+@time ew_algorithm1(neal_data.y, prior_par, N)
+
 [1, 2, 1, 1, 1, 3, 1, 4, 1, 1]'
 neal_data.params'
+
+# N = 10000, n = 1000
+## Neal: 268.8 segundos
+## EW:   243.3 segundos

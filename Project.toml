@@ -1,0 +1,4 @@
+name = "tic"
+uuid = "2393eaa0-ed37-4eb1-9753-f844a555aa16"
+authors = ["Eduardo Vásquez <evasquezt@uc.cl>"]
+version = "0.1.0"

@@ -112,7 +112,5 @@ function tic_dpm_neal(
 
         # Print
         # println(c)
-        # println(phi)
-        # sleep(0.01)
     end
 end
