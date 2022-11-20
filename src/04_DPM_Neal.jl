@@ -29,6 +29,7 @@ function _n8_update_clusters(c, phi, y, F_y, alpha, G0, m)
             # If the current cluster is the last, do nothing
             max_c_i = maximum(c_i)
             if current_c < max_c_i
+                # Cambiar también en c
                 # Swap cluster labels and phi
                 c_i[c_i.==max_c_i] .= current_c
                 phi_tmp = phi[current_c]
@@ -46,6 +47,7 @@ function _n8_update_clusters(c, phi, y, F_y, alpha, G0, m)
         c_unique = unique(c_i)
         weights = Vector{Float64}(undef, h)
         for cluster in c_unique
+            # Contar desde antes
             n_clust = count(==(cluster), c_i)
             mu_clust = phi_aug[cluster][1]
             sigma_clust = sqrt(phi_aug[cluster][2])
@@ -60,6 +62,7 @@ function _n8_update_clusters(c, phi, y, F_y, alpha, G0, m)
         # Change of state
         new_clust = sample(1:h, Weights(weights))
         if new_clust <= k_
+            # Revisar el caso que se elimina
             c[i] = new_clust
         else
             c[i] = k_ + 1

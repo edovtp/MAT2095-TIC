@@ -170,5 +170,3 @@ plot!(alpha_grid, pdf(Gamma(a, 1 / b), alpha_grid), label="Prior density")
 k_sim = [size(unique(pi_v, dims=1))[1] for pi_v in eachslice(g_pi, dims = 1)];
 prop(freqtable(k_sim))[1:10]
 #endregion
-
-# Posterior inference (Example 4 of Gene Expression)

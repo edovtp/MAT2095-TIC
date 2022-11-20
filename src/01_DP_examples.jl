@@ -95,5 +95,3 @@ n_values = 1000:2000:21000
 @time akh_empirical(n_values, 100)
 @time akh_empirical(n_values, 1000)
 #endregion
-
-# Posterior inference (example 3 of T-Cell Receptors)
