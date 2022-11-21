@@ -115,13 +115,15 @@ Necesidad de métodos flexibles
 
 Considerando lo anterior, debemos entonces definir medidas de probabilidad sobre medidas de probabilidad. Una de estas opciones es la del proceso de Dirichlet [@ferguson_bayesian_1973], que definimos a continuación.
 
-\begin{definicion}[(Ferguson, 1973)]
-Sea $\alpha>0$ y $G_0$ una medida de probabilidad definida sobre $S$. Un \textbf{Proceso de Dirichlet (DP)} de parámetros $(\alpha, G_0)$, denotado por $\text{DP}(\alpha, G_0)$, es una medida de probabilidad aleatoria $G$ definida en $S$ que asigna probabilidad $G(B)$ a todo conjunto medible $B$ tal que, para toda partición medible finita $\{B_1, ..., B_k\}$ de $S$, la distribución conjunta del vector $(G(B_1), ..., G(B_k))$ es Dirichlet con parámetros
+<!-- DEFINICIÓN PROCESO DE DIRICHLET -->
+  \begin{definicion}[(Ferguson, 1973)]
+    Sea $\alpha>0$ y $G_0$ una medida de probabilidad definida sobre $S$. Un \textbf{Proceso de Dirichlet (DP)} de parámetros $(\alpha, G_0)$, denotado por $\text{DP}(\alpha, G_0)$, es una medida de probabilidad aleatoria $G$ definida en $S$ que asigna probabilidad $G(B)$ a todo conjunto medible $B$ tal que, para toda partición medible finita $\{B_1, ..., B_k\}$ de $S$, la distribución conjunta del vector $(G(B_1), ..., G(B_k))$ es Dirichlet con parámetros
 
-$$
-(\alpha G_0(B_1), ..., \alpha G_0(B_k))
-$$
-\end{definicion}
+  $$
+  (\alpha G_0(B_1), ..., \alpha G_0(B_k))
+  $$
+  \end{definicion}
+<!-- DEFINICIÓN PROCESO DE DIRICHLET -->
 
 Los parámetros $G_0$ y $\alpha$ se denominan la medida de 
 
@@ -135,6 +137,10 @@ $$
 * La varianza de $G(B)$ es $G_0(B)(1 - G_0(B))/(1 + \alpha)$, lo cual nos indica la razón por la cual $\alpha$ se denomina el parámetro de precisión.
 
 * Dado dos conjuntos medibles disjuntos $B_1$ y $B_2$, la covarianza de $G(B_1)$ y $G(B_2)$ corresponde a $-G_0(B_1)G_0(B_2)/(1 + \alpha)$. Esto nos indica que la covarianza es **siempre** negativa, independiente de la cercanía o lejanía que presenten estos dos conjuntos.
+
+\begin{nota}
+  Razón por la que se denomina **Proceso**
+\end{nota}
 
 Por último, otra propiedad importante que muestra Ferguson es que $G$ es casi-seguramente discreta. Este resultado nos dice que $G$ se puede escribir como una suma ponderada de masas puntuales, también denominados átomos, esto es,
 
@@ -152,6 +158,19 @@ donde $\sum_{h=1}^\infty w_h = 1$ y $\delta_{x}(\cdot)$ denota la medida de Dira
 Naturaleza discreta del Proceso de Dirichlet (DP)
 :::
 
+<!-- POSTERIORI PROCESO DE DIRICHLET -->
+\begin{proposicion}[(Ferguson, 1973)]
+  Sea $y_1, ..., y_n | G \overset{i.i.d}{\sim} G$ y $G \sim \text{DP}(\alpha, G_0)$. Luego,
+  \begin{equation*}
+    G | y_1, ..., y_n \sim \text{DP}\left(\alpha + n, \frac{\alpha G_0 + n \hat{f}_n}{\alpha + n}\right)
+  \end{equation*}
+  donde $\hat{f}_n$ es la distribución empírica obtenida a partir de los datos, i.e.
+  \begin{equation*}
+    \hat{f}_n(\cdot) = \frac{1}{n}\sum_{i=1}^n \delta_{y_i}(\cdot)
+  \end{equation*}
+\end{proposicion}
+<!-- POSTERIORI PROCESO DE DIRICHLET -->
+
 Ahora, todo lo anterior aún no nos dice mucho acerca de como trabajar con esta distribución, ya que de momento solo sabemos que existen tales procesos, así como algunas propiedades. En la práctica, se ha trabajado principalmente de dos formas: marginalizando 
 
 * Marginalizar: urnas de Pólya
@@ -162,9 +181,9 @@ Ahora, todo lo anterior aún no nos dice mucho acerca de como trabajar con esta 
 [@blackwell_ferguson_1973]
 
 ```{julia}
-#| label: fig-crp-normal
+#| label: fig-crp-gamma
 #| echo: false
-#| fig-cap: Simulación de datos provenientes de un Proceso de Dirichlet
+#| fig-cap: Simulación de datos provenientes de un Proceso de Dirichlet con medida de centralización Gamma(6, 4) (en azul)
 #| fig-subcap:
 #|   - M = 1
 #|   - M = 10
@@ -176,29 +195,37 @@ Ahora, todo lo anterior aún no nos dice mucho acerca de como trabajar con esta 
 #| layout-nrow: 2
 
 include("../src/00_extras.jl")
-include("../src/01_DP.jl")
-include("../src/02_DPM.jl")
-include("../src/03_DPM_EW.jl")
-include("../src/04_DPM_Neal.jl")
+include("code/c2_f.jl")
 
-# Example CRP - Normal centering measure
 Random.seed!(219);
-G0 = Distributions.Normal(0, 1);
-
+G0 = Distributions.Gamma(6, 1/4);
 display(tic_rdp_marginal_example(500, 1, G0))
 display(tic_rdp_marginal_example(500, 10, G0))
 display(tic_rdp_marginal_example(500, 50, G0))
 display(tic_rdp_marginal_example(500, 100, G0))
 display(tic_rdp_marginal_example(500, 1000, G0))
 display(tic_rdp_marginal_example(500, 10000, G0))
+
 ```
 
 
 ## Stick-Breaking
 
+[@sethuraman_constructive_1994]
+
+\begin{theo}[(Sethuraman, 1994)]
+  Sea $w_h = \upsilon \prod_{l<h} (1 - \upsilon_l)$ con $\upsilon_h \overset{i.i.d.}{\sim} \text{Beta}(1, \alpha)$ y $m_h \overset{i.i.d.}{\sim} G_0$, donde $(\upsilon_h)$ y $(m_h)$ son independientes entre sí. Luego,
+
+  \begin{equation*}
+    G(\cdot) = \sum_{h=1}^\infty w_h \delta_{m_h}(\cdot)
+  \end{equation*}
+\end{theo}
+
+define un Proceso de Dirichlet de parámetros $\alpha$ y $G_0$.
 **Nota**: mejoría de casi 100 segundos con respecto a R
 
-Distribución Normal
+Ejemplo Normal. Hablar de Proceso de Dirichlet $\epsilon$-Finito
+
 
 ```{julia}
 #| label: fig-dp-normal
@@ -213,75 +240,30 @@ Distribución Normal
 #|   - M = 1000
 #| layout-ncol: 3
 #| layout-nrow: 2
-# include("../src/01_DP.jl")
 
-# Random.seed!(219);
-# G0 = Distributions.Normal(0, 1)
-# display(tic_rdp_example(15, 1, G0, -10, 10, (-3, 3)))
-# display(tic_rdp_example(15, 10, G0, -10, 10, (-3, 3)))
-# display(tic_rdp_example(15, 50, G0, -10, 10, (-3, 3)))
-# display(tic_rdp_example(15, 100, G0, -10, 10, (-3, 3)))
-# display(tic_rdp_example(15, 500, G0, -10, 10, (-3, 3)))
-# display(tic_rdp_example(15, 1000, G0, -10, 10, (-3, 3)))
+Random.seed!(219);
+G0 = Distributions.Normal(0, 1)
+display(tic_rdp_example(15, 1, G0, -10, 10, (-3, 3)))
+display(tic_rdp_example(15, 10, G0, -10, 10, (-3, 3)))
+display(tic_rdp_example(15, 50, G0, -10, 10, (-3, 3)))
+display(tic_rdp_example(15, 100, G0, -10, 10, (-3, 3)))
+display(tic_rdp_example(15, 500, G0, -10, 10, (-3, 3)))
+display(tic_rdp_example(15, 1000, G0, -10, 10, (-3, 3)))
 ```
 
-Distribución Gamma
-
-```{julia}
-#| label: fig-dp-gamma
-#| echo: false
-#| fig-cap: Simulaciones Proceso de Dirichlet con medida de centralización Gamma (en rojo)
-#| fig-subcap:
-#|   - M = 1
-#|   - M = 10
-#|   - M = 50
-#|   - M = 100
-#|   - M = 500
-#|   - M = 1000
-#| layout-ncol: 3
-#| layout-nrow: 2
-# Random.seed!(219);
-# G0 = Distributions.Gamma(6, 1 / 4)
-# display(tic_rdp_example(15, 1, G0, -10, 10, (0, 4)))
-# display(tic_rdp_example(15, 10, G0, -10, 10, (0, 4)))
-# display(tic_rdp_example(15, 50, G0, -10, 10, (0, 4)))
-# display(tic_rdp_example(15, 100, G0, -10, 10, (0, 4)))
-# display(tic_rdp_example(15, 500, G0, -10, 10, (0, 4)))
-# display(tic_rdp_example(15, 1000, G0, -10, 10, (0, 4)))
-```
 
 ## Algunos resultados asintóticos
 
-Results from Antoniak, Korwar & Hollander.
+Resultados de Antoniak, Korwar & Hollander.
+
 
 ```{julia}
 #| echo: false
-# function akh_empirical(n_values, M)
-#     # Expected value for k
-#     ek_values = Vector{Float64}(undef, length(n_values))
 
-#     function n_unique(n, M)
-#         sim_data = tic_rdp_marginal(n, M, Normal(0, 1))
-#         k = length(unique(sim_data))
-#     end
+Random.seed!(219)
+n_values = 1000:2000:21000
 
-#     for (i, n) in enumerate(n_values)
-#         k_sim = [n_unique(n, M) for _ in 1:20]
-#         ek_values[i] = mean(k_sim)
-#     end
-
-#     result = plot(x -> M * log(x), 1, maximum(n_values) + 100,
-#         label="Korwar & Hollander", size=(800, 600),
-#         legend=:bottomright)
-#     plot!(result, x -> M * log(1 + x / M), label="Antoniak")
-#     scatter!(result, n_values, ek_values, label="Simulation")
-# end
-
-
-# Random.seed!(219)
-# n_values = 1000:2000:21000
-
-# akh_empirical(n_values, 1000)
+akh_empirical(n_values, 100)
 ```
 
 
