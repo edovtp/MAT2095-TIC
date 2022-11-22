@@ -4,14 +4,14 @@ author: "Eduardo Vásquez"
 number-sections: true
 highlight-style: pygments
 format: 
-  html:
-    toc: true
-    code-fold: true
   pdf:
     documentclass: article
     toc: true
     include-in-header: header.tex
     toc-title: "Tabla de Contenidos"
+  html:
+    toc: true
+    code-fold: true
 execute: 
   cache: true
 bibliography: references.bib
@@ -115,50 +115,69 @@ Necesidad de métodos flexibles
 
 Considerando lo anterior, debemos entonces definir medidas de probabilidad sobre medidas de probabilidad. Una de estas opciones es la del proceso de Dirichlet [@ferguson_bayesian_1973], que definimos a continuación.
 
-<!-- DEFINICIÓN PROCESO DE DIRICHLET -->
-  \begin{definicion}[(Ferguson, 1973)]
-    Sea $\alpha>0$ y $G_0$ una medida de probabilidad definida sobre $S$. Un \textbf{Proceso de Dirichlet (DP)} de parámetros $(\alpha, G_0)$, denotado por $\text{DP}(\alpha, G_0)$, es una medida de probabilidad aleatoria $G$ definida en $S$ que asigna probabilidad $G(B)$ a todo conjunto medible $B$ tal que, para toda partición medible finita $\{B_1, ..., B_k\}$ de $S$, la distribución conjunta del vector $(G(B_1), ..., G(B_k))$ es Dirichlet con parámetros
+```{=tex}
+% Definición Proceso de Dirichlet
+\begin{definicion}[(Ferguson, 1973)]
+  Sea $\alpha>0$ y $G_0$ una medida de probabilidad definida sobre $S$. Un \textbf{Proceso de Dirichlet (DP)} de parámetros $(\alpha, G_0)$, denotado por $\text{DP}(\alpha, G_0)$, es una medida de probabilidad aleatoria $G$ definida en $S$ que asigna probabilidad $G(B)$ a todo conjunto medible $B$ tal que, para toda partición medible finita $\{B_1, ..., B_k\}$ de $S$, la distribución conjunta del vector $(G(B_1), ..., G(B_k))$ es Dirichlet con parámetros
 
-  $$
-  (\alpha G_0(B_1), ..., \alpha G_0(B_k))
-  $$
-  \end{definicion}
-<!-- DEFINICIÓN PROCESO DE DIRICHLET -->
+$$
+(\alpha G_0(B_1), ..., \alpha G_0(B_k))
+$$
 
-Los parámetros $G_0$ y $\alpha$ se denominan la medida de 
+
+Los parámetros $G_0$ y $\alpha$ se denominan la medida de centralización y la precisión, respectivamente. También se suele denominar $\alpha G_0$ como la medida base.
+\end{definicion}
+```
 
 Ferguson muestra que $G$ existe para todo $G_0$. Además, señala algunas de las propiedades estadísticas de los DP, tales como:
 
-* La esperanza de $G(B)$ para cualquier conjunto medible $B$ es $G_0(B)$, lo cual nos indica la razón por la cual $G_0$ se denomina la medida de centrado (?). Esto es,
-$$
-\text{E}(G(B)) = G_0(B)
-$$
+```{=tex}
+\begin{propiedad}[(Propiedades Proceso de Dirichlet)]
+  Sea $G \sim \text{DP}(\alpha, G_0$), $B, B_1$ y $B_2$ conjuntos medibles, con $B_1 \cap B_2 = \emptyset$. Luego,
+  \begin{itemize}
+    \item El soporte de $G$ coincide con el de $G_0$. Esto es,
+    \begin{equation*}
+      G_0(B) = 0 \implies P(G(B) = 0) = 1
+    \end{equation*}
+    y
+    \begin{equation*}
+      \quad G_0(B) > 0 \implies P(G(B) > 0) > 1 
+    \end{equation*}
+    \item $\text{E}(G(B)) = G_0(B)$
+    \item $\text{Var}(G(B)) = \frac{G_0(B)(1 - G_0(B)}{1 + \alpha}$
+    \item $\text{Cov}(G(B_1), G(B_2)) = \frac{-G_0(B_1)G_0(B_2)}{1 + \alpha}$
+  \end{itemize}
+\end{propiedad}
+```
 
-* La varianza de $G(B)$ es $G_0(B)(1 - G_0(B))/(1 + \alpha)$, lo cual nos indica la razón por la cual $\alpha$ se denomina el parámetro de precisión.
+Las propiedades anteriores nos muestran la razón por la que $G_0$ se denomina la medida de centralización, así como el por qué $\alpha$ se denomina el parámetro de precisión. La covarianza muestra que la covarianza entre dos conjuntos cualesquiera es siempre negativa (acá hay extensiones, mencionar que están fuera del alcance de este trabajo)
 
-* Dado dos conjuntos medibles disjuntos $B_1$ y $B_2$, la covarianza de $G(B_1)$ y $G(B_2)$ corresponde a $-G_0(B_1)G_0(B_2)/(1 + \alpha)$. Esto nos indica que la covarianza es **siempre** negativa, independiente de la cercanía o lejanía que presenten estos dos conjuntos.
-
+```{=tex}
 \begin{nota}
-  Razón por la que se denomina **Proceso**
+  Algunos se preguntarán, como yo lo hice la primera vez que aprendí sobre esto, el por qué se denomina un \textbf{proceso}. La razón es bastante sencilla, y es que el DP es un proceso estocástico que, en vez de estar indexado por índices comunes como el tiempo o coordenadas geográficas, está indexado por todos los conjuntos medibles, esto es, para cada conjunto medible $B$ tenemos la variable aleatoria $G(B)$.
 \end{nota}
+```
 
-Por último, otra propiedad importante que muestra Ferguson es que $G$ es casi-seguramente discreta. Este resultado nos dice que $G$ se puede escribir como una suma ponderada de masas puntuales, también denominados átomos, esto es,
+Una propiedad muy importante que muestra Ferguson, que será central en el transcurso de esta monografía, es que $G$ es casi-seguramente discreta. Este resultado nos dice que $G$ se puede escribir como una suma ponderada de masas puntuales, también denominados átomos, esto es,
 
 $$
 G(\cdot) = \sum_{h=1}^\infty w_h \delta_{m_h}(\cdot)
 $$
 
-donde $\sum_{h=1}^\infty w_h = 1$ y $\delta_{x}(\cdot)$ denota la medida de Dirac en $x$. Gráficamente:
+donde $\sum_{h=1}^\infty w_h = 1$ y $\delta_{x}(\cdot)$ denota la medida de Dirac en $x$. En la Figura 2 se presenta gráficamente un Proceso de Dirichlet. A la izquierda se ilustran los átomos con puntos morados, donde los largos indican la masa que aporta cada uno. A la derecha se muestra cómo se calcularía la probabilidad para un cierto conjunto medible $B$, que es simplemente tomar la suma de las masas de los átomos que se encuentran dentro de este conjunto.
 
 ::: {#fig-dp layout-ncol=2}
 ![](figuras/DP%20-%20Definition.jpg)
 
 ![](figuras/DP%20-%20Definition%202.jpg)
 
-Naturaleza discreta del Proceso de Dirichlet (DP)
+Naturaleza discreta del Proceso de Dirichlet
 :::
 
-<!-- POSTERIORI PROCESO DE DIRICHLET -->
+Por último, Ferguson tambien demuestra que un DP es conjugada para una muestra i.i.d. de esta distribución, donde se considera un promedio ponderado entre la medida de centralización $G_0$ y la función de distribución empírica de los datos.
+
+```{=tex}
+% Posteriori Proceso de Dirichlet
 \begin{proposicion}[(Ferguson, 1973)]
   Sea $y_1, ..., y_n | G \overset{i.i.d}{\sim} G$ y $G \sim \text{DP}(\alpha, G_0)$. Luego,
   \begin{equation*}
@@ -169,28 +188,56 @@ Naturaleza discreta del Proceso de Dirichlet (DP)
     \hat{f}_n(\cdot) = \frac{1}{n}\sum_{i=1}^n \delta_{y_i}(\cdot)
   \end{equation*}
 \end{proposicion}
-<!-- POSTERIORI PROCESO DE DIRICHLET -->
+```
 
-Ahora, todo lo anterior aún no nos dice mucho acerca de como trabajar con esta distribución, ya que de momento solo sabemos que existen tales procesos, así como algunas propiedades. En la práctica, se ha trabajado principalmente de dos formas: marginalizando 
+Ahora, todo lo anterior aún no nos dice mucho acerca de como trabajar con esta distribución, ya que de momento solo sabemos que existen tales procesos, así como algunas propiedades. En la práctica, se ha trabajado principalmente de dos formas. La primera es marginalizando la medida de probabilidad aleatoria $G$, esto es, trabajar directamente con
 
-* Marginalizar: urnas de Pólya
-* Stick-breaking
+$$
+p(y_1, ..., y_n) = \int p(y_1, ..., y_n|G) d\pi(G)
+$$
+
+La otra forma es considerar la construcción de un DP mediante una representación basada en cortar una varilla de largo unitario de manera sucesiva e indefinida, denominada *Stick-Breaking*.
 
 ## Construcción con Urnas de Pólya
 
-[@blackwell_ferguson_1973]
+Una de las formas de poder trabajar con un Proceso de Dirichlet es, irónicamente, no trabajar con él. En probabilidades esto lo logramos marginalizando con respecto a la medida que no es de interés.
+
+Considerando una muestra aleatoria $y_1, ..., y_n|G \sim G$, Blackwell y MacQueen  [@blackwell_ferguson_1973] formulan una representación de la densidad marginal $p(y_1, ..., y_n)$ mediante una representación por Urnas de Pólya. En particular, se tiene que
+
+$$
+p(y_1, ..., y_n) = p(y_1)\prod_{i=2}^n p(y_i|y_1, ..., y_{i-1})
+$$
+
+y lo que muestran es que
+
+$$
+p(y_i|y_1, ..., y_{i-1}) = \frac{1}{M + i - 1}\sum_{h=1}^{i-1}\delta_{y_h}(y_i) + \frac{M}{M + i - 1}G_0(y_i)
+$$
+
+Hay dos cosas bastante importantes:
+
+* Dada la intercambiabilidad, las condicionales completas toman la misma forma
+* La predictiva toma la misma forma para $i = n + 1$
+* Lo anterior se puede simplificar considerando solo los valores iguales
+
+```{=tex}
+\begin{ejemplo}[Urnas de Pólya]
+  Para ilustrar, consideramos el ejemplo de obtener datos de un Proceso de Dirichlet con medida de centralización Gamma(6, 4) y precisión $\alpha = 1, 10, 50, 100, 1000, 10000$.
+\end{ejemplo}
+```
+
 
 ```{julia}
 #| label: fig-crp-gamma
 #| echo: false
 #| fig-cap: Simulación de datos provenientes de un Proceso de Dirichlet con medida de centralización Gamma(6, 4) (en azul)
 #| fig-subcap:
-#|   - M = 1
-#|   - M = 10
-#|   - M = 50
-#|   - M = 100
-#|   - M = 1000
-#|   - M = 10000
+#|   - $\alpha$ = 1
+#|   - $\alpha$ = 10
+#|   - $\alpha$ = 50
+#|   - $\alpha$ = 100
+#|   - $\alpha$ = 1000
+#|   - $\alpha$ = 10000
 #| layout-ncol: 3
 #| layout-nrow: 2
 
@@ -205,26 +252,39 @@ display(tic_rdp_marginal_example(500, 50, G0))
 display(tic_rdp_marginal_example(500, 100, G0))
 display(tic_rdp_marginal_example(500, 1000, G0))
 display(tic_rdp_marginal_example(500, 10000, G0))
-
 ```
-
 
 ## Stick-Breaking
 
-[@sethuraman_constructive_1994]
+La forma de trabajar directamente con un Proceso de Dirichlet vino dada por una construcción stick-breaking indefinida.
 
+```{=tex}
 \begin{theo}[(Sethuraman, 1994)]
   Sea $w_h = \upsilon \prod_{l<h} (1 - \upsilon_l)$ con $\upsilon_h \overset{i.i.d.}{\sim} \text{Beta}(1, \alpha)$ y $m_h \overset{i.i.d.}{\sim} G_0$, donde $(\upsilon_h)$ y $(m_h)$ son independientes entre sí. Luego,
 
   \begin{equation*}
     G(\cdot) = \sum_{h=1}^\infty w_h \delta_{m_h}(\cdot)
   \end{equation*}
+  
+  define un Proceso de Dirichlet de parámetros $\alpha$ y $G_0$.
 \end{theo}
+```
 
-define un Proceso de Dirichlet de parámetros $\alpha$ y $G_0$.
-**Nota**: mejoría de casi 100 segundos con respecto a R
+En la Figura 4 se pequeña una pequeña ilustración del proceso stick-breaking para obtener un Proceso de Dirichlet.
 
-Ejemplo Normal. Hablar de Proceso de Dirichlet $\epsilon$-Finito
+::: {#fig-stickbreaking}
+![](figuras/DP%20-%20Stick%20Breaking.jpg)
+
+Ilustación del proceso de Stick-Breaking
+:::
+
+Ahora, lo anterior sigue teniendo un pequeño problema, y es que claramente no podemos repetir el proceso una cantidad infinita de veces para obtener las secuencias infinitas de pesos y localizaciones. Para arreglar esto, se propone simplemente truncar la representación hasta un valor $H$ fijo, considerando $\upsilon_H = 1$, u obtener los pesos $w_h$ hasta cubrir un cierto número fijo, cercano a 1, de probabilidad.
+
+```{=tex}
+\begin{ejemplo}[Stick-Breaking]
+\end{ejemplo}
+```
+
 
 
 ```{julia}
@@ -251,11 +311,15 @@ display(tic_rdp_example(15, 500, G0, -10, 10, (-3, 3)))
 display(tic_rdp_example(15, 1000, G0, -10, 10, (-3, 3)))
 ```
 
+```{=tex}
+\begin{nota}
+  En este punto del trabajo fue donde decidí cambiarme de R a Julia, ya que las simulaciones anteriores tomaban demasiado tiempo. Utilizando Julia obtuve una mejoría en rapidez de casi 100 veces.
+\end{nota}
+```
 
 ## Algunos resultados asintóticos
 
 Resultados de Antoniak, Korwar & Hollander.
-
 
 ```{julia}
 #| echo: false
@@ -284,14 +348,14 @@ Gibbs:
   * No-gaps, MacEachern & Müller (1998)
   * Algoritmo 8, Neal (2000)
 
-Otros: slice sampler, DP $\epsilon$-finito, inferencia variacional, etc.
+Otros: slice sampler, DP finito, inferencia variacional, etc. DP $\epsilon$-finito.
 
 
 \newpage
 # Particiones Aleatorias y Clustering
 
 \newpage
-# Aplicación
+# Aplicación: Modelo CAPM
 
 aaaa
 
