@@ -11,7 +11,7 @@ histogram(a1_data.y, bins=30, label="Simulated data")
 vline!(unique(a1_data.params[:, 1]), label="Components")
 
 prior_par = (alpha, m, tau, s, S)
-@time test_a1_rp = ew_algorithm1(a1_data.y, prior_par, 10000);
+@time test_a1_rp = tic_dpm_ew_fixed(a1_data.y, prior_par, 10000);
 
 sample_means = mapslices(mean, test_a1_rp, dims=[1])
 
@@ -52,7 +52,7 @@ vline!([-5, -1, 0, 5], c="red", line=:dash)
 
 alpha, m, tau, s, S = 1, 0, 100, 4, 2
 prior_par = (alpha, m, tau, s, S)
-test_a1_rd = ew_algorithm1(y, prior_par, 10000)
+test_a1_rd = tic_dpm_ew_fixed(y, prior_par, 10000)
 sample_means = mapslices(mean, test_a1_rd, dims=[1])
 
 scatter(nmeans[components], sample_means[1, :, 1], ms=3, ma=0.3, label="")

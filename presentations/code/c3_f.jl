@@ -1,8 +1,4 @@
-include("00_extras.jl")
-include("01_DP.jl")
-include("02_DPM.jl")
-
-
+# Algoritmo Escobar & West (1995)
 function tic_dpm_ew(y, prior_par, iter, warmup=floor(Int64, iter / 2))
     """
     Implementation of the final algorithm given in Escobar & West (1995) to sample from
@@ -94,57 +90,4 @@ function tic_dpm_ew(y, prior_par, iter, warmup=floor(Int64, iter / 2))
         al_samples[(warmup+2):end],
         mt_samples[(warmup+2):end, :],
         pi_samples[(warmup+2):end, :, :])
-end
-
-
-function tic_dpm_ew_fixed(y, prior_par, iter, warmup=floor(Int64, iter / 2))
-    """
-    Implementation of the first algorithm given in Escobar & West (1995)
-
-    y         : data to fit the model
-    prior_par : prior parameters (alpha, m, tau, s and S)
-    """
-    n = length(y)
-    alpha, m, tau, s, S = prior_par
-    samples = Array{Float64,3}(undef, (iter + 1, n, 2))
-
-    # Initial values
-    for i in 1:n
-        xi = (m + tau * y[i]) / (1 + tau)
-        X = tau / (1 + tau)
-        Si = S + (y[i] - m)^2 / (1 + tau)
-
-        post = NormalInverseGamma(xi, X, (1 + s) / 2, Si / 2)
-        samples[1, i, :] .= rand(post)
-    end
-
-    # Start of the algorithm
-    prev_sample = samples[1, :, :]
-    for n_sample in 2:(iter+1)
-        # Update of each component
-        for i in 1:n
-            xi = (m + tau * y[i]) / (1 + tau)
-            X = tau / (1 + tau)
-            Si = S + (y[i] - m)^2 / (1 + tau)
-            M = (1 + tau) * S / s
-            q_weights = Vector{Float64}(undef, n)
-
-            q_weights[i] = alpha * pdf(TDist(s), (y[i] - m) / sqrt(M)) / sqrt(M)
-            q_weights[1:end.!=i] = map(
-                x -> pdf(Normal(x[1], sqrt(x[2])), y[i]),
-                eachrow(prev_sample[1:end.!=i, :])
-            )
-
-            idx_new = StatsBase.sample(1:n, Weights(q_weights))
-            if idx_new == i
-                prev_sample[i, :] .= rand(NormalInverseGamma(xi, X, (1 + s) / 2, Si / 2))
-            else
-                prev_sample[i, :] .= prev_sample[idx_new, :]
-            end
-        end
-
-        samples[n_sample, :, :] .= prev_sample
-    end
-
-    return samples[(warmup+2):(iter+1), :, :]
 end

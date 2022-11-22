@@ -285,19 +285,17 @@ Ahora, lo anterior sigue teniendo un pequeño problema, y es que claramente no p
 \end{ejemplo}
 ```
 
-
-
 ```{julia}
 #| label: fig-dp-normal
 #| echo: false
 #| fig-cap: Simulaciones Proceso de Dirichlet con medida de centralización Normal (en rojo)
 #| fig-subcap:
-#|   - M = 1
-#|   - M = 10
-#|   - M = 50
-#|   - M = 100
-#|   - M = 500
-#|   - M = 1000
+#|   - $\alpha$ = 1
+#|   - $\alpha$ = 10
+#|   - $\alpha$ = 50
+#|   - $\alpha$ = 100
+#|   - $\alpha$ = 500
+#|   - $\alpha$ = 1000
 #| layout-ncol: 3
 #| layout-nrow: 2
 
@@ -336,19 +334,150 @@ akh_empirical(n_values, 100)
 
 ## Definición
 
+Problema con DP: discretas con probabilidad 1. Usamos una mezcla continua usando un DP como medida de mezcla.
+
+$$
+f_G(y) = \int f_\theta(y)dG(\theta)
+$$
+
+Equivalentemente:
+
+$$
+\begin{aligned}
+y_i|\theta_i &\overset{ind.}{\sim} f_{\theta_i} \\
+\theta_i | G &\overset{i.i.d.}{\sim} G
+\end{aligned}
+$$
+
+
+Modelo completo: Usar notación de Neal, 2000.
+
+
 ## Simulación a posteriori
 
-Gibbs:
+Muestreo de Gibbs [@geman_stochastic_1984]
 
-* Caso conjugado:
-  * Escobar (1988, 1994)
-  * Escobar & West (1995)
-  * Bush & MacEachern (1996)
-* Caso no-conjugado:
-  * No-gaps, MacEachern & Müller (1998)
-  * Algoritmo 8, Neal (2000)
+## Caso conjugado
 
-Otros: slice sampler, DP finito, inferencia variacional, etc. DP $\epsilon$-finito.
+### Escobar & West (1995)
+
+```{=tex}
+\begin{ejemplo}[(Datos de Galaxias)]
+Modelo propuesto por Escobar y West en el paper del 1995
+\end{ejemplo}
+```
+
+```{julia}
+#| label: fig-galaxias1
+#| echo: false
+#| fig-cap: Velocidades de galaxias
+
+include("code/c3_f.jl")
+
+velocities = [9172, 9558, 10406, 18419, 18927, 19330, 19440, 19541,
+    19846, 19914, 19989, 20179, 20221, 20795, 20875, 21492,
+    21921, 22209, 22314, 22746, 22914, 23263, 23542, 23711,
+    24289, 24990, 26995, 34279, 9350, 9775, 16084, 18552,
+    19052, 19343, 19473, 19547, 19856, 19918, 20166, 20196,
+    20415, 20821, 20986, 21701, 21960, 22242, 22374, 22747,
+    23206, 23484, 23666, 24129, 24366, 25633, 32065, 9483,
+    10227, 16170, 18600, 19070, 19349, 19529, 19663, 19863,
+    19973, 20175, 20215, 20629, 20846, 21137, 21814, 22185,
+    22249, 22495, 22888, 23241, 23538, 23706, 24285, 24717,
+    26960, 32789] ./ 1000;
+
+histogram(velocities, bins=1:40, label="")
+```
+
+```{julia}
+#| label: fig-pos-ew
+#| echo: false
+#| fig-cap: Densidades estimadas a posteriori
+#| fig-subcap:
+#|   - Predictiva a posteriori
+#|   - $\alpha$|D
+#| layout-ncol: 2
+#| layout-nrow: 1
+
+a, b, A, w, W, s, S = 2, 4, 1000, 1, 100, 4, 2;
+prior_par = (a, b, A, w, W, s, S);
+
+Random.seed!(219);
+N = 4000;
+warmup = 2000;
+g_eta, g_alpha, g_mt, g_pi = tic_dpm_ew(velocities, prior_par, N, warmup);
+
+n = length(velocities)
+function cond_dens(y)
+    s1 = [
+        g_alpha[i] * pdf(TDist(s), (y - g_mt[i, 1]) / sqrt(1 + g_mt[i, 2] * S / s)) /
+        sqrt(1 + g_mt[i, 2] * S / s) for i in 1:(N-warmup)
+    ]
+
+    s2 = [
+        sum(map(x -> pdf(Normal(x[1], sqrt(x[2])), y), eachrow(sample)))
+        for sample in eachslice(g_pi, dims=1)
+    ]
+
+    dens = (s1 .+ s2) ./ (g_alpha .+ n)
+
+    return mean(dens)
+end
+
+y_grid = range(8, 40, length=500);
+dens_est = [cond_dens(y) for y in y_grid];
+
+histogram(velocities, bins=1:40, label="", normalize=true);
+display(plot!(y_grid, dens_est, label="Densidad estimada", linewidth=2.5))
+
+
+function cond_dens(alpha)
+    function a_dist(i, alpha)
+        eta = g_eta[i]
+
+        unique_pi = unique(g_pi[i, :, :], dims=1)
+        k = size(unique_pi)[1]
+        odds_w = (a + k - 1) / (n * (b - log(eta)))
+        weight = odds_w / (1 + odds_w)
+
+        weight * pdf(Gamma(a + k, 1 / (b - log(eta))), alpha) +
+        (1 - weight) * pdf(Gamma(a + k - 1, 1 / (b - log(eta))), alpha)
+    end
+
+    dens = [a_dist(i, alpha) for i in 1:(N-warmup)]
+    return mean(dens)
+end
+
+alpha_grid = range(0, 3, length=500);
+dens_est = [cond_dens(alpha) for alpha in alpha_grid]
+plot(alpha_grid, dens_est, label="Estimated density", linewidth=3);
+display(plot!(alpha_grid, pdf(Gamma(a, 1 / b), alpha_grid), label="Prior density"))
+```
+
+### Problema de "sticky-clusters"
+
+Problema: sticky clusters
+
+```{julia}
+#| label: fig-sticky-clusters
+#| echo: false
+#| fig-cap: Simulación a post de un parámetro. Vemos que se queda pegado
+
+aux_theta = g_pi[1:end, 1, 1]
+plot(1:500, aux_theta[1:500])
+```
+
+Bush & MacEachern
+
+## Caso no-conjugado
+
+* No-gaps de MacEachern & Muller
+* Algoritmo 8 de Neal
+
+
+## Otras opciones
+
+Inferencia variacional, DP $\epsilon$-finito.
 
 
 \newpage
