@@ -6,6 +6,7 @@ using ConjugatePriors
 using Plots
 using StatsPlots
 using FreqTables
+using NamedArrays
 
 """
 Extensions of the Normal-Inverse-Gamma distribution
