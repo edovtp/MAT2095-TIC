@@ -1,6 +1,4 @@
 ---
-title: "MAT2035 - Taller de Iniciación Científica"
-author: "Eduardo Vásquez"
 number-sections: true
 highlight-style: pygments
 format: 
@@ -8,7 +6,9 @@ format:
     documentclass: article
     toc: true
     include-in-header: header.tex
+    include-before-body: title_page.tex
     toc-title: "Tabla de Contenidos"
+    toc-depth: 3
   html:
     toc: true
     code-fold: true
@@ -25,26 +25,34 @@ El objetivo de este taller es implementar el algoritmo SIGN [@ni_scalable_2020],
 
 Todo este material fue confeccionado durante mi Taller de Iniciación Científica junto al profesor Fernando Quintana, durante el segundo semestre del 2022. Todo el código y material se encuentra disponible en el siguiente [repositorio](https://github.com/edovtp/MAT2095-TIC) de Github.
 
+Mencionar los paquetes de R disponibles. [@jara_dppackage_2011], [@ross_dirichletprocess_2020]
+
 \newpage
 # Introducción
 
-El material presentado a continuación se enmarca en el área de la Estadística Bayesiana No-Paramétrica, por lo que, en primer lugar, es necesario presentar una breve introducción de ambos conceptos.
+El material presentado a continuación se enmarca en el área de la Estadística Bayesiana No-Paramétrica, por lo que, en primer lugar, sería una buena idea presentar una breve introducción de ambos conceptos.
 
-## Paradigma Bayesiano
+## Estadística Bayesiana
 
-Es común que al presentarnos como estadísticos se nos pregunte acerca de qué es lo que hacemos en nuestro trabajo. Ante esta pregunta, comúnmente respondemos que nuestro objetivo principal es el de cuantificar la incertidumbre. Explicamos, además, que para lo anterior nos apoyamos sobre la teoría de probabilidades, tomándola como herramienta principal para modelar aquellas incertezas de interés.
+### Tipos de Incertidumbre
 
-Pero, como estadísticos podemos ir un paso atrás, y preguntarnos acerca de a qué nos referimos exactamente con incertidumbre. Esta pregunta es la que nos lleva a las bases mismas de la estadística, así como a entender cómo surgieron dos visiones diferentes entre sí: la *Estadística Frecuentista* (también denominada clásica) y la *Estadística Bayesiana*.
+Es común que al presentarnos como estadísticos se nos pregunte acerca de qué es lo que hacemos en nuestro trabajo, ante lo cual solemos responder que nuestro objetivo principal es el de cuantificar la incertidumbre. Explicamos, además, que para lo anterior nos apoyamos sobre la teoría de probabilidades, tomándola como herramienta principal para modelar aquellas incertezas de interés.
 
-En particular, Tony O'Hagan distingue dos tipos de incertidumbre [@ohagan_dicing_2004]. Una de ellas la podemos denominar *incerteza ontólogica* (o aleatoria), mientras que la otra toma el nombre de *incerteza epistemológica*. Es importante recordar que la ontología es el estudio del *ser*, mientras que la epistemología es el estudio del *saber*.
+Pero, como estadísticos podemos ir un paso atrás y preguntarnos acerca de a qué nos referimos exactamente con incertidumbre. Esta pregunta es la que nos lleva a las bases mismas de la estadística, así como a entender cómo surgen dos visiones que son diferentes entre sí: la **Estadística Frecuentista** (también denominada clásica) y la **Estadística Bayesiana**.
 
-La incerteza ontológica trata acerca de una incerteza que está sujeta a una variabilidad aleatoria innata, que no podemos predecir bajo ninguna cantidad de información. Dentro de los ejemplos de incerteza ontológica se encuentran varios de los ejemplos introductorios a la estadística, como el lanzamiento de un dado o ganar la lotería.
+En particular, se distinguen dos tipos de incertidumbre [@ohagan_dicing_2004]. Una de ellas la podemos denominar **incerteza ontólogica** (o aleatoria), mientras que la otra toma el nombre de **incerteza epistemológica**. Es importante recordar que la ontología es el estudio del *ser*, mientras que la epistemología es el estudio del *saber*.
 
-Por otro lado, la incerteza epistemológica, tal como lo dice el nombre, es una incerteza acerca de lo que sabemos, como puede ser el...
+La incerteza ontológica trata acerca de una incerteza que está sujeta a una variabilidad aleatoria innata, que no podemos predecir bajo ninguna cantidad de información. Dentro de los ejemplos de incerteza ontológica se encuentran varios de los ejemplos introductorios a la estadística, como el lanzamiento de un dado o el de ganar la lotería.
 
-Probabilidades subjetivas...
+Por otro lado, la incerteza epistemológica, tal como lo dice el nombre, es una incerteza acerca de lo que sabemos. La diferencia con la anterior es que en este caso sí podemos obtener información para disminuir, e incluso a veces eliminar, la incerteza. Por ejemplo, podemos tener incerteza acerca de la altura del Costanera Center en Santiago, pero podemos fácilmente buscar en internet esta información, eliminando completamente la incerteza (de hecho, el edificio central tiene una altura de 300 metros).
 
-Como en estadística Bayesiana también consideramos medir mediante probabilidades los parámetros de nuestros modelos, debemos definir entonces un modelo conjunto de cantidades observables y no observables. Esto es,
+Así, cuando hablamos de cuantificar la incertidumbre con probabilidades, podemos notar que siempre nos hemos estado refiriendo a incertezas ontológicas. En este sentido, las probabilidades se interpretan como la frecuencia de ocurrencia de un evento, considerando un número infinito de repeticiones. Este es el paradigma frecuentista de la estadística.
+
+Ahora, ¿por qué no podemos modelar también las incertezas epistemológicas mediante probabilidades?. Esto es justamente lo que propone el paradigma Bayesiano. En este caso ya no podemos interpretar las probabilidades como frecuencias, si no que como una *medida racional de incerteza*, lo cual normalmente dependerá de cada persona.
+
+### Modelos Bayesianos
+
+Como vimos, en el paradigma Bayesiano asignamos probabilidades a todas las cantidades desconocidas, sean observables u no observables. Esto nos lleva a definir un modelo de probabilidad conjunto, i.e.
 
 $$
 p(\mathbf{y}, \theta) = p(\mathbf{y}|\theta)\pi(\theta)
@@ -59,8 +67,37 @@ Luego, a la luz de nueva información, se actualiza nuestra creencia a priori, m
 \end{aligned}
 \end{equation}
 
+```{=tex}
 \begin{ejemplo}[Modelo Normal-Normal]
+Consideremos el siguiente modelo:
+
+$$
+\begin{aligned}
+  y_1, ..., y_n | \theta &\overset{i.i.d.}{\sim} \text{N}(\theta, \sigma^2) \\
+  \theta &\sim \text{N}(\mu_0, \sigma_0^2)
+\end{aligned}
+$$
+
+donde $\sigma^2$ es conocido. Utilizando la ecuación (1) es fácil mostrar que
+
+\begin{equation*}
+  \theta | y_1, ..., y_n \sim N(\mu_n, \sigma_n^2)
+\end{equation*}
+
+donde 
+
+\begin{equation*}
+  \mu_n = \frac{(1/\sigma_0^2)\mu_0}{1/\sigma_0^2 + n/\sigma^2} + \frac{(n/\sigma^2)\bar{y}}{1/\sigma_0^2 + n/\sigma^2}
+\end{equation*}
+
+y
+
+\begin{equation*}
+  \sigma_n^2 = \left(\frac{1}{\sigma_0^2} + \frac{n}{\sigma^2}\right)^{-1}
+\end{equation*}
 \end{ejemplo}
+```
+
 
 En el ejemplo anterior obtuvimos un resultado bastante conveniente. Al considerar una función de verosimilitud Normal, así como una priori Normal para $\theta$, obtuvimos que a posteriori la distribución sigue siendo una distribución Normal, con la actualización de los parámetros dada en (poner ecuación). Este tipo de modelos se denominan **conjugados**...
 
@@ -99,21 +136,26 @@ $$
 
 * Figura
 
-::: {#fig-np layout-ncol=2}
-![](figuras/NP%20-%20Example%201.jpg)
+<!-- ::: {#fig-np layout-ncol=2}
+![](figures/NP%20-%20Example%201.jpg)
 
-![](figuras/NP%20-%20Example%202.jpg)
+![](figures/NP%20-%20Example%202.jpg)
 
 Necesidad de métodos flexibles
-:::
-
+::: -->
 
 * Nos gustaría ir un poco más allá: estimación de densidades (figura) y regresión
+
+## Estadística Bayesiana No-Paramétrica
 
 \newpage
 # Procesos de Dirichlet
 
-Considerando lo anterior, debemos entonces definir medidas de probabilidad sobre medidas de probabilidad. Una de estas opciones es la del proceso de Dirichlet [@ferguson_bayesian_1973], que definimos a continuación.
+## Definición
+
+Consideremos en primer lugar el problema de estimación de densidades ...
+
+Considerando lo anterior, debemos entonces definir medidas de probabilidad sobre medidas de probabilidad. Una de estas opciones es la del Proceso de Dirichlet, que definimos a continuación.
 
 ```{=tex}
 % Definición Proceso de Dirichlet
@@ -125,7 +167,7 @@ $$
 $$
 
 
-Los parámetros $G_0$ y $\alpha$ se denominan la medida de centralización y la precisión, respectivamente. También se suele denominar $\alpha G_0$ como la medida base.
+Los parámetros $G_0$ y $\alpha$ se denominan la \textbf{medida de centralización} y la \textbf{precisión}, respectivamente. También se suele denominar $\alpha G_0$ como la \textbf{medida base}.
 \end{definicion}
 ```
 
@@ -167,9 +209,9 @@ $$
 donde $\sum_{h=1}^\infty w_h = 1$ y $\delta_{x}(\cdot)$ denota la medida de Dirac en $x$. En la Figura 2 se presenta gráficamente un Proceso de Dirichlet. A la izquierda se ilustran los átomos con puntos morados, donde los largos indican la masa que aporta cada uno. A la derecha se muestra cómo se calcularía la probabilidad para un cierto conjunto medible $B$, que es simplemente tomar la suma de las masas de los átomos que se encuentran dentro de este conjunto.
 
 ::: {#fig-dp layout-ncol=2}
-![](figuras/DP%20-%20Definition.jpg)
+![](figures/DP%20-%20Definition.jpg)
 
-![](figuras/DP%20-%20Definition%202.jpg)
+![](figures/DP%20-%20Definition%202.jpg)
 
 Naturaleza discreta del Proceso de Dirichlet
 :::
@@ -198,7 +240,7 @@ $$
 
 La otra forma es considerar la construcción de un DP mediante una representación basada en cortar una varilla de largo unitario de manera sucesiva e indefinida, denominada *Stick-Breaking*.
 
-## Construcción con Urnas de Pólya
+## Construcción mediante Urnas de Pólya
 
 Una de las formas de poder trabajar con un Proceso de Dirichlet es, irónicamente, no trabajar con él. En probabilidades esto lo logramos marginalizando con respecto a la medida que no es de interés.
 
@@ -254,7 +296,7 @@ display(tic_rdp_marginal_example(500, 1000, G0))
 display(tic_rdp_marginal_example(500, 10000, G0))
 ```
 
-## Stick-Breaking
+## Construcción Stick-Breaking
 
 La forma de trabajar directamente con un Proceso de Dirichlet vino dada por una construcción stick-breaking indefinida.
 
@@ -273,7 +315,7 @@ La forma de trabajar directamente con un Proceso de Dirichlet vino dada por una 
 En la Figura 4 se pequeña una pequeña ilustración del proceso stick-breaking para obtener un Proceso de Dirichlet.
 
 ::: {#fig-stickbreaking}
-![](figuras/DP%20-%20Stick%20Breaking.jpg)
+![](figures/DP%20-%20Stick%20Breaking.jpg)
 
 Ilustación del proceso de Stick-Breaking
 :::
@@ -334,7 +376,9 @@ akh_empirical(n_values, 100)
 
 ## Definición
 
-Problema con DP: discretas con probabilidad 1. Usamos una mezcla continua usando un DP como medida de mezcla.
+Podemos notar de la sección anterior que obtener distribuciones discretas con probabilidad 1 puede no ser adecuado para diferentes problemas. Considerando lo anterior, nos interesa extender los procesos de Dirichlet para formular modelos adecuados a estos casos. Utilizaremos la notación de [@neal_markov_2000]
+
+Una opción es usar estas medidas de probabilidad aleatoria como la *mixing distribution* en un modelo de mezcla, esto es,
 
 $$
 f_G(y) = \int f_\theta(y)dG(\theta)
@@ -344,26 +388,127 @@ Equivalentemente:
 
 $$
 \begin{aligned}
-y_i|\theta_i &\overset{ind.}{\sim} f_{\theta_i} \\
-\theta_i | G &\overset{i.i.d.}{\sim} G
+y_i|\theta_i &\overset{ind.}{\sim} F(\theta_i) \\
+\theta_i|G &\overset{i.i.d.}{\sim} G \\
+G &\sim \text{DP}(\alpha, G_0)
 \end{aligned}
 $$
-
-
-Modelo completo: Usar notación de Neal, 2000.
-
 
 ## Simulación a posteriori
 
 Muestreo de Gibbs [@geman_stochastic_1984]
 
-## Caso conjugado
+$$
+\theta_i | \theta_{-i}, y_i \sim \sum_{j\neq i}q_{i,j}\delta(\theta_j) + r_i H_i
+$$
 
-### Escobar & West (1995)
+donde
+
+$$
+\begin{aligned}
+  q_{i,j} &= bF(y_i, \theta_j) \\
+  r_i &= b\alpha \int F(y_i, \theta)dG_0(\theta)
+\end{aligned}
+$$
+
+doonde $b$ es tal que $\sum_{j\neq i}q_{i,j} + r_i = 1$.
+
+
+### Caso conjugado
+#### Escobar & West (1995)
 
 ```{=tex}
 \begin{ejemplo}[(Datos de Galaxias)]
 Modelo propuesto por Escobar y West en el paper del 1995
+
+To finalize the article, the authors present a final extension of the previous algorithm that now includes learning about the precision parameter $\alpha$.
+
+This final model is represented as,
+
+$$
+\begin{aligned}
+  Y_i | \pi_i &\overset{ind.}{\sim} \text{N}(\mu_i, V_i), \quad i = 1, ..., n \\
+  \pi_1, ..., \pi_n &\overset{i.i.d.}{\sim} G  \\
+  G &\sim DP(\alpha, G_0) \\
+  G_0 &= N-\Gamma^{-1}(m, 1/\tau, s/2, S/2) \\
+  \tau &\sim \Gamma^{-1}(w/2, W/2) \\
+  m &\sim N(0, A), \quad A \to \infty \\
+  \alpha & \sim \Gamma(a, b) 
+\end{aligned}
+$$
+
+It follows that,
+
+* The full conditional of $\alpha$ is given by,
+
+$$
+\alpha | \pi, m, \tau, D_n \equiv \alpha | \eta, k \sim \pi_\eta \Gamma(a + k, b - \log \eta) + (1 - \pi_\eta)\Gamma(a + k - 1, b - \log \eta)
+$$
+
+where $\pi_\eta/(1 - \pi_\eta) = (a + k - 1)/[n (b - \log \eta)]$. Here we introduced an auxiliary variable $\eta$ that satisfies
+
+$$
+\eta | \alpha, k \sim \text{Beta}(\alpha + 1, n)
+$$
+
+* The full conditional of $m$ is given by,
+
+$$
+m | \tau, \pi, \alpha, D_n \equiv m | \pi, \tau \sim N\Big[ x\bar{V}\sum(V_j^*)^{-1}\mu_j^*\,;\, x\tau\bar{V}\Big]
+$$
+
+  where $x = A/(A + \tau \bar{V})$ and $\bar{V}^{-1} = \sum(V_j^*)^{-1}$.
+
+* The full conditional of $\tau$ is given by,
+
+$$
+\tau | \pi, m, \alpha, D_n \equiv \tau | \pi, m \sim \Gamma^{-1}((w + k)/2, (W + K)/2)
+$$
+
+  where $K = \sum_{j=1}^k (\mu_j^* - m)^2/V_j^*$.
+
+* The full conditionals of $\pi$ are given by,
+
+$$
+\pi_i|\pi^{(i)}, m, \tau, \alpha, D_n \sim q_0G_i(\pi_i) + \sum_{j\neq i}
+q_j \delta_{\pi_j}(\pi_i)
+$$
+
+  where $G_i(\pi_i) \equiv N-\Gamma^{-1}(x_i, 1/X; (1 + s)/2, S_i/2)$ and 
+
+$$
+    \begin{aligned}
+    q_0 &\propto \alpha c(s)[1 + (y_i - m)^2/(sM)]^{-(1 + s)/2}/M^{1/2} & \propto \alpha \cdot t_s(m, \sqrt{M})\\
+    q_j &\propto \exp[-(y_i - \mu_j)^2/(2V_j)](2V_j)^{-1/2} &\propto N(\mu_j, V_j) \\
+    \sum_{j=0, j\neq i}^n q_j &= 1 
+    \end{aligned}
+$$
+
+  with
+
+  -   $x_i = (m + \tau y_i)/(1 + \tau)$
+  
+  -   $X = \tau/(1 + \tau)$
+  
+  -   $S_i = S + (y_i - m)^2/(1 + \tau)$
+  
+  -   $M = (1 + \tau)S/s$
+  
+  -   $c(s) = \Gamma((1 + s)/2)\Gamma(s/2)^{-1}s^{-1/2}$
+
+Thus, the algorithm proceeds as follows:
+
+1. Sample initial values in the following way:
+    * Sample $\alpha \sim \Gamma(a, b)$
+    * Sample $\tau \sim \Gamma^{-1}(w/2, W/2)$
+    * Sample $m \sim N(0, 1)$
+    * Sample $\pi$ given $m, \tau$
+2. For $t = 1, ..., N$:
+    * Sample $\eta_{(t)}|\alpha_{(t-1)}, k_{(t-1)}$
+    * Sample $\alpha_{(t)} | \eta_{(t)}, k_{(t-1)}$
+    * Sample $m_{(t)} | \pi_{(t-1)}, \tau_{(t-1)}$
+    * Sample $\tau_{(t)} | \pi_{(t-1)}, m_{(t)}$
+    * Sample $\pi_{i, (t)} | \pi^{(i)}_{(t-1)}, m_{(t)}, \tau_{(t)}, \alpha_{(t)}, D_n$ from its full conditional. Be aware that $\pi^{(i)}_{(t-1)}$ may contain already updated values of the form $\pi_{1, (t)}, ..., \pi_{i-1, (t)}, \pi_{i+1, (t-1)}, ..., \pi_{n, (t-1)}$.
 \end{ejemplo}
 ```
 
@@ -454,7 +599,7 @@ plot(alpha_grid, dens_est, label="Estimated density", linewidth=3);
 display(plot!(alpha_grid, pdf(Gamma(a, 1 / b), alpha_grid), label="Prior density"))
 ```
 
-### Problema de "sticky-clusters"
+#### Problema de "sticky-clusters"
 
 Problema: sticky clusters
 
@@ -467,15 +612,21 @@ aux_theta = g_pi[1:end, 1, 1]
 plot(1:500, aux_theta[1:500])
 ```
 
-Bush & MacEachern
+Bush & MacEachern, separación de valores.
 
-## Caso no-conjugado
+**Figura de cómo recuperar valores utilizando las indicadoras de clusters**
+
+
+
+
+
+### Caso no-conjugado
 
 * No-gaps de MacEachern & Muller
 * Algoritmo 8 de Neal
 
 
-## Otras opciones
+### Otras opciones
 
 Inferencia variacional, DP $\epsilon$-finito.
 
@@ -486,11 +637,25 @@ Inferencia variacional, DP $\epsilon$-finito.
 \newpage
 # Aplicación: Modelo CAPM
 
-aaaa
+* El modelo de valorización de activos financieros (CAPM) fue desarrollado en los años 60 de forma independiente por Jack Treynor, William Sharpe, John Linter y Jan Mossin.
+
+* El modelo propone 
+
+$$
+\text{E}(R) = r_f + \beta(\text{E}(R_m) - r_f)
+$$
+
+donde R es el retorno del activo, $r_f$ es la tasa de retorno libre de riesgo, $R_m$ es el retorno del mercado y $\beta$ es el riesgo sistemático del activo bajo estudio.
+
+* Normalmente se considera el modelo de regresión
+
+$$
+Y_j \equiv r_j - r_{fj} = \alpha + \beta(r_{mj} - r_{fj}) + \varepsilon_j, \quad j = 1,...,n
+$$
 
 \newpage
 # Referencias
----
+<!-- ---
 nocite: |
   @*
----
+--- -->

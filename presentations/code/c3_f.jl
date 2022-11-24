@@ -1,8 +1,69 @@
-# Algoritmo Escobar & West (1995)
-function tic_dpm_ew(y, prior_par, iter, warmup=floor(Int64, iter / 2))
+function dpm_normal(y, prior_par, iter, warmup, fixed=false)
+    if fixed == true
+        return _dpm_norm_neal_fixed(y, prior_par, iter, warmup)
+    else
+        return _dpm_norm_neal(y, prior_par, iter, warmup)
+    end
+end
+
+function _dpm_norm_ew_fix(y, prior_par, iter, warmup=floor(Int64, iter / 2))
     """
-    Implementation of the final algorithm given in Escobar & West (1995) to sample from
-    the posterior distribution of a DPM model of normals.
+    Implementation of the first algorithm given in Escobar & West (1995) for the normal
+    model with conjugate G0 and fixed hyperparameters
+
+    y         : data to fit the model
+    prior_par : prior parameters (alpha, m, tau, s and S)
+    """
+    n = length(y)
+    alpha, m, tau, s, S = prior_par
+    samples = Array{Float64,3}(undef, (iter - warmup, n, 2))
+
+    # Initial values
+    for i in 1:n
+        xi = (m + tau * y[i]) / (1 + tau)
+        X = tau / (1 + tau)
+        Si = S + (y[i] - m)^2 / (1 + tau)
+
+        post = NormalInverseGamma(xi, X, (1 + s) / 2, Si / 2)
+        prev_sample .= rand(post)
+    end
+
+    # Start of the algorithm
+    for n_sample in 1:iter
+        # Update of each component
+        for i in 1:n
+            xi = (m + tau * y[i]) / (1 + tau)
+            X = tau / (1 + tau)
+            Si = S + (y[i] - m)^2 / (1 + tau)
+            M = (1 + tau) * S / s
+            q_weights = Vector{Float64}(undef, n)
+
+            q_weights[i] = alpha * pdf(TDist(s), (y[i] - m) / sqrt(M)) / sqrt(M)
+            q_weights[1:end.!=i] = map(
+                x -> pdf(Normal(x[1], sqrt(x[2])), y[i]),
+                eachrow(prev_sample[1:end.!=i, :])
+            )
+
+            idx_new = StatsBase.sample(1:n, Weights(q_weights))
+            if idx_new == i
+                prev_sample[i, :] .= rand(NormalInverseGamma(xi, X, (1 + s) / 2, Si / 2))
+            else
+                prev_sample[i, :] .= prev_sample[idx_new, :]
+            end
+        end
+
+        if n_sample > warmup
+            samples[n_sample - warmup, :, :] .= prev_sample
+        end
+    end
+
+    return samples
+end
+
+function _dpm_norm_ew(y, prior_par, iter, warmup=floor(Int64, iter / 2))
+    """
+    Implementation of the last algorithm given in Escobar & West (1995) for the normal
+    model with conjugate G0 and random hyperparameters.
 
     y         : data to fit the model
     prior_par : prior parameters (a, b, A, w, W, s, S)
@@ -90,4 +151,23 @@ function tic_dpm_ew(y, prior_par, iter, warmup=floor(Int64, iter / 2))
         al_samples[(warmup+2):end],
         mt_samples[(warmup+2):end, :],
         pi_samples[(warmup+2):end, :, :])
+end
+
+function _dpm_norm_neal_fixed(y, prior_par, iter, warmup=floor(Int64, iter/2))
+    """
+    Implementation of Algorithm 8 given in Neal (2000) for the normal model with conjugate
+    G0.
+
+    y         : data to fit the model
+    prior_par : prior parameters (alpha, m, tau, s and S)
+    """
+    # Samples
+    n = length(y)
+    alpha, m, tau, s, S = prior_par
+    c_samples = Array{Float64, 2}(undef, (iter + 1, 2))
+    phi_samples = Array{Array{Float64}}(undef)
+    theta_samples = Array{Float64, 3}(undef, (iter + 1, n, 2))
+end
+
+function _dpm_norm_neal(y, prior_par, iter, warmup=floor(Int64, iter/2))
 end
