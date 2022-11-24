@@ -83,7 +83,7 @@ Random.seed!(219);
 N = 4000;
 warmup = 2000;
 n = length(velocities);
-y_grid = range(8, 40, length=500);
+y_grid = range(2, 40, length=500);
 alpha_grid = range(0, 3, length=500);
 
 ## Escobar & West
@@ -110,7 +110,14 @@ prop(freqtable(k_sim))[1:10]
 
 ## Neal
 m_extra = 1
-@time pi_neal_fix = _dpm_norm_neal_fixed(velocities, prior_par_fixed, m_extra, N, warmup)
+@time c_neal, pi_neal_fix =
+    _dpm_norm_neal_fixed(velocities, prior_par_fixed, m_extra, N, warmup);
+@time dens_est = [cond_dens_fixed(y, pi_neal_fix.array) for y in y_grid];
+histogram(velocities, bins=1:40, label="", normalize=true);
+plot!(y_grid, dens_est, label="Densidad estimada", linewidth=2.5)
+k_sim = [size(unique(pi_v, dims=1))[1] for pi_v in eachslice(pi_neal_fix.array, dims=1)];
+prop(freqtable(k_sim))
+
 @time hyp_neal, pi_neal = _dpm_norm_neal(velocities, prior_par_random, m_extra, N, warmup)
 
 #endregion

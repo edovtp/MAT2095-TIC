@@ -118,6 +118,8 @@ function tic_dpm_neal(
         phi = phi_sampler(phi, c, y, G0)
 
         # Print
-        # println(c)
+        # println(phi[c])
     end
+
+    return c, phi
 end

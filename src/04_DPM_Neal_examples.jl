@@ -4,7 +4,7 @@ include("04_DPM_Neal.jl")
 # Pruebas
 ## Data simulation
 Random.seed!(219)
-n, alpha, m, tau, s, S = 1000, 1, 0, 100, 50, 2
+n, alpha, m, tau, s, S = 20, 1, 0, 100, 50, 2
 neal_data = tic_rdpm_normal(n, alpha, m, tau, s, S)
 prior_par = (alpha, m, tau, s, S)
 
@@ -38,8 +38,8 @@ function phi_sampler_nig(phi, c, y, G0)
     return phi
 end
 
-N = 10000
-@time tic_dpm_neal(neal_data.y, F_y, alpha, G0, m, phi_sampler_nig, N)
+N = 1000
+@time aux = tic_dpm_neal(neal_data.y, F_y, alpha, G0, m, phi_sampler_nig, N)
 @time ew_algorithm1(neal_data.y, prior_par, N)
 
 [1, 2, 1, 1, 1, 3, 1, 4, 1, 1]'
