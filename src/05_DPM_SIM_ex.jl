@@ -1,9 +1,9 @@
 include("05_DPM_SIM.jl")
 
 
-# Pruebas univariate normal
+# Tests univariate normal
 #region
-# Estimación datos galaxy: densidad y alpha
+# Galaxy data: densidad, alpha y k
 velocities = [9172, 9558, 10406, 18419, 18927, 19330, 19440, 19541,
     19846, 19914, 19989, 20179, 20221, 20795, 20875, 21492,
     21921, 22209, 22314, 22746, 22914, 23263, 23542, 23711,
@@ -18,23 +18,31 @@ velocities = [9172, 9558, 10406, 18419, 18927, 19330, 19440, 19541,
 
 histogram(velocities, bins=1:40, label="")
 
-a, b, A, w, W, s, S = 2, 4, 1000, 1, 100, 4, 2;
-prior_par = (a, b, A, w, W, s, S);
+prior_par_fixed = (1, 0, 1000, 4, 2) # alpha, m, tau, s, S
+prior_par_random = (2, 4, 1000, 1, 100, 4, 2); # a, b, A, w, W, s, S
 
-Random.seed!(219);
-N = 4000;
-warmup = 2000;
+# Posterior predictive y|D
+function cond_dens_fixed(y, pi_samples)
+    alpha, m, tau, s, S = prior_par_fixed
+    s1 = [
+        alpha * pdf(TDist(s), (y - m) / sqrt(1 + tau * S / s)) /
+        sqrt(1 + m * S / s) for i in 1:(N-warmup)
+    ]
 
-## Escobar & West
-#region
-@time hyp_ew, pi_ew = _dpm_norm_ew(velocities, prior_par, N, warmup);
+    s2 = [
+        sum(map(x -> pdf(Normal(x[1], sqrt(x[2])), y), eachrow(sample)))
+        for sample in eachslice(pi_samples, dims=1)
+    ]
 
-## Posteriori predictiva p(y|D)
-n = length(velocities)
-function cond_dens(y)
-    g_alpha = hyp_ew[:, "alpha"].array
-    g_mt = hyp_ew[:, ["m", "tau"]].array
-    g_pi = pi_ew.array
+    dens = (s1 .+ s2) ./ (alpha .+ n)
+
+    return mean(dens)
+end
+
+function cond_dens_random(y, hyp_samples, pi_samples)
+    a, b, A, w, W, s, S = prior_par_random
+    g_alpha = hyp_samples[:, "alpha"].array
+    g_mt = hyp_samples[:, ["m", "tau"]].array
     s1 = [
         g_alpha[i] * pdf(TDist(s), (y - g_mt[i, 1]) / sqrt(1 + g_mt[i, 2] * S / s)) /
         sqrt(1 + g_mt[i, 2] * S / s) for i in 1:(N-warmup)
@@ -42,7 +50,7 @@ function cond_dens(y)
 
     s2 = [
         sum(map(x -> pdf(Normal(x[1], sqrt(x[2])), y), eachrow(sample)))
-        for sample in eachslice(g_pi, dims=1)
+        for sample in eachslice(pi_samples, dims=1)
     ]
 
     dens = (s1 .+ s2) ./ (g_alpha .+ n)
@@ -50,20 +58,15 @@ function cond_dens(y)
     return mean(dens)
 end
 
-y_grid = range(8, 40, length=500);
-@time dens_est = [cond_dens(y) for y in y_grid];
+# Posterior alpha|D
+function cond_dens_alpha(alpha, hyp_samples, pi_samples)
+    a, b, A, w, W, s, S = prior_par_random
 
-histogram(velocities, bins=1:40, label="", normalize=true);
-plot!(y_grid, dens_est, label="Densidad estimada", linewidth=2.5)
-
-## Posteriori p(alpha|D)
-function cond_dens(alpha)
-    g_eta = hyp_ew[:, "eta"].array
-    g_pi = pi_ew.array
+    g_eta = hyp_samples[:, "eta"].array
     function a_dist(i, alpha)
         eta = g_eta[i]
 
-        unique_pi = unique(g_pi[i, :, :], dims=1)
+        unique_pi = unique(pi_samples[i, :, :], dims=1)
         k = size(unique_pi)[1]
         odds_w = (a + k - 1) / (n * (b - log(eta)))
         weight = odds_w / (1 + odds_w)
@@ -76,23 +79,41 @@ function cond_dens(alpha)
     return mean(dens)
 end
 
+Random.seed!(219);
+N = 4000;
+warmup = 2000;
+n = length(velocities);
+y_grid = range(8, 40, length=500);
 alpha_grid = range(0, 3, length=500);
-dens_est = [cond_dens(alpha) for alpha in alpha_grid]
-plot(alpha_grid, dens_est, label="Estimated density", linewidth=3)
-plot!(alpha_grid, pdf(Gamma(a, 1 / b), alpha_grid), label="Prior density")
 
-## Posteriori p(k|D)
+## Escobar & West
+#region
+@time pi_ew_fix = _dpm_norm_ew_fixed(velocities, prior_par_fixed, N, warmup);
+@time dens_est = [cond_dens_fixed(y, pi_ew_fix.array) for y in y_grid];
+histogram(velocities, bins=1:40, label="", normalize=true);
+plot!(y_grid, dens_est, label="Densidad estimada", linewidth=2.5)
+k_sim = [size(unique(pi_v, dims=1))[1] for pi_v in eachslice(pi_ew_fix.array, dims=1)];
+prop(freqtable(k_sim))
+
+@time hyp_ew, pi_ew = _dpm_norm_ew(velocities, prior_par_random, N, warmup);
+@time dens_est = [cond_dens_random(y, hyp_ew, pi_ew.array) for y in y_grid];
+histogram(velocities, bins=1:40, label="", normalize=true);
+plot!(y_grid, dens_est, label="Densidad estimada", linewidth=2.5)
+@time dens_est = [cond_dens_alpha(alpha, hyp_ew, pi_ew.array) for alpha in alpha_grid];
+plot(alpha_grid, dens_est, label="Estimated density", linewidth=3);
+plot!(alpha_grid, pdf(Gamma(prior_par_random[1], 1 / prior_par_random[2]), alpha_grid),
+    label="Prior density")
 k_sim = [size(unique(pi_v, dims=1))[1] for pi_v in eachslice(pi_ew.array, dims=1)];
 prop(freqtable(k_sim))[1:10]
+
+## Bush & MacEachern
+
+## Neal
+m_extra = 1
+@time pi_neal_fix = _dpm_norm_neal_fixed(velocities, prior_par_fixed, m_extra, N, warmup)
+@time hyp_neal, pi_neal = _dpm_norm_neal(velocities, prior_par_random, m_extra, N, warmup)
+
 #endregion
-
-### Bush & MacEachern
-
-### Neal
-
-
-
-
 #endregion
 
 # Pruebas multivariate normal
