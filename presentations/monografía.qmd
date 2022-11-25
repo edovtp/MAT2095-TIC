@@ -14,6 +14,9 @@ format:
     code-fold: true
 execute: 
   cache: true
+crossref: 
+  fig-title: Figura
+  tbl-title: Tabla
 bibliography: references.bib
 ---
 
@@ -40,7 +43,9 @@ Es común que al presentarnos como estadísticos se nos pregunte acerca de qué 
 
 Pero, como estadísticos podemos ir un paso atrás y preguntarnos acerca de a qué nos referimos exactamente con incertidumbre. Esta pregunta es la que nos lleva a las bases mismas de la estadística, así como a entender cómo surgen dos visiones que son diferentes entre sí: la **Estadística Frecuentista** (también denominada clásica) y la **Estadística Bayesiana**.
 
-En particular, se distinguen dos tipos de incertidumbre [@ohagan_dicing_2004]. Una de ellas la podemos denominar **incerteza ontólogica** (o aleatoria), mientras que la otra toma el nombre de **incerteza epistemológica**. Es importante recordar que la ontología es el estudio del *ser*, mientras que la epistemología es el estudio del *saber*.
+En particular, se distinguen dos tipos de incertidumbre [@ohagan_dicing_2004]. Una de ellas la podemos denominar **incerteza ontólogica** (o aleatoria), mientras que la otra toma el nombre de **incerteza epistemológica** [^1].
+
+[^1]: Es importante mencionar que la ontología es el estudio filosófico del *ser*, mientras que la epistemología es el estudio filosófico del *saber*.
 
 La incerteza ontológica trata acerca de una incerteza que está sujeta a una variabilidad aleatoria innata, que no podemos predecir bajo ninguna cantidad de información. Dentro de los ejemplos de incerteza ontológica se encuentran varios de los ejemplos introductorios a la estadística, como el lanzamiento de un dado o el de ganar la lotería.
 
@@ -52,25 +57,36 @@ Ahora, ¿por qué no podemos modelar también las incertezas epistemológicas me
 
 ### Modelos Bayesianos
 
-Como vimos, en el paradigma Bayesiano asignamos probabilidades a todas las cantidades desconocidas, sean observables u no observables. Esto nos lleva a definir un modelo de probabilidad conjunto, i.e.
+Como vimos, en el paradigma Bayesiano asignamos probabilidades a todas las cantidades desconocidas, sean observables u no observables. Normalmente, en un modelo estadístico estas cantidades no observables son representados mediante parámetros. Esto nos lleva a definir un modelo de probabilidad conjunto, i.e.
 
 $$
 p(\mathbf{y}, \theta) = p(\mathbf{y}|\theta)\pi(\theta)
 $$
 
-Luego, a la luz de nueva información, se actualiza nuestra creencia a priori, mediante el teorema de Bayes, para obtener entonces la distribución a posteriori.
+donde $\theta$ no es necesariamente unidimensional. Luego, a la luz de nueva información, se actualiza nuestra creencia a priori, mediante el teorema de Bayes, para obtener entonces la distribución a posteriori que llamaremos simplemente **posteriori** en lo que sigue.
 
-\begin{equation}\label{eq:1}
+$$
 \begin{aligned}
-\pi(\theta|\mathbf{y}) &= \frac{f(\mathbf{y}|\theta)\pi(\theta)}{\int_{\Theta}f(\mathbf{y}|\theta)\pi(\theta)d\theta} \\
-&\propto f(\mathbf{y}|\theta)\pi(\theta)
+  \pi(\theta|\mathbf{y}) &= \frac{f(\mathbf{y}|\theta)\pi(\theta)}{\int_{\Theta}f(\mathbf{y}|\theta)\pi(\theta)d\theta} \\
+  &\propto f(\mathbf{y}|\theta)\pi(\theta)
 \end{aligned}
-\end{equation}
+$$ {#eq-posterior}
 
+Por otro lado, es posible que también tengamos interés en la predicción de valores observables a futuro. Esto se obtiene fácilmente marginalizando la incerteza con respecto a las cantidades no observables, i.e.
+
+$$
+\begin{aligned}
+  p(y_{n+1}|\mathbf{y}) &= \int p(y_{n+1}, \theta|\mathbf{y})d\theta \\
+  &=\int p(y_{n+1}|\theta)\pi(\theta|\mathbf{y})d\theta
+\end{aligned}
+$$ {#eq-posterior-predictive}
+
+donde en la segunda ecuación realizamos el supuesto de independencia condicional entre las observaciones, dado los valores del vector de parámetros $\theta$. Ambos resultados, [-@eq-posterior] y [-@eq-posterior-predictive], podemos considerarlos como los productos principales para ser utilizados en la inferencia estadística mediante este paradigma.
+
+\newpage
 ```{=tex}
 \begin{ejemplo}[Modelo Normal-Normal]
-Consideremos el siguiente modelo:
-
+Para aterrizar los conceptos anteriores, consideremos el siguiente modelo:
 $$
 \begin{aligned}
   y_1, ..., y_n | \theta &\overset{i.i.d.}{\sim} \text{N}(\theta, \sigma^2) \\
@@ -80,30 +96,48 @@ $$
 
 donde $\sigma^2$ es conocido. Utilizando la ecuación (1) es fácil mostrar que
 
-\begin{equation*}
+$$
   \theta | y_1, ..., y_n \sim N(\mu_n, \sigma_n^2)
-\end{equation*}
+$$
 
 donde 
 
-\begin{equation*}
+$$
   \mu_n = \frac{(1/\sigma_0^2)\mu_0}{1/\sigma_0^2 + n/\sigma^2} + \frac{(n/\sigma^2)\bar{y}}{1/\sigma_0^2 + n/\sigma^2}
-\end{equation*}
+$$
 
 y
 
-\begin{equation*}
+$$
   \sigma_n^2 = \left(\frac{1}{\sigma_0^2} + \frac{n}{\sigma^2}\right)^{-1}
-\end{equation*}
+$$
+
+Por otro lado, también es posible mostrar que
+
+$$
+  y_{n+1}|\mathbf{y} \sim \text{N}(\mu_n, \sigma^2 + \sigma_n^2)
+$$
 \end{ejemplo}
 ```
 
+Los resultados anteriores muestran una de las características principales de la estadística bayesiana, que es la combinación de la información a priori con la información de los datos para los resultados a posteriori. En particular, notamos que la media a posteriori corresponde a un promedio ponderado de la media a priori y el promedio muestral.
 
-En el ejemplo anterior obtuvimos un resultado bastante conveniente. Al considerar una función de verosimilitud Normal, así como una priori Normal para $\theta$, obtuvimos que a posteriori la distribución sigue siendo una distribución Normal, con la actualización de los parámetros dada en (poner ecuación). Este tipo de modelos se denominan **conjugados**...
+Además, en el ejemplo anterior obtuvimos un resultado bastante conveniente. Al considerar una función de verosimilitud Normal, así como una priori Normal para $\theta$, obtuvimos que la posteriori sigue siendo una distribución Normal. Este tipo de modelos se denominan **conjugados** y serán importantes en los siguientes capítulos. Presentamos la definición formal a continuación.
 
-Ahora, nada nos debe restringir a ocupar modelos conjugados solo para poder trabajarlos de forma más fácil con resultados analíticos. En particular, vemos que, en un principio, tanto para la verosimilitud como para la priori podemos ocupar cualquier distribución de probabilidad. 
+\newpage
+```{=tex}
+\begin{definicion}[Priori conjugada]
+  Decimos que una clase $\mathcal{P}$ de distribuciones a priori es \textbf{conjugada} para la verosimilitud $f(\mathbf{y}|\theta)$ si
+  $$
+    \pi(\theta) \in \mathcal{P} \implies \pi(\theta|\mathbf{y}) \in \mathcal{P}
+  $$
+  esto es, la distribución a posteriori de $\theta$ sigue teniendo la misma distribución que la priori.
+\end{definicion}
+```
 
-Uno de los cuellos de botella más importantes de la estadística bayesiana, que provocó el poco uso de esta...
+Los modelos conjugados son convenientes ya que obtenemos resultados analíticamente tractables, así como generalmente intuitivos. Ahora, nada nos debe restringir a ocupar modelos conjugados. En particular, vemos que, en un principio, tanto para la verosimilitud como para la priori podemos ocupar cualquier distribución de probabilidad, que deberán ser elegidas de acorde al problema.
+
+Lo anterior provocó uno de los cuellos de botella más importantes de la estadística Bayesiana, que frenó su amplio uso en la práctica. Principalmente, el problema radicaba en los cálculos computacionales necesarios para realizar la inferencia a posteriori.
 
 * Métodos computacionales
   * Rejection Sampling
@@ -136,13 +170,13 @@ $$
 
 * Figura
 
-<!-- ::: {#fig-np layout-ncol=2}
+::: {#fig-np layout-ncol=2}
 ![](figures/NP%20-%20Example%201.jpg)
 
 ![](figures/NP%20-%20Example%202.jpg)
 
 Necesidad de métodos flexibles
-::: -->
+:::
 
 * Nos gustaría ir un poco más allá: estimación de densidades (figura) y regresión
 
@@ -394,9 +428,25 @@ G &\sim \text{DP}(\alpha, G_0)
 \end{aligned}
 $$
 
+**Resultado de Antoniak**
+
+De manera más general podemos incluir inferencia sobre $\alpha$ e hiperparámetros de la medida de centro $G_0$. Procedemos entonces con el siguiente modelo:
+
+$$
+\begin{aligned}
+  y_i|\theta_i &\overset{ind.}{\sim} F(\theta_i) \\
+  \theta_i | G &\overset{i.i.d.}{\sim} G \\
+  G &\sim \text{DP}(\alpha, G_\eta) \\
+  (\alpha, \eta) &\sim \pi
+\end{aligned}
+$${#eq-dpm}
+
+
 ## Simulación a posteriori
 
-Muestreo de Gibbs [@geman_stochastic_1984]
+* Muestreo de Gibbs [@geman_stochastic_1984]
+
+* Posteriori condicional completa de $\theta$.
 
 $$
 \theta_i | \theta_{-i}, y_i \sim \sum_{j\neq i}q_{i,j}\delta(\theta_j) + r_i H_i
@@ -411,10 +461,20 @@ $$
 \end{aligned}
 $$
 
-doonde $b$ es tal que $\sum_{j\neq i}q_{i,j} + r_i = 1$.
+donde $b$ es tal que $\sum_{j\neq i}q_{i,j} + r_i = 1$ y $H_i$ es la posteriori que se obtiene al considerar un modelo con $G_0$ como priori y una única observación de la verosimilitud $F(y_i, \theta_i)$.
 
+* Resultado $\alpha$: depende solo del número de valores únicos en $\theta$.
+* Resultado $\eta$: proporcional a su priori multiplicada por $\prod_{c} G_0(\theta_i)$.
 
 ### Caso conjugado
+
+De la ecuación anterior hay dos problemas:
+
+* Simular de $H_i$
+* Calcular la integral $\int F(y_i, \theta)dG_0(\theta)$
+
+Así, en primera instancia se consideraron modelos conjugados.
+
 #### Escobar & West (1995)
 
 ```{=tex}

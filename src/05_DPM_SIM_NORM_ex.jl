@@ -2,7 +2,6 @@ include("05_DPM_SIM.jl")
 
 
 # Tests univariate normal
-#region
 # Galaxy data: densidad, alpha y k
 velocities = [9172, 9558, 10406, 18419, 18927, 19330, 19440, 19541,
     19846, 19914, 19989, 20179, 20221, 20795, 20875, 21492,
@@ -87,7 +86,6 @@ y_grid = range(2, 40, length=500);
 alpha_grid = range(0, 3, length=500);
 
 ## Escobar & West
-#region
 @time pi_ew_fix = _dpm_norm_ew_fixed(velocities, prior_par_fixed, N, warmup);
 @time dens_est = [cond_dens_fixed(y, pi_ew_fix.array) for y in y_grid];
 histogram(velocities, bins=1:40, label="", normalize=true);
@@ -119,10 +117,3 @@ k_sim = [size(unique(pi_v, dims=1))[1] for pi_v in eachslice(pi_neal_fix.array, 
 prop(freqtable(k_sim))
 
 @time hyp_neal, pi_neal = _dpm_norm_neal(velocities, prior_par_random, m_extra, N, warmup)
-
-#endregion
-#endregion
-
-# Pruebas multivariate normal
-#region
-#endregion

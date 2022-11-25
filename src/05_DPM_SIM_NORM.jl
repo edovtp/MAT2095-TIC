@@ -19,8 +19,11 @@ function _dpm_norm_ew_fixed(y, prior_par, iter, warmup=floor(Int64, iter / 2))
     normal model with conjugate G0. In particular,
 
         y_i | π_i ∼ N(μ_i, V_i)
-        π_i | G   ∼ DP(α, G_0)
-            G_0 = N-Inv-Gamma(m, 1/τ, s/2, S/2)
+          π_i | G ∼ G
+                G ∼ DP
+              G_0 = N-Inv-Gamma(m, τ, s/2, S/2)
+
+        i.e. G_0 ≡ N(μ | m, τV) ⋅ Inv-Gamma(V | s/2, S/2) (scale parameterization)
 
     y         : data to fit the model
     prior_par : prior parameters (alpha, m, tau, s and S)
@@ -80,11 +83,14 @@ function _dpm_norm_ew(y, prior_par, iter, warmup=floor(Int64, iter / 2))
     model with conjugate G0 and random hyperparameters. In particular,
 
         y_i | π_i ∼ N(μ_i, V_i)
-        π_i | G   ∼ DP(α, G_0)
-              G_0 = N-Inv-Gamma(m, 1/τ, s/2, S/2)
-              τ   ∼ Inv-Gamma(w/2, W/2)
-              m   ∼ N(0, A)
-              α   ∼ Gamma(a, b)
+          π_i | G ∼ G
+                G ∼ DP(α, G_0)
+              G_0 = N-Inv-Gamma(m, τ, s/2, S/2)
+                τ ∼ Inv-Gamma(w/2, W/2)
+                m ∼ N(0, A)
+                α ∼ Gamma(a, b)
+
+    that is, G_0 ≡ N(μ | m, τV) ⋅ Inv-Gamma(V | s/2, S/2) (scale parameterization)
 
     y         : data to fit the model
     prior_par : prior parameters (a, b, A, w, W, s, S)
@@ -103,7 +109,7 @@ function _dpm_norm_ew(y, prior_par, iter, warmup=floor(Int64, iter / 2))
 
     ## m and tau
     tau = rand(InverseGamma(w / 2, W / 2))
-    m = rand(Normal(0, 1))
+    m = rand(Normal(0, A))
 
     ## pi
     prev_pi = Array{Float64,2}(undef, (n, 2))
@@ -184,7 +190,7 @@ function _dpm_norm_neal_fixed(y, prior_par, m_extra, iter, warmup=floor(Int64, i
     """
     n = length(y)
     alpha, m, tau, s, S = prior_par
-    G0 = NormalInverseGamma(m, tau, s, S)
+    G0 = NormalInverseGamma(m, tau, s/2, S/2)
 
     # Samples
     total_samples = iter - warmup
@@ -304,11 +310,14 @@ function _dpm_norm_neal(y, prior_par, m_extra, iter, warmup=floor(Int64, iter / 
     G0 and random hyperparameters. In particular,
 
         y_i | π_i ∼ N(μ_i, V_i)
-        π_i | G   ∼ DP(α, G_0)
-            G_0 = N-Inv-Gamma(m, 1/τ, s/2, S/2)
-            τ   ∼ Inv-Gamma(w/2, W/2)
-            m   ∼ N(0, A)
-            α   ∼ Gamma(a, b)
+        π_i | G ∼ G
+            G ∼ DP(α, G_0)
+            G_0 = N-Inv-Gamma(m, τ, s/2, S/2)
+            τ ∼ Inv-Gamma(w/2, W/2)
+            m ∼ N(0, A)
+            α ∼ Gamma(a, b)
+
+    i.e. G_0 ≡ N(μ | m, τV) ⋅ Inv-Gamma(V | s/2, S/2) (scale parameterization)
 
     y         : data to fit the model
     prior_par : prior parameters (a, b, A, w, W, s, S)
@@ -325,7 +334,18 @@ function _dpm_norm_neal(y, prior_par, m_extra, iter, warmup=floor(Int64, iter / 
     setnames!(pi_samples, ["mu", "V"], 3)
 
     # Initial values
+    ## alpha
+    alpha = rand(Gamma(a, 1/b))
+
+    ## m and tau
+    tau = rand(InverseGamma(w/2, W/2))
+    m = rand(Normal(0, A))
+
+    ## Cluster memberships
     c = ones(Int64, n)
+
+    ## phi
+    G0 = NormalInverseGamma(m, tau, s/2, S/2)
     phi = [rand(G0)]
 
     # Auxiliar function to relabel
@@ -343,6 +363,24 @@ function _dpm_norm_neal(y, prior_par, m_extra, iter, warmup=floor(Int64, iter / 
 
     # Start of the algorithm
     for n_sample in 1:iter
+        # Update alpha
+        k = length(unique(c))
+        eta = rand(Beta(alpha + 1, n))
+        odds_weight = (a + k - 1) / (n * (b - log(eta)))
+        weight = odds_weight / (1 + odds_weight)
+        component = sample([0, 1], Weights([weight, 1 - weight]))
+        alpha = rand(Gamma(a + k - 1 * component, 1 / (b - log(eta))))
+
+        # Update m and tau
+        unique_pi = reshape(reinterpret(Float64, phi[c]), (2, :))'
+        Vbar = 1 / sum(1 ./ unique_pi[:, 2])
+        x = A / (A + tau * Vbar)
+        m = rand(
+            Normal(x * Vbar * sum(unique_pi[:, 1] ./ unique_pi[:, 2]), sqrt(x * tau * Vbar))
+        )
+        K = sum((unique_pi[:, 1] .- m) .^ 2 ./ unique_pi[:, 2])
+        tau = rand(InverseGamma((w + k) / 2, (W + K) / 2))
+
         # Update cluster memberships
         for i in 1:n
             current_c = c[i]
@@ -432,66 +470,5 @@ end
 
 ## ONLY FOR ILLUSTRATION PURPOSES
 function _dpm_norm_bm()
-end
-#endregion
-
-# Multivariate normal with conjugate G0
-#region
-function dpm_mvnorm(y, prior_par, iter, warmup, algorithm="neal", fixed=false)
-end
-
-function _dpm_mvnorm_neal_fixed()
-end
-
-function _dpm_mvnorm_neal()
-end
-#endregion
-
-#region
-function dpm_neal_normal1()
-end
-
-
-function tic_dpm_neal(
-    y::Array,
-    F_y::UnionAll,
-    alpha::Real,
-    G0::Distribution,
-    m::Int64,
-    phi_sampler::Function,
-    iter::Int64,
-    warmup=floor(Int64, iter / 2)
-)
-    """
-    Implementation of Algorithm 8 given in Neal (2000)
-    # TODO: Array to save and return data
-
-    y           : data to fit the model
-    F_y         : sampling model
-    G0          : centering measure of the DP
-    alpha       : precision parameter
-    phi_sampler : custom sampler for the posterior of phi, receives phi, c and y
-    """
-    # Sample arrays
-    c_samples = Array{Float64,2}(undef, (iter + 1, 2))
-    theta_samples = Array{Float64}
-
-    # Starting values
-    c = ones(Int64, n)
-    phi = [rand(G0)]
-
-    for _ in 1:iter
-        # Update cluster memberships
-        c, phi = _n8_update_clusters(c, phi, y, F_y, alpha, G0, m)
-
-        # Update phi
-        phi = phi_sampler(phi, c, y, G0)
-
-        # Print
-        # println(c)
-    end
-end
-
-function tic_dpm_neal(y, prior_par, iter, warmup=floor(Int64, iter / 2))
 end
 #endregion
