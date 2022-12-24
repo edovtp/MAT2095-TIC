@@ -18,9 +18,9 @@ function _dpm_norm_ew_fixed(y, prior_par, iter, warmup=floor(Int64, iter / 2))
     Implementation of the first algorithm given in Escobar & West (1995) for the
     normal model with conjugate G0. In particular,
 
-        y_i | π_i ∼ N(μ_i, V_i)
-          π_i | G ∼ G
-                G ∼ DP
+        y_i | π_i ~ N(μ_i, V_i)
+          π_i | G ~ G
+                G ~ DP
               G_0 = N-Inv-Gamma(m, τ, s/2, S/2)
 
         i.e. G_0 ≡ N(μ | m, τV) ⋅ Inv-Gamma(V | s/2, S/2) (scale parameterization)
@@ -82,13 +82,13 @@ function _dpm_norm_ew(y, prior_par, iter, warmup=floor(Int64, iter / 2))
     Implementation of the last algorithm given in Escobar & West (1995) for the normal
     model with conjugate G0 and random hyperparameters. In particular,
 
-        y_i | π_i ∼ N(μ_i, V_i)
-          π_i | G ∼ G
-                G ∼ DP(α, G_0)
+        y_i | π_i ~ N(μ_i, V_i)
+          π_i | G ~ G
+                G ~ DP(α, G_0)
               G_0 = N-Inv-Gamma(m, τ, s/2, S/2)
-                τ ∼ Inv-Gamma(w/2, W/2)
-                m ∼ N(0, A)
-                α ∼ Gamma(a, b)
+                τ ~ Inv-Gamma(w/2, W/2)
+                m ~ N(0, A)
+                α ~ Gamma(a, b)
 
     that is, G_0 ≡ N(μ | m, τV) ⋅ Inv-Gamma(V | s/2, S/2) (scale parameterization)
 
@@ -181,8 +181,8 @@ function _dpm_norm_neal_fixed(y, prior_par, m_extra, iter, warmup=floor(Int64, i
     Implementation of Algorithm 8 given in Neal (2000) for the normal model with conjugate
     G0. In particular,
 
-    y_i | π_i ∼ N(μ_i, V_i)
-    π_i | G   ∼ DP(α, G_0)
+    y_i | π_i ~ N(μ_i, V_i)
+    π_i | G   ~ DP(α, G_0)
           G_0 = N-Inv-Gamma(m, 1/τ, s/2, S/2)
 
     y         : data to fit the model
@@ -309,13 +309,13 @@ function _dpm_norm_neal(y, prior_par, m_extra, iter, warmup=floor(Int64, iter / 
     Implementation of Algorithm 8 given in Neal (2000) for the normal model with conjugate
     G0 and random hyperparameters. In particular,
 
-        y_i | π_i ∼ N(μ_i, V_i)
-        π_i | G ∼ G
-            G ∼ DP(α, G_0)
+        y_i | π_i ~ N(μ_i, V_i)
+        π_i | G ~ G
+            G ~ DP(α, G_0)
             G_0 = N-Inv-Gamma(m, τ, s/2, S/2)
-            τ ∼ Inv-Gamma(w/2, W/2)
-            m ∼ N(0, A)
-            α ∼ Gamma(a, b)
+            τ ~ Inv-Gamma(w/2, W/2)
+            m ~ N(0, A)
+            α ~ Gamma(a, b)
 
     i.e. G_0 ≡ N(μ | m, τV) ⋅ Inv-Gamma(V | s/2, S/2) (scale parameterization)
 
