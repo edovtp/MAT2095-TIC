@@ -4,7 +4,7 @@ include("03_DPM_EW.jl")
 # Recovering parameters
 #region
 Random.seed!(219)
-n, alpha, m, tau, s, S = 50, 1, 0, 100, 50, 2
+n, alpha, m, tau, s, S = 200, 1, 0, 100, 50, 2
 a1_data = tic_rdpm_normal(n, alpha, m, tau, s, S)
 
 histogram(a1_data.y, bins=30, label="Simulated data")
