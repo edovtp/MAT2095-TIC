@@ -16,6 +16,7 @@ function DpmNorm1f(y, prior_par, iter, warmup=floor(Int64, iter / 2))
     total_samples = iter - warmup
     μ_samples = Array{Float64}(undef, total_samples, n)
     V_samples = Array{Float64}(undef, total_samples, n)
+    θ_new = Array{Float64}(undef, total_samples, 2)
 
     # Posterior parameters
     m_p = @. (m + γ * y) / (γ + 1)
@@ -34,6 +35,7 @@ function DpmNorm1f(y, prior_par, iter, warmup=floor(Int64, iter / 2))
     # Start of the algorithm
     for n_sample in 1:iter
         # Update of each component of θ
+        counter_θ = Dict{Any, Int64}()
         for i in 1:n
             weights = Vector{Float64}(undef, n)
             weights[i] = M * pdf(TDist(s), (y[i] - m) / scale_t) / scale_t # r_i
@@ -49,15 +51,27 @@ function DpmNorm1f(y, prior_par, iter, warmup=floor(Int64, iter / 2))
                 prev_V[i] = prev_V[idx_new]
                 prev_μ[i] = prev_μ[idx_new]
             end
+            sample = (prev_μ[i], prev_V[i])
+            freq = get(counter_θ, sample, 0)
+            counter_θ[sample] = freq + 1
         end
 
         if n_sample > warmup
             μ_samples[n_sample-warmup, :] .= prev_μ
             V_samples[n_sample-warmup, :] .= prev_V
+
+            # New θ value
+            all_values = collect(keys(counter_θ))
+            candidate = rand(NormalInverseGamma(m, γ, s / 2, S / 2))
+            push!(all_values, candidate)
+            freqs = collect(values(counter_θ))
+            norm_term = 1 / (M + n)
+            probs = [freqs .* norm_term; M * norm_term]
+            θ_new[n_sample-warmup, :] .= StatsBase.sample(all_values, Weights(probs))
         end
     end
 
-    return (μ_samples=μ_samples, V_samples=V_samples)
+    return (μ_samples=μ_samples, V_samples=V_samples, θ_new=θ_new)
 end
 
 function DpmNorm1()
