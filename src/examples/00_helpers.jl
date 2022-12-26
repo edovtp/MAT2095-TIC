@@ -1,6 +1,7 @@
 using Random
 using StatsBase
 using Distributions
+using ConjugatePriors
 using ElasticArrays
 using Plots
 using StatsPlots
@@ -12,17 +13,15 @@ function RdpNigMarginal(n, M, par)
 
     n   : sample length
     M   : precision parameter
-    par : NIG parameters (m, λ, s, S)
+    par : NIG parameters (m, γ, s, S) (scale parameterization of σ)
     """
-    m, λ, s, S = par
+    m, γ, s, S = par
     marginal_sample = ElasticArray{Float64}(undef, 2, 0)
     counter = Dict{Any,Int64}()
 
     for i in 1:n
         all_values = collect(keys(counter))
-        V_sample = rand(InverseGamma(s, S))
-        μ_sample = rand(Normal(m, sqrt(V_sample / λ)))
-        candidate = (μ_sample, V_sample)
+        candidate = rand(NormalInverseGamma(m, γ, s, S))
         push!(all_values, candidate)
 
         norm_term = 1 / (M + i - 1)
@@ -46,7 +45,7 @@ function RdpmNormal(n::Int64, M, par)
 
     n   : sample length
     M   : precision parameter
-    par : NIG parameters (m, λ, s, S)
+    par : NIG parameters (m, γ, s, S) (scale parameterization of σ)
     """
     θ = RdpNigMarginal(n, M, par)
     k = size(unique(θ, dims=1))[1]

@@ -6,30 +6,29 @@ function DpmNorm1f(y, prior_par, iter, warmup=floor(Int64, iter / 2))
         y_i | θ_i ~ Normal(μ_i, V_i)
         θ_i | G ~ G
         G ~ DP(M, G0)
-        G0 = NIG(m, λ, s/2, S/2)
+        G0 = NIG(m, γ, s/2, S/2)
 
     y         : data to fit the model
-    prior_par : prior parameters (M, m, λ, s, S)
+    prior_par : prior parameters (M, m, γ, s, S) (scale parameterization of σ)
     """
     n = length(y)
-    M, m, λ, s, S = prior_par
+    M, m, γ, s, S = prior_par
     total_samples = iter - warmup
     μ_samples = Array{Float64}(undef, total_samples, n)
     V_samples = Array{Float64}(undef, total_samples, n)
 
     # Posterior parameters
-    m_p = @. (λ * m + y) / (λ + 1)
-    λ_p = λ + 1
+    m_p = @. (m + γ * y) / (γ + 1)
+    γ_p = γ / (1 + γ)
     s_p = s + 1
-    S_p = @. S + λ / (λ + 1) * (y - m)^2
-    scale_t = sqrt(S / s * (λ + 1) / λ) # for r_i
+    S_p = @. S + (y - m)^2 / (1 + γ)
+    scale_t = sqrt(S / s * (1 + γ)) # for r_i
 
     # Initial values
     prev_μ = Vector{Float64}(undef, n)
     prev_V = Vector{Float64}(undef, n)
     for i in 1:n
-        prev_V[i] = rand(InverseGamma(s_p / 2, S_p[i] / 2))
-        prev_μ[i] = rand(Normal(m_p[i], sqrt(prev_V[i] / λ_p)))
+        prev_μ[i], prev_V[i] = rand(NormalInverseGamma(m_p[i], γ_p, s_p / 2, S_p[i] / 2))
     end
 
     # Start of the algorithm
@@ -44,8 +43,8 @@ function DpmNorm1f(y, prior_par, iter, warmup=floor(Int64, iter / 2))
             )
             idx_new = StatsBase.sample(1:n, Weights(weights))
             if idx_new == i
-                prev_V[i] = rand(InverseGamma(s_p / 2, S_p[i] / 2))
-                prev_μ[i] = rand(Normal(m_p[i], sqrt(prev_V[i] / λ_p)))
+                prev_μ[i], prev_V[i] = rand(
+                    NormalInverseGamma(m_p[i], γ_p, s_p / 2, S_p[i] / 2))
             else
                 prev_V[i] = prev_V[idx_new]
                 prev_μ[i] = prev_μ[idx_new]
