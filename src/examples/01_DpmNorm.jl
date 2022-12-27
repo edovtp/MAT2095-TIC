@@ -7,19 +7,21 @@ include("../02_DpmNorm.jl");
 #region
 Random.seed!(219);
 n, M, m, γ, s, S = 200, 1, 0, 100, 10, 100;
-data_a1f = RdpmNormal(n, M, (m, γ, s, S));
-histogram(data_a1f.y, bins=30, label="Simulated data")
-vline!(unique([x[1] for x in data_a1f.θ]), label="Components")
+data_a1f = DpmNormal(n, M, (m, γ, s, S));
+histogram(data_a1f.y, bins=30, label="Simulated data");
+components_means = [x[1] for x in data_a1f.θ];
+components_variances = [x[2] for x in data_a1f.θ];
+vline!(unique(components_means), label="Components")
 
 prior_par = (M, m, γ, 2 * s, 2 * S);
 @time test_a1_normf = DpmNorm1f(data_a1f.y, prior_par, 10000, 8000);
 
 ## μ and V
 μ_means = [mean(c) for c in eachcol(test_a1_normf.μ_samples)];
-scatter(data_a1f.θ[:, 1], μ_means, ms=3, ma=0.3, label="");
+scatter(components_means, μ_means, ms=3, ma=0.3, label="")
 Plots.abline!(1, 0, label="")
 V_means = [mean(c) for c in eachcol(test_a1_normf.V_samples)];
-scatter(data_a1f.θ[:, 2], V_means, ms=3, ma=0.3, label="");
+scatter(components_variances, V_means, ms=3, ma=0.3, label="");
 Plots.abline!(1, 0, label="")
 xlims!((5, 9))
 ylims!((5, 9))
@@ -28,10 +30,10 @@ ylims!((5, 9))
 k_sim = map(
     x -> size(unique(x))[1],
     eachrow(collect(zip(test_a1_normf.μ_samples, test_a1_normf.V_samples)))
-)
-k_mean = mean(k_sim)
-bar(sort(unique(k_sim)), counts(k_sim), label="Samples values of k")
-vline!([data_a1f.k], label="Real value", linewidth=2, color="red")
+);
+k_mean = mean(k_sim);
+bar(sort(unique(k_sim)), counts(k_sim), label="Samples values of k");
+vline!([data_a1f.k], label="Real value", linewidth=2, color="red");
 vline!([k_mean], label="Sample mean", linewidth=2, color="blue")
 #endregion
 
@@ -54,7 +56,7 @@ vline!([-5, -1, 0, 5], c="red", line=:dash, label="Components")
 
 M, m, γ, s, S = 1, 0, 100, 4, 2;
 prior_par = (M, m, γ, s, S);
-test_a1_normf = DpmNorm1f(y, prior_par, 10000, 8000);
+@time test_a1_normf = DpmNorm1f(y, prior_par, 100000, 80000);
 
 ## μ
 μ_means = [mean(c) for c in eachcol(test_a1_normf.μ_samples)];
@@ -65,8 +67,8 @@ Plots.abline!(1, 0, label="")
 function cond_dens(y)
     mean(map(x -> pdf(Normal(x[1], sqrt(x[2])), y), eachrow(test_a1_normf.θ_new)))
 end
-@time dens = [cond_dens(y) for y in range(-8, 8, 200)]
-plot(mmodel, components=false, label="Real density")
+@time dens = [cond_dens(y) for y in range(-8, 8, 200)];
+plot(mmodel, components=false, label="Real density");
 plot!(range(-8, 8, length=200), dens, label="Estimated density")
 #endregion
 
