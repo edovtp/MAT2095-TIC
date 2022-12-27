@@ -17,7 +17,7 @@ function DpmNorm1f(y, prior_par, iter, warmup=floor(Int64, iter / 2))
     total_samples = iter - warmup
     μ_samples = Array{Float64}(undef, total_samples, n)
     V_samples = Array{Float64}(undef, total_samples, n)
-    θ_new = Array{Float64}(undef, total_samples, 2)
+    θ_new = Vector{Tuple}(undef, total_samples)
 
     # Posterior distributions
     m_p = @. (m + γ * y) / (γ + 1)
@@ -43,7 +43,7 @@ function DpmNorm1f(y, prior_par, iter, warmup=floor(Int64, iter / 2))
         for i in 1:n
             weights = Vector{Float64}(undef, n)
             weights[i] = r_i[i]                                 # r_i
-            id_c = 1:n .!= i                                    # index complement of i
+            id_c = 1:n .!= i                                    # index complement of {i}
             weights[id_c] = [                                   # q_ij
                 pdf(Normal(x[1], sqrt(x[2])), y[i]) for x in zip(prev_μ[id_c], prev_V[id_c])
             ]
@@ -70,7 +70,7 @@ function DpmNorm1f(y, prior_par, iter, warmup=floor(Int64, iter / 2))
             freqs = collect(values(counter_θ))
             norm_term = 1 / (M + n)
             probs = [freqs .* norm_term; M * norm_term]
-            θ_new[n_sample-warmup, :] .= StatsBase.sample(all_values, Weights(probs))
+            θ_new[n_sample-warmup] = StatsBase.sample(all_values, Weights(probs))
         end
     end
 

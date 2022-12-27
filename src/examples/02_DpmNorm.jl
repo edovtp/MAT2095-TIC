@@ -6,8 +6,8 @@ include("../02_DpmNorm.jl");
 # Recovering parameters
 #region
 Random.seed!(219);
-n, M, m, γ, s, S = 200, 1, 0, 100, 10, 100;
-data_a1f = DpmNormal(n, M, (m, γ, s, S));
+n, M, m, γ, s, S = 100, 1, 0, 100, 10, 100;
+data_a1f = DataDpm(n, M, (m, γ, s, S), "Normal");
 histogram(data_a1f.y, bins=30, label="Simulated data");
 components_means = [x[1] for x in data_a1f.θ];
 components_variances = [x[2] for x in data_a1f.θ];
@@ -32,7 +32,7 @@ k_sim = map(
     eachrow(collect(zip(test_a1_normf.μ_samples, test_a1_normf.V_samples)))
 );
 k_mean = mean(k_sim);
-bar(sort(unique(k_sim)), counts(k_sim), label="Samples values of k");
+bar(sort(unique(k_sim)), counts(k_sim), label="Sampled values of k");
 vline!([data_a1f.k], label="Real value", linewidth=2, color="red");
 vline!([k_mean], label="Sample mean", linewidth=2, color="blue")
 #endregion
@@ -45,7 +45,7 @@ mmodel = MixtureModel(
     [0.15, 0.25, 0.3, 0.3]
 );
 
-n = 100;
+n = 200;
 probs = [0.15, 0.25, 0.3, 0.3];
 nmeans = [-5, -1, 0, 5];
 components = sample(1:4, Weights(probs), n);
@@ -65,7 +65,7 @@ Plots.abline!(1, 0, label="")
 
 ## Density
 function cond_dens(y)
-    mean(map(x -> pdf(Normal(x[1], sqrt(x[2])), y), eachrow(test_a1_normf.θ_new)))
+    mean([pdf(Normal(θ[1], sqrt(θ[2])), y) for θ in test_a1_normf.θ_new])
 end
 @time dens = [cond_dens(y) for y in range(-8, 8, 200)];
 plot(mmodel, components=false, label="Real density");

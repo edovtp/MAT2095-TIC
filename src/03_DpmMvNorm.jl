@@ -1,4 +1,4 @@
-function DpmMvNorm1f(y::Vector, prior_par, iter, warmup=floor(Int64, iter/2))
+function DpmMvNorm1f(y::Vector, prior_par, iter, warmup=floor(Int64, iter / 2))
     """
     Implementation of algorithm 1 (Neal, 2000) for the Multivariate Normal model with 
     conjugate prior G0 and fixed hyperparameters. That is,
@@ -7,7 +7,7 @@ function DpmMvNorm1f(y::Vector, prior_par, iter, warmup=floor(Int64, iter/2))
         θ_i | G ~ G
         G ~ DP(M, G0)
         G0 = NIW(m, γ, Ψ, ν) ≡ MvNorm(μ|m, γΣ)⋅IW(Σ|Ψ, ν)
-    
+
     with parameterization such that E(Σ) = Ψ/(ν - p + 1)
 
     y         : data to fit the model
@@ -16,41 +16,44 @@ function DpmMvNorm1f(y::Vector, prior_par, iter, warmup=floor(Int64, iter/2))
     """
     n = length(y)
     p = length(y[1])
-    M, m, γ, Ψ, S = prior_par
+    M, m, γ, Ψ, ν = prior_par
     total_samples = iter - warmup
     μ_samples = Array{Vector}(undef, total_samples, n)
     Σ_samples = Array{Matrix}(undef, total_samples, n)
     θ_new = Vector{Tuple}(undef, total_samples)
 
     # Posterior parameters
-    m_p = [@. (m + γ * yi)/(1 + γ) for yi in y]
+    m_p = [(m + γ * yi) / (1 + γ) for yi in y]
     γ_p = γ / (1 + γ)
     ν_p = ν + 1
-    Ψ_p = [@. Ψ + (yi - m) ⋅ (yi - m)' / (1 + γ) for yi in y]
-    scale_t = sqrt((1 + γ)/(ν - p + 1) * Ψ) # for r_i
+    Ψ_p = [Ψ + (yi - m) * (yi - m)' / (1 + γ) for yi in y]
+    prior_Σ = InverseWishart(ν, Ψ)
+    post_Σ = [InverseWishart(ν_p, Psi) for Psi in Ψ_p]
+    scale_t = sqrt((1 + γ) / (ν - p + 1) * Ψ)
+    r_i = [M * pdf(MvTDist(ν - p + 1, m, scale_t), obs) for obs in y]
 
     # Initial values
     prev_μ = Vector{Vector}(undef, n)
     prev_Σ = Vector{Matrix}(undef, n)
     for i in 1:n
-        prev_Σ[i] = rand(InverseWishart(ν_p, Ψ_p[i]))
-        prev_μ[i] = rand(MvNormal(m_p[i], γ * prev_Σ[i]))
+        prev_Σ[i] = rand(post_Σ[i])
+        prev_μ[i] = rand(MvNormal(m_p[i], γ_p * prev_Σ[i]))
     end
 
     # Start of the algorithm
     for n_sample in 1:iter
         # Update of each component of θ
-        counter_θ = Dict{Tuple, Int64}()
+        counter_θ = Dict{Tuple,Int64}()
         for i in 1:n
             weights = Vector{Float64}(undef, n)
-            weights[i] = M * pdf(MvTDist(ν - p + 1, m, scale_t))
-            weights[1:end.!i] = map(
-                x -> pdf(MvNormal(x[1], x[2]), y[i]),
-                zip(prev_μ[1:end.!=i], prev_Σ[1:end.!=i])
-            )
+            weights[i] = r_i[i]                               # r_i
+            id_c = 1:n .!= i                                  # index complement of {i}
+            weights[id_c] = [                                 # q_ij
+                pdf(MvNormal(x[1], x[2]), y[i]) for x in zip(prev_μ[id_c], prev_Σ[id_c])
+            ]
             idx_new = StatsBase.sample(1:n, Weights(weights))
             if idx_new == i
-                prev_Σ[i] = rand(InverseWishart(ν_p, Ψ_p[i]))
+                prev_Σ[i] = rand(post_Σ[i])
                 prev_μ[i] = rand(MvNormal(m_p[i], γ * prev_Σ[i]))
             else
                 prev_Σ[i] = prev_Σ[idx_new]
@@ -67,7 +70,7 @@ function DpmMvNorm1f(y::Vector, prior_par, iter, warmup=floor(Int64, iter/2))
 
             # New θ value
             all_values = collect(keys(counter_θ))
-            candidate_Σ = rand(InverseWishart(ν, Ψ))
+            candidate_Σ = rand(prior_Σ)
             candidate_μ = rand(MvNormal(m, γ * candidate_Σ))
             candidate = (candidate_μ, candidate_Σ)
             push!(all_values, candidate)
@@ -81,5 +84,5 @@ function DpmMvNorm1f(y::Vector, prior_par, iter, warmup=floor(Int64, iter/2))
     return (μ_samples=μ_samples, Σ_samples=Σ_samples, θ_new=θ_new)
 end
 
-function DpmMvNorm1(y, prior_par, iter, warmup=floor(Int64, iter/2))
+function DpmMvNorm1(y, prior_par, iter, warmup=floor(Int64, iter / 2))
 end

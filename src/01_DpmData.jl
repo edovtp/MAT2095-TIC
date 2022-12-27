@@ -1,7 +1,7 @@
 function DataDp(n::Int64, M, par, dist)
     if dist == "Nig"
         return DataDpNig(n, M, par)
-    else if dist == "Niw"
+    elseif dist == "Niw"
         return DataDpNiw(n, M, par)
     end
 end
@@ -9,11 +9,12 @@ end
 function DataDpm(n::Int64, M, par, dist)
     if dist == "Normal"
         return DataDpmNormal(n, M, par)
-    else if dist == "MvNorm"
-        return DataDpmMvnorm(n. M, par)
+    elseif dist == "MvNormal"
+        return DataDpmMvNormal(n, M, par)
     end
 end
 
+# Specific functions
 function DataDpNig(n::Int64, M, par)
     """
     Data simulation from a Dirichlet process with Normal-Inv-Gamma base measure using the
@@ -61,7 +62,7 @@ function DataDpmNormal(n::Int64, M, par)
     M   : precision parameter
     par : NIG parameters (m, γ, s, S)
     """
-    θ = DpNigMarginal(n, M, par)
+    θ = DataDpNig(n, M, par)
     k = size(unique(θ))[1]
     y = [rand(Normal(par[1], sqrt(par[2]))) for par in θ]
 
@@ -106,7 +107,7 @@ function DataDpNiw(n::Int64, M, par)
     return marginal_sample
 end
 
-function DataDpmMvnorm(n::Int64, M, par)
+function DataDpmMvNormal(n::Int64, M, par)
     """
     Random sample from a DPM of Multivariate Normals with Normal-Inv-Wishart base measure.
     Returns the component parameters, the number of unique components (k) and the simulated
@@ -120,7 +121,7 @@ function DataDpmMvnorm(n::Int64, M, par)
     M   : precision parameters
     par : NIW parameters (m, γ, Ψ, ν)
     """
-    θ = DpNiwMarginal(n, M, par)
+    θ = DataDpNiw(n, M, par)
     k = size(unique(θ))[1]
     y = [rand(MvNormal(par[1], par[2])) for par in θ]
 
