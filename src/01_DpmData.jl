@@ -1,4 +1,20 @@
-function RdpNigMarginal(n::Int64, M, par)
+function DataDp(n::Int64, M, par, dist)
+    if dist == "Nig"
+        return DataDpNig(n, M, par)
+    else if dist == "Niw"
+        return DataDpNiw(n, M, par)
+    end
+end
+
+function DataDpm(n::Int64, M, par, dist)
+    if dist == "Normal"
+        return DataDpmNormal(n, M, par)
+    else if dist == "MvNorm"
+        return DataDpmMvnorm(n. M, par)
+    end
+end
+
+function DataDpNig(n::Int64, M, par)
     """
     Data simulation from a Dirichlet process with Normal-Inv-Gamma base measure using the
     Pólya Urn representation of Blackwell and McQueen (1973).
@@ -33,7 +49,7 @@ function RdpNigMarginal(n::Int64, M, par)
     return marginal_sample
 end
 
-function RdpmNormal(n::Int64, M, par)
+function DataDpmNormal(n::Int64, M, par)
     """
     Random sample from a DPM of Normals with Normal-Inv-Gamma base measure. Returns the
     component parameters, the number of unique components (k) and the simulated data.
@@ -45,22 +61,21 @@ function RdpmNormal(n::Int64, M, par)
     M   : precision parameter
     par : NIG parameters (m, γ, s, S)
     """
-    θ = RdpNigMarginal(n, M, par)
+    θ = DpNigMarginal(n, M, par)
     k = size(unique(θ))[1]
     y = [rand(Normal(par[1], sqrt(par[2]))) for par in θ]
 
     return (y=y, θ=θ, k=k)
 end
 
-function RdpNiwMarginal(n::Int64, M, par)
+function DataDpNiw(n::Int64, M, par)
     """
     Data simulation from a Dirichlet process with Normal-Inv-Wishart base measure using 
     the Pólya Urn representation of Blackwell and McQueen (1973).
 
     The parameterization of the base measure is such that γ scales Σ. That is,
-    G0 = MvNormal(μ|m, γΣ)⋅Inv-Wishart(Σ|Ψ, ν)
-
-    and E(Σ) = Ψ/(ν - p + 1) with p the dimension of the data
+    G0 = MvNormal(μ|m, γΣ)⋅Inv-Wishart(Σ|Ψ, ν), and E(Σ) = Ψ/(ν - p + 1) with p the
+    dimension of the data.
 
     n   : sample length
     M   : precision parameter
@@ -91,22 +106,21 @@ function RdpNiwMarginal(n::Int64, M, par)
     return marginal_sample
 end
 
-function RdpmMvnorm(n::Int64, M, par)
+function DataDpmMvnorm(n::Int64, M, par)
     """
     Random sample from a DPM of Multivariate Normals with Normal-Inv-Wishart base measure.
     Returns the component parameters, the number of unique components (k) and the simulated
     data.
 
     The parameterization of the base measure is such that γ scales Σ. That is,
-    G0 = MvNormal(μ|m, γΣ)⋅Inv-Wishart(Σ|Ψ, ν)
-
-    and E(Σ) = Ψ/(ν - p + 1) with p the dimension of the data
+    G0 = MvNormal(μ|m, γΣ)⋅Inv-Wishart(Σ|Ψ, ν), and E(Σ) = Ψ/(ν - p + 1) with p the
+    dimension of the data.
 
     n   : sample length
     M   : precision parameters
     par : NIW parameters (m, γ, Ψ, ν)
     """
-    θ = RdpNiwMarginal(n, M, par)
+    θ = DpNiwMarginal(n, M, par)
     k = size(unique(θ))[1]
     y = [rand(MvNormal(par[1], par[2])) for par in θ]
 
