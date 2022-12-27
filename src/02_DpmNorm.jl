@@ -35,7 +35,7 @@ function DpmNorm1f(y, prior_par, iter, warmup=floor(Int64, iter / 2))
     # Start of the algorithm
     for n_sample in 1:iter
         # Update of each component of θ
-        counter_θ = Dict{Any, Int64}()
+        counter_θ = Dict{Tuple, Int64}()
         for i in 1:n
             weights = Vector{Float64}(undef, n)
             weights[i] = M * pdf(TDist(s), (y[i] - m) / scale_t) / scale_t # r_i
@@ -83,6 +83,7 @@ function DpmNorm2f()
 end
 
 function DpmNorm2()
+    
 end
 
 function DpmNorm8f()

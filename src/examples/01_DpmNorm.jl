@@ -1,5 +1,6 @@
-include("00_helpers.jl")
-include("../01_DpmNorm.jl")
+include("../00_helpers.jl");
+include("../01_DpmData.jl");
+include("../02_DpmNorm.jl");
 
 ## Algorithm 1 - Fixed hyperparameters
 # Recovering parameters
@@ -8,7 +9,7 @@ Random.seed!(219);
 n, M, m, γ, s, S = 200, 1, 0, 100, 10, 100;
 data_a1f = RdpmNormal(n, M, (m, γ, s, S));
 histogram(data_a1f.y, bins=30, label="Simulated data")
-vline!(unique(data_a1f.θ[:, 1]), label="Components")
+vline!(unique([x[1] for x in data_a1f.θ]), label="Components")
 
 prior_par = (M, m, γ, 2 * s, 2 * S);
 @time test_a1_normf = DpmNorm1f(data_a1f.y, prior_par, 10000, 8000);
@@ -69,7 +70,11 @@ plot(mmodel, components=false, label="Real density")
 plot!(range(-8, 8, length=200), dens, label="Estimated density")
 #endregion
 
-
 ## Algorithm 1 - Random hyperparameters
+# Galaxies example
+#region
+#endregion
 
-
+# Sticky clusters
+#region
+#endregion
