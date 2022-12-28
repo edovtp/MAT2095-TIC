@@ -5,9 +5,9 @@ renv/
 pruebas.R
 *.html
 aux/
-presentations/monografía.pdf
+monography/monografía.pdf
 code.jl
 monografía_files
-presentations/code/c[0-9]_c.jl
+monography/code/
 verano/
 dudas.md

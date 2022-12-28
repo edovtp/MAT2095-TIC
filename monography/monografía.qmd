@@ -35,7 +35,7 @@ La monografía incluye una pequeña introducción tanto a la estadística Bayesi
 \newpage
 # Introducción
 
-El material presentado a continuación se enmarca en el área de la Estadística Bayesiana No-Paramétrica, por lo que, en primer lugar, es una buena idea presentar una breve introducción de ambos conceptos.
+El material presentado a continuación se enmarca en el área de la Estadística Bayesiana No-Paramétrica, por lo que, en primer lugar, es una buena idea presentar una breve introducción de ambos conceptos. Lo siguiente no pretende ser una introducción exhaustiva, para lo cual existe bibliografía mucho más adecuada.
 
 ## Estadística Bayesiana
 
@@ -89,7 +89,7 @@ $$
 \end{aligned}
 $$ {#eq-posterior-predictive}
 
-donde en la segunda ecuación realizamos el supuesto de independencia condicional entre las observaciones, dado los valores del vector de parámetros $\theta$. Ambos resultados, [-@eq-posterior] y [-@eq-posterior-predictive], podemos considerarlos como los productos principales para ser utilizados en la inferencia estadística mediante este paradigma.
+donde en la segunda ecuación realizamos el supuesto de independencia condicional entre las observaciones, dado los valores del vector de parámetros $\theta$. Ambos resultados, ([-@eq-posterior]) y ([-@eq-posterior-predictive]), podemos considerarlos como los productos principales para ser utilizados en la inferencia estadística mediante este paradigma.
 
 \newpage
 ```{=tex}
@@ -148,21 +148,13 @@ Además, en el ejemplo anterior obtuvimos un resultado bastante conveniente. Al 
 
 Los modelos conjugados son convenientes ya que obtenemos resultados analíticamente tractables, siempre y cuando esta clase sea analíticamente tractable, así como generalmente intuitivos. Ahora, nada nos debe restringir a ocupar modelos conjugados. En particular, vemos que, en un principio, tanto para la verosimilitud como para la priori podemos ocupar cualquier distribución de probabilidad, que deberán ser elegidas de acorde al problema.
 
-Lo anterior provocó uno de los cuellos de botella más importantes de la estadística Bayesiana, que frenó su amplio uso en la práctica. Principalmente, el problema radicaba en los cálculos computacionales necesarios para realizar la inferencia a posteriori.
+Lo anterior provocó uno de los cuellos de botella más importantes de la estadística Bayesiana, que frenó su amplio uso en la práctica, donde los modelos necesitaban ser cada vez más realísticos. Principalmente, el problema radica en los cálculos computacionales necesarios para realizar la inferencia a posteriori, que incluye tanto la evaluación de ([-@eq-posterior]) y ([-@eq-posterior-predictive]), las cuales no siempre pueden ser obtenidas de forma analítica.
 
-* Métodos computacionales
-  * Rejection Sampling
-  * Importance Sampling
-  * MCMC: Gibbs sampler, Slice sampling
-  * MCMC: Metropolis y Metropolis-Hastings
-  * MCMC: Hamiltonian Monte Carlo and No-U-Turn Sampler
-  * MCMC: Sequential Monte Carlo
+Para resolver parcialmente lo anterior se ha recurrido principalmente a métodos de simulación, utilizando muestras a posteriori para evaluar diferentes cantidades de interés, como momentos, cuantiles, probabilidades, etc. Entre estos métodos computacionales se encuentran Rejection Sampling, Importance Sampling y métodos basados en cadenas de Markov como Slice sampling, Gibbs Sampling, Metropolis-Hastings, Hamiltonian Monte Carlo (HMC) y No-U-Turn Sampler (NUTS), Sequential Monte Carlo, entre otros. Para una introducción a cada uno de los métodos anteriores, ver [@gelman_bayesian_2014].
 
-* Lenguajes probabilísticos
-  * Stan
-  * Turing
-  * PyMC3
+No solo estos modelos se han ido perfeccionando con el tiempo, si no que también se han desarrollado diferentes softwares que permiten definir nuestros modelos para realizar la simulación a posteriori, sin tener que uno programar toda la maquinaria necesaria. Algunos ejemplos son los lenguajes probabilísticos BUGS, JAGS, Stan, PyMC3 y Turing. Además, existen librerías escritas sobre estos lenguajes probabilísticos, que ayudan aún más a que personas de otras áreas puedan fácilmente ajustar sus modelos.
 
+\newpage
 ## Estadística No-Paramétrica
 
 Normalmente, en estadística asumimos
