@@ -188,31 +188,39 @@ Necesidad de métodos flexibles
 \newpage
 # Procesos de Dirichlet
 
+Consideremos, en primer lugar, el problema de estimación de densidades. Específicamente, consideremos una muestra aleatoria $y_1, ..., y_n$ de una medida de probabilidad $G$ no especificada, denotado por $y_1, ..., y_n | G \overset{i.i.d.}{\sim} G$.
+
+Considerando el paradigma Bayesiano, lo anterior debe ser completado con una medida de probabilidad sobre $G$, esto es, sobre el espacio de las medidas de probabilidad. Una de estas opciones es la del Proceso de Dirichlet [@ferguson_bayesian_1973], que probablemente sea uno de los puntos de partida más usuales a los modelos no paramétricos, y que tomará una gran importancia en los siguientes capítulos.
+
 ## Definición
 
-Consideremos en primer lugar el problema de estimación de densidades ...
-
-Considerando lo anterior, debemos entonces definir medidas de probabilidad sobre medidas de probabilidad. Una de estas opciones es la del Proceso de Dirichlet, que definimos a continuación.
+Presentamos a continuación la definición formal de estos procesos.
 
 ```{=tex}
 % Definición Proceso de Dirichlet
 \begin{definicion}[(Ferguson, 1973)]
-  Sea $\alpha>0$ y $G_0$ una medida de probabilidad definida sobre $S$. Un \textbf{Proceso de Dirichlet (DP)} de parámetros $(\alpha, G_0)$, denotado por $\text{DP}(\alpha, G_0)$, es una medida de probabilidad aleatoria $G$ definida en $S$ que asigna probabilidad $G(B)$ a todo conjunto medible $B$ tal que, para toda partición medible finita $\{B_1, ..., B_k\}$ de $S$, la distribución conjunta del vector $(G(B_1), ..., G(B_k))$ es Dirichlet con parámetros
+  Sea $M>0$ y $G_0$ una medida de probabilidad definida sobre $S$. Un \textbf{Proceso de Dirichlet (DP)} de parámetros $(M, G_0)$, denotado por $\text{DP}(M, G_0)$, es una medida de probabilidad aleatoria $G$ definida en $S$ que asigna probabilidad $G(B)$ a todo conjunto medible $B$ tal que, para toda partición medible finita $\{B_1, ..., B_k\}$ de $S$, la distribución conjunta del vector $(G(B_1), ..., G(B_k))$ es Dirichlet con parámetros
 
 $$
-(\alpha G_0(B_1), ..., \alpha G_0(B_k))
+(M G_0(B_1), ..., M G_0(B_k))
 $$
 
-
-Los parámetros $G_0$ y $\alpha$ se denominan la \textbf{medida de centralización} y la \textbf{precisión}, respectivamente. También se suele denominar $\alpha G_0$ como la \textbf{medida base}.
+Los parámetros $G_0$ y $M$ se denominan la \textbf{medida de centralización} y la \textbf{precisión}, respectivamente. También se suele denominar $M G_0$ como la \textbf{medida base}.
 \end{definicion}
 ```
 
-Ferguson muestra que $G$ existe para todo $G_0$. Además, señala algunas de las propiedades estadísticas de los DP, tales como:
+```{=tex}
+\begin{nota}
+  En la mayoría de la literatura se suele utilizar $\alpha$ en vez de M. Decidí en este caso utilizar la segunda opción para así tener disponible la nomenclatura $\alpha$ para parámetros de otras distribuciones, como por ejemplo la Gamma.
+\end{nota}
+```
 
+En su artículo, Ferguson muestra que $G$ existe para todo $G_0$ . Además, señala algunas de las propiedades estadísticas de los DP, que se deducen directamente de la definición del proceso al considerar la partición $\{B, B^c\}$.
+
+\newpage
 ```{=tex}
 \begin{propiedad}[(Propiedades Proceso de Dirichlet)]
-  Sea $G \sim \text{DP}(\alpha, G_0$), $B, B_1$ y $B_2$ conjuntos medibles, con $B_1 \cap B_2 = \emptyset$. Luego,
+  Sea $G \sim \text{DP}(M, G_0$), $B, B_1$ y $B_2$ conjuntos medibles, con $B_1 \cap B_2 = \emptyset$. Luego,
   \begin{itemize}
     \item El soporte de $G$ coincide con el de $G_0$. Esto es,
     \begin{equation*}
@@ -223,27 +231,27 @@ Ferguson muestra que $G$ existe para todo $G_0$. Además, señala algunas de las
       \quad G_0(B) > 0 \implies P(G(B) > 0) > 1 
     \end{equation*}
     \item $\text{E}(G(B)) = G_0(B)$
-    \item $\text{Var}(G(B)) = \frac{G_0(B)(1 - G_0(B)}{1 + \alpha}$
-    \item $\text{Cov}(G(B_1), G(B_2)) = \frac{-G_0(B_1)G_0(B_2)}{1 + \alpha}$
+    \item $\text{Var}(G(B)) = \frac{G_0(B)(1 - G_0(B)}{1 + M}$
+    \item $\text{Cov}(G(B_1), G(B_2)) = \frac{-G_0(B_1)G_0(B_2)}{1 + M}$
   \end{itemize}
 \end{propiedad}
 ```
 
-Las propiedades anteriores nos muestran la razón por la que $G_0$ se denomina la medida de centralización, así como el por qué $\alpha$ se denomina el parámetro de precisión. La covarianza muestra que la covarianza entre dos conjuntos cualesquiera es siempre negativa (acá hay extensiones, mencionar que están fuera del alcance de este trabajo)
+La segunda propiedad nos muestra la razón por la que $G_0$ recibe el nombre de *medida de centralización*. Por otro lado, la tercera propiedad nos da la intuición por la que el parámetro M recibe el nombre de *parámetro de precisión*, al controlar el grado de concentración en la media $G_0(B)$. Por último, la última propiedad nos entrega una característica bastante interesante, y es que la covarianza entre dos conjuntos cualesquiera es siempre negativa. Lo anterior puede ser una característica no deseada, donde esperaríamos que exista una alta correlación entre conjuntos $B_1$ y $B_2$ cercanos entre sí, pero aquellas extensiones están fuera del alcance de este trabajo.
 
 ```{=tex}
 \begin{nota}
-  Algunos se preguntarán, como yo lo hice la primera vez que aprendí sobre esto, el por qué se denomina un \textbf{proceso}. La razón es bastante sencilla, y es que el DP es un proceso estocástico que, en vez de estar indexado por índices comunes como el tiempo o coordenadas geográficas, está indexado por todos los conjuntos medibles, esto es, para cada conjunto medible $B$ tenemos la variable aleatoria $G(B)$.
+  Algunos se preguntarán, como yo lo hice al empezar a estudiar estos temas, el por qué lo anterior se denomina un \textbf{proceso}. La razón es bastante sencilla, y es que el DP es un proceso estocástico que, en vez de estar indexado por índices comunes como el tiempo o coordenadas geográficas, está indexado por todos los conjuntos medibles, esto es, para cada conjunto medible $B$ tenemos la variable aleatoria $G(B)$.
 \end{nota}
 ```
 
-Una propiedad muy importante que muestra Ferguson, que será central en el transcurso de esta monografía, es que $G$ es casi-seguramente discreta. Este resultado nos dice que $G$ se puede escribir como una suma ponderada de masas puntuales, también denominados átomos, esto es,
+Una propiedad muy importante, que será central en el transcurso de esta monografía, es que $G$ es casi-seguramente discreta. Este resultado nos dice que $G$ se puede escribir como una suma ponderada de masas puntuales (también denominados *átomos*). Esto es,
 
 $$
 G(\cdot) = \sum_{h=1}^\infty w_h \delta_{m_h}(\cdot)
 $$
 
-donde $\sum_{h=1}^\infty w_h = 1$ y $\delta_{x}(\cdot)$ denota la medida de Dirac en $x$. En la Figura 2 se presenta gráficamente un Proceso de Dirichlet. A la izquierda se ilustran los átomos con puntos morados, donde los largos indican la masa que aporta cada uno. A la derecha se muestra cómo se calcularía la probabilidad para un cierto conjunto medible $B$, que es simplemente tomar la suma de las masas de los átomos que se encuentran dentro de este conjunto.
+donde $\sum_{h=1}^\infty w_h = 1$ y $\delta_{x}(\cdot)$ denota la medida de Dirac en $x$, i.e. $\delta_x(A) = 1$ si $x\in A$ y $\delta_x(A) = 0$ en caso contrario. En la Figura 2 se ilustra gráficamente un Proceso de Dirichlet. A la izquierda se ilustran los átomos con puntos morados, donde los largos indican el peso que aporta cada uno. A la derecha se muestra cómo se calcularía la probabilidad para un cierto conjunto medible $B$, que es simplemente tomar la suma de las masas de los átomos que se encuentran dentro de este conjunto.
 
 ::: {#fig-dp layout-ncol=2}
 ![](figures/DP%20-%20Definition.jpg)
@@ -253,14 +261,14 @@ donde $\sum_{h=1}^\infty w_h = 1$ y $\delta_{x}(\cdot)$ denota la medida de Dira
 Naturaleza discreta del Proceso de Dirichlet
 :::
 
-Por último, Ferguson tambien demuestra que un DP es conjugada para una muestra i.i.d. de esta distribución, donde se considera un promedio ponderado entre la medida de centralización $G_0$ y la función de distribución empírica de los datos.
+Por último, Ferguson tambien demuestra que un DP es conjugado para una muestra i.i.d. de esta distribución, donde para la medida de centralización se considera un promedio ponderado entre la medida a priori $G_0$ y la función de distribución empírica de los datos, mientras que la precisión aumenta en el número de observaciones.
 
 ```{=tex}
 % Posteriori Proceso de Dirichlet
 \begin{proposicion}[(Ferguson, 1973)]
-  Sea $y_1, ..., y_n | G \overset{i.i.d}{\sim} G$ y $G \sim \text{DP}(\alpha, G_0)$. Luego,
+  Sea $y_1, ..., y_n | G \overset{i.i.d}{\sim} G$ y $G \sim \text{DP}(M, G_0)$. Luego,
   \begin{equation*}
-    G | y_1, ..., y_n \sim \text{DP}\left(\alpha + n, \frac{\alpha G_0 + n \hat{f}_n}{\alpha + n}\right)
+    G | y_1, ..., y_n \sim \text{DP}\left(M + n, \frac{M G_0 + n \hat{f}_n}{M + n}\right)
   \end{equation*}
   donde $\hat{f}_n$ es la distribución empírica obtenida a partir de los datos, i.e.
   \begin{equation*}
@@ -269,19 +277,19 @@ Por último, Ferguson tambien demuestra que un DP es conjugada para una muestra 
 \end{proposicion}
 ```
 
-Ahora, todo lo anterior aún no nos dice mucho acerca de como trabajar con esta distribución, ya que de momento solo sabemos que existen tales procesos, así como algunas propiedades. En la práctica, se ha trabajado principalmente de dos formas. La primera es marginalizando la medida de probabilidad aleatoria $G$, esto es, trabajar directamente con
+Ahora, todo lo anterior aún no nos dice mucho acerca de como trabajar con esta distribución, ya que de momento sólo sabemos que existen tales procesos. En la práctica, se ha trabajado principalmente de dos formas. La primera es marginalizando la medida de probabilidad aleatoria $G$, esto es, trabajar directamente con
 
 $$
 p(y_1, ..., y_n) = \int p(y_1, ..., y_n|G) d\pi(G)
 $$
 
-La otra forma es considerar la construcción de un DP mediante una representación basada en cortar una varilla de largo unitario de manera sucesiva e indefinida, denominada *Stick-Breaking*.
+La otra forma es considerar la construcción de un DP mediante una representación basada en cortar una varilla de largo unitario, de manera sucesiva e indefinida, denominada *Stick-Breaking*.
 
 ## Construcción mediante Urnas de Pólya
 
 Una de las formas de poder trabajar con un Proceso de Dirichlet es, irónicamente, no trabajar con él. En probabilidades esto lo logramos marginalizando con respecto a la medida que no es de interés.
 
-Considerando una muestra aleatoria $y_1, ..., y_n|G \sim G$, Blackwell y MacQueen  [@blackwell_ferguson_1973] formulan una representación de la densidad marginal $p(y_1, ..., y_n)$ mediante una representación por Urnas de Pólya. En particular, se tiene que
+Considerando una muestra aleatoria $y_1, ..., y_n|G \sim G$, Blackwell y MacQueen  [-@blackwell_ferguson_1973] formulan una representación de la densidad marginal $p(y_1, ..., y_n)$ mediante una construcción por Urnas de Pólya. En particular, sabemos que la densidad marginal conjunta podemos expresarla como
 
 $$
 p(y_1, ..., y_n) = p(y_1)\prod_{i=2}^n p(y_i|y_1, ..., y_{i-1})
@@ -290,14 +298,22 @@ $$
 y lo que muestran es que
 
 $$
-p(y_i|y_1, ..., y_{i-1}) = \frac{1}{M + i - 1}\sum_{h=1}^{i-1}\delta_{y_h}(y_i) + \frac{M}{M + i - 1}G_0(y_i)
-$$
+p(y_i|y_1, ..., y_{i-1}) = \frac{1}{M + i - 1}\sum_{h=1}^{i-1}\delta_{y_h}(y_i) + \frac{M}{M + i - 1}G_0(y_i), \quad i = 2, ..., n
+$${#eq-dp-marginal}
 
-Hay dos cosas bastante importantes:
+con $y_1 \sim G_0$. Este resultado puede ser interpretado de la siguiente manera, razón por la cuál se asocia a Urnas de Pólya:
 
-* Dada la intercambiabilidad, las condicionales completas toman la misma forma
-* La predictiva toma la misma forma para $i = n + 1$
-* Lo anterior se puede simplificar considerando solo los valores iguales
+```{=tex}
+\begin{nota}
+  Esta construcción también recibe el nombre del Proceso del Restaurante Chino (CRP) si es que, en vez de urnas, consideramos a clientes llegando a un restaurante y sentándolos en mesas.
+\end{nota}
+```
+
+De este resultado también se pueden observar tres cosas importantes:
+
+* Dada la intercambiabilidad de $y_1, ..., y_n$, las distribuciones condicionales completas $p(y_i|y_{-i})$ toman la misma forma que para $i = n$.
+* La distribución a priori predictiva toma la misma forma para $i = n + 1$.
+* Las condicionales [@eq-dp-marginal] se pueden simplificar considerando solo los valores iguales
 
 ```{=tex}
 \begin{ejemplo}[Urnas de Pólya]
@@ -411,9 +427,9 @@ Resultados de Antoniak, Korwar & Hollander.
 \newpage
 # Dirichlet Process Mixture Models
 
-## Definición
+## Introducción
 
-Podemos notar de la sección anterior que obtener distribuciones discretas con probabilidad 1 puede no ser adecuado para diferentes problemas. Considerando lo anterior, nos interesa extender los procesos de Dirichlet para formular modelos adecuados a estos casos. Utilizaremos la notación de [@neal_markov_2000]
+Obtener distribuciones discretas puede no ser adecuado para diferentes problemas. Nos interesa entonces extender los procesos de Dirichlet para formular modelos que los utilicen y reflejen realmente el problema considerado. En lo que sigue, utilizaremos principalmente la notación de Neal (2000), mezclándola en parte con la del libro *Bayesian Nonparametric Data Analysis* [@muller_bayesian_2015].
 
 Una opción es usar estas medidas de probabilidad aleatoria como la *mixing distribution* en un modelo de mezcla, esto es,
 
@@ -421,7 +437,7 @@ $$
 f_G(y) = \int f_\theta(y)dG(\theta)
 $$
 
-Equivalentemente:
+Equivalentemente, lo anterior puede ser escrito a través de un modelo jerárquico, introduciendo variables latentes $\theta_i$ para cada una de las observaciones. Esto es,
 
 $$
 \begin{aligned}
@@ -431,31 +447,13 @@ G &\sim \text{DP}(\alpha, G_0)
 \end{aligned}
 $$
 
-**Resultado de Antoniak**
-
-De manera más general podemos incluir inferencia sobre $\alpha$ e hiperparámetros de la medida de centro $G_0$. Procedemos entonces con el siguiente modelo:
-
-$$
-\begin{aligned}
-  y_i|\theta_i &\overset{ind.}{\sim} F(\theta_i) \\
-  \theta_i | G &\overset{i.i.d.}{\sim} G \\
-  G &\sim \text{DP}(\alpha, G_\eta) \\
-  (\alpha, \eta) &\sim \pi
-\end{aligned}
-$${#eq-dpm}
-
-
-## Simulación a posteriori
-
-* Muestreo de Gibbs [@geman_stochastic_1984]
-
-* Posteriori condicional completa de $\theta$.
+De lo anterior sale una característica de este modelo que será clave en lo que sigue, particularmente en el contexto de clustering y es lo que vimos en la sección anterior con respecto a la distribución marginal de los $\theta_i$. En particular,
 
 $$
 \theta_i | \theta_{-i}, y_i \sim \sum_{j\neq i}q_{i,j}\delta(\theta_j) + r_i H_i
 $$
 
-donde
+donde,
 
 $$
 \begin{aligned}
@@ -469,14 +467,45 @@ donde $b$ es tal que $\sum_{j\neq i}q_{i,j} + r_i = 1$ y $H_i$ es la posteriori 
 * Resultado $\alpha$: depende solo del número de valores únicos en $\theta$.
 * Resultado $\eta$: proporcional a su priori multiplicada por $\prod_{c} G_0(\theta_i)$.
 
+**Resultado de Antoniak**
+
+De manera más general podemos incluir inferencia sobre $\alpha$ e hiperparámetros de la medida de centro $G_0$. Procedemos entonces con el siguiente modelo:
+
+
+$$
+\begin{aligned}
+  y_i|\theta_i \overset{ind.}&{\sim} F(\theta_i) \\
+  \theta_i | G \overset{i.i.d.}&{\sim} G \\
+  G &\sim \text{DP}(\alpha, G_\eta) \\
+  (\alpha, \eta) &\sim \pi
+\end{aligned}
+$${#eq-dpm}
+
+
+## Simulación a posteriori
+
+Radford Neal presenta una revisión histórica de los algoritmos de simulación para el modelo ([-@eq-dpm]), los cuales se basan principalmente en Gibbs Sampling [@geman_stochastic_1984].
+
+En particular, nuestra meta principal es poder obtener muestras de la distribución a posteriori de $\theta = (\theta_1, ..., \theta_n)$. Estas muestras nos permiten entonces evaluar la cantidad de interés en estimación de densidades, que es (* LINK O ECUACIÓN DE LA POSTERIORI PREDICTIVA). En particular,
+
+$$
+\begin{aligned}
+  p(y_{n+1}|\mathbf{y}) &= \int F(\theta_{n+1})dP(\theta_{n + 1}|\mathbf{y}) \\
+  &= \int F(\theta_{n+1})p(\theta_{n+1}|\theta)dP(\theta|\mathbf{y}) \\
+  &\approx (1 / T) \sum_{t=1}^T F(\theta_{n+1}^{(t)})
+\end{aligned}
+$$
+
+donde $\theta_{n+1}^{(t)}$, $t=1,...,T$, corresponden a muestras de $\theta_{n+1}|\theta$, dadas por (* INSERTAR ECUACIÓN DE LA POSTERIORI PREDICTIVA).
+
+La clave entonces es poder simular de la posteriori. El muestreo de Gibbs nos dice que una forma de realizar lo anterior es muestrear de las distribuciones condicionales completas a posteriorio, lo cual está dado por la (* LINK A ECUACIÓN ANTERIOR). Notamos entonces que hay dos problemas claves:
+
+* Muestrear de la distribución $H_i$, $i = 1,...,n$
+* Calcular la integral en $r_i$
+
+A continuación, veremos algunos casos para mitigar ambos problemas, realizando una revisión histórica de los diferentes algoritmos basados en muestreo de Gibbs, que culmina en lo que se denomina el *Algoritmo 8* de Neal, que permite realizar simulación en el modelo general dado en ([@eq-dpm]).
+
 ### Caso conjugado
-
-De la ecuación anterior hay dos problemas:
-
-* Simular de $H_i$
-* Calcular la integral $\int F(y_i, \theta)dG_0(\theta)$
-
-Así, en primera instancia se consideraron modelos conjugados.
 
 #### Escobar & West (1995)
 
