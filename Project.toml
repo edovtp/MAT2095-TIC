@@ -4,11 +4,13 @@ authors = ["Eduardo Vásquez <evasquezt@uc.cl>"]
 version = "0.1.0"
 
 [deps]
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 ConjugatePriors = "1624bea9-42b1-5fc1-afd3-e96f729c8d6c"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 ElasticArrays = "fdbdab4c-e67f-52f5-8c3f-e7b388dad3d4"
 FreqTables = "da1fdf0e-e0ff-5433-a45f-9bb5ff651cb1"
 IJulia = "7073ff75-c697-5162-941a-fcdaad2a7d2a"
+Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 NamedArrays = "86f7a689-2022-50b4-a561-43c23ac3c673"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
