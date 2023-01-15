@@ -20,6 +20,17 @@ crossref:
 bibliography: references.bib
 ---
 
+```{julia}
+#| include: false
+using Random
+using StatsBase
+using Distributions
+using ConjugatePriors
+using ElasticArrays
+using Plots
+using StatsPlots
+```
+
 \newpage
 
 \section*{Prefacio}
@@ -228,7 +239,7 @@ En su artículo, Ferguson muestra que $G$ existe para todo $G_0$ . Además, señ
     \end{equation*}
     y
     \begin{equation*}
-      \quad G_0(B) > 0 \implies P(G(B) > 0) > 1 
+      \quad G_0(B) > 0 \implies P(G(B) > 0) = 1 
     \end{equation*}
     \item $\text{E}(G(B)) = G_0(B)$
     \item $\text{Var}(G(B)) = \frac{G_0(B)(1 - G_0(B)}{1 + M}$
@@ -285,9 +296,11 @@ $$
 
 La otra forma es considerar la construcción de un DP mediante una representación basada en cortar una varilla de largo unitario, de manera sucesiva e indefinida, denominada *Stick-Breaking*.
 
-## Construcción mediante Urnas de Pólya
+## Construcción de Procesos de Dirichlet
 
-Una de las formas de poder trabajar con un Proceso de Dirichlet es, irónicamente, no trabajar con él. En probabilidades esto lo logramos marginalizando con respecto a la medida que no es de interés.
+### Urnas de Pólya o Proceso del Restaurante Chino
+
+Una de las formas de poder trabajar con un Proceso de Dirichlet es, irónicamente, no trabajar con él. En probabilidades esto lo logramos marginalizando con respecto a la medida de la variable que no es de interés.
 
 Considerando una muestra aleatoria $y_1, ..., y_n|G \sim G$, Blackwell y MacQueen  [-@blackwell_ferguson_1973] formulan una representación de la densidad marginal $p(y_1, ..., y_n)$ mediante una construcción por Urnas de Pólya. En particular, sabemos que la densidad marginal conjunta podemos expresarla como
 
@@ -295,64 +308,52 @@ $$
 p(y_1, ..., y_n) = p(y_1)\prod_{i=2}^n p(y_i|y_1, ..., y_{i-1})
 $$
 
-y lo que muestran es que
+y lo que muestran ambos autores es que $p(y_1)$ es la densidad de $G_0$ y que, para $i = 2, ..., n$,
 
 $$
-p(y_i|y_1, ..., y_{i-1}) = \frac{1}{M + i - 1}\sum_{h=1}^{i-1}\delta_{y_h}(y_i) + \frac{M}{M + i - 1}G_0(y_i), \quad i = 2, ..., n
+p(y_i|y_1, ..., y_{i-1}) = \frac{1}{M + i - 1}\sum_{h=1}^{i-1}\delta_{y_h}(y_i) + \frac{M}{M + i - 1}G_0(y_i)
 $${#eq-dp-marginal}
 
-con $y_1 \sim G_0$. Este resultado puede ser interpretado de la siguiente manera, razón por la cuál se asocia a Urnas de Pólya:
+Este resultado puede ser interpretado de la siguiente manera, razón por la cuál se asocia a Urnas de Pólya: consideremos una especie de generador de colores $G_0$ y una urna en la cuál iremos depositando pelotas de diferentes colores. Partimos nuestro proceso generando un color y depositando una pelota en la urna de ese mismo color. Luego, seguimos el proceso para $i = 1, 2, ...,$ como:
+
+* Con probabilidad $M/(M + i - 1)$ generamos un nuevo color de $G_0$ y depositamos en la urna una pelota de ese color.
+* En caso contrario, sacamos una pelota al azar de la urna y devolvemos una pelota extra del mismo color.
+
+Lo que muestran Blackwell y MacQueen es que, siguiendo este proceso de forma infinita, el proceso converge a un proceso de Dirichlet, por lo que las densidades marginales finitas coinciden y están dadas por la ecuación ([-@eq-dp-marginal]).
 
 ```{=tex}
 \begin{nota}
-  Esta construcción también recibe el nombre del Proceso del Restaurante Chino (CRP) si es que, en vez de urnas, consideramos a clientes llegando a un restaurante y sentándolos en mesas.
+  Esta construcción también recibe el nombre del Proceso del Restaurante Chino (CRP). En este caso, se considera un restaurante de mesas infinitas y que $G_0$ es un generador de comidas. De manera sucesiva entran clientes y los sentamos en una mesa vacía con probabilidad $M/(M + i - 1)$, sirviéndoles un nuevo plato de $G_0$ o, en caso contrario, se elige a otro cliente al azar, sentando al nuevo cliente en la misma mesa, y sirviéndole el mismo plato.
 \end{nota}
 ```
 
-De este resultado también se pueden observar tres cosas importantes:
+De ([-@eq-dp-marginal]) también se pueden observar tres cosas importantes:
 
-* Dada la intercambiabilidad de $y_1, ..., y_n$, las distribuciones condicionales completas $p(y_i|y_{-i})$ toman la misma forma que para $i = n$.
+* Dada la intercambiabilidad de $y_1, ..., y_n$, las distribuciones condicionales completas $p(y_i|y_{-i})$ toman la misma forma que para $i = n$. Estas distribuciones son la pieza clave para realizar simulación a posteriori mediante muestreo de Gibbs.
 * La distribución a priori predictiva toma la misma forma para $i = n + 1$.
-* Las condicionales [@eq-dp-marginal] se pueden simplificar considerando solo los valores iguales
+* Las condicionales ([-@eq-dp-marginal]) se pueden simplificar considerando solo los valores iguales de $y_1, ..., y_{i-1}$. Sean $y^{*}_1, ..., y^{*}_k$ los valores únicos y $n_j$, $j=1,...,k$ el número de veces que se repite cada valor. Luego podemos escribir la distribución marginal de forma equivalente como
+
+$$
+p(y_i|y_1, ..., y_{i-1}) = \frac{n_j}{M + i - 1}\sum_{j=1}^{k}\delta_{y_j^{*}}(y_i) + \frac{M}{M + i - 1}G_0(y_i)
+$$
 
 ```{=tex}
 \begin{ejemplo}[Urnas de Pólya]
-  Para ilustrar, consideramos el ejemplo de obtener datos de un Proceso de Dirichlet con medida de centralización Gamma(6, 4) y precisión $\alpha = 1, 10, 50, 100, 1000, 10000$.
+  Para ilustrar los resultados anteriores, en la Figura 3 se presentan muestras aleatorias de tamaño 100 de un proceso de Dirichlet con medida de centralización Gamma(6, 4) y diferentes valores de $M = 1, 10, 50, 100, 1000, 10000$. \\
 \end{ejemplo}
 ```
 
+::: {#fig-dp-urn}
+![](figures/DP%20-%20Urn.png)
 
-```{julia}
-#| label: fig-crp-gamma
-#| echo: false
-#| fig-cap: Simulación de datos provenientes de un Proceso de Dirichlet con medida de centralización Gamma(6, 4) (en azul)
-#| fig-subcap:
-#|   - $\alpha$ = 1
-#|   - $\alpha$ = 10
-#|   - $\alpha$ = 50
-#|   - $\alpha$ = 100
-#|   - $\alpha$ = 1000
-#|   - $\alpha$ = 10000
-#| layout-ncol: 3
-#| layout-nrow: 2
+Muestra simulada directamente de la distribución marginal de un proceso de Dirichlet. Es posible ver que, a medida que $M$ aumenta, el histograma se va pareciendo cada vez más a $G_0$, representada en azul. 
+:::
 
-# include("../src/00_extras.jl")
-# include("code/c2_f.jl")
-
-# Random.seed!(219);
-# G0 = Distributions.Gamma(6, 1/4);
-# display(tic_rdp_marginal_example(500, 1, G0))
-# display(tic_rdp_marginal_example(500, 10, G0))
-# display(tic_rdp_marginal_example(500, 50, G0))
-# display(tic_rdp_marginal_example(500, 100, G0))
-# display(tic_rdp_marginal_example(500, 1000, G0))
-# display(tic_rdp_marginal_example(500, 10000, G0))
-```
-
-## Construcción Stick-Breaking
+### Stick-Breaking
 
 La forma de trabajar directamente con un Proceso de Dirichlet vino dada por una construcción stick-breaking indefinida.
 
+\newpage
 ```{=tex}
 \begin{theo}[(Sethuraman, 1994)]
   Sea $w_h = \upsilon \prod_{l<h} (1 - \upsilon_l)$ con $\upsilon_h \overset{i.i.d.}{\sim} \text{Beta}(1, \alpha)$ y $m_h \overset{i.i.d.}{\sim} G_0$, donde $(\upsilon_h)$ y $(m_h)$ son independientes entre sí. Luego,
