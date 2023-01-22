@@ -399,9 +399,30 @@ Muestras de un proceso de Dirichlet, representadas en gris, junto a la función 
 \end{nota}
 ```
 
-## Algunos resultados asintóticos
+## Otros resultados y extensiones
 
-Resultados de Antoniak, Korwar & Hollander.
+En las secciones anteriores vimos que, dada la naturaleza discreta del proceso de Dirichlet, existe una probabilidad positiva de repeticiones en los valores $y_1, ..., y_n$, los que denotamos por $y_1^*, ..., y_k^*$, $k \leq n$. En esta sección veremos algunos resultados con respecto a la distribución y comportamiento de $k$, el número de valores únicos.
+
+En primer lugar, tenemos que el comportamiento asintótico de $k$ se comporta como $M \log (n)$ cuando $n \to \infty$ [@korwar_contributions_1973]. Por otro lado, Antoniak [-@antoniak_mixtures_1974] entrega la distribución a priori de $k$, dada por
+
+$$
+p(k|M, n) = c_n(k) n! M^k \frac{\Gamma(M)}{\Gamma(M + n)}
+$$
+
+con $c_n(k) = P(k|M = 1, n)$ (este es el resultado que entrega Escobar y West, pero revisando el paper de Antoniak no logro ver que sean iguales). Además, muestra que:
+
+$$
+E(k|M, n) = \sum_{i=1}^n \frac{M}{M + i - 1} \approx M \left(\log (n/M + 1)\right)
+$$
+
+La Figura 6 ilustra estos resultados. Para la simulación se utilizaron 15 muestras para tamaños de muestra que van desde 1000 hasta 50000.
+
+::: {#fig-stickbreaking}
+![](figures/DP%20-%20AKH.png)
+
+Ilustación de los resultados de Antoniak, Korwar y Hollander, junto con estimaciones empíricas de $E(k)$ mediante simulación. Vemos que efectivamente la aproximación dada por 
+Antoniak es bastante certera.
+:::
 
 \newpage
 # Dirichlet Process Mixture Models

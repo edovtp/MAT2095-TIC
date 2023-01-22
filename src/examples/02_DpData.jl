@@ -2,6 +2,7 @@ using CairoMakie
 include("../helpers.jl")
 include("../DpData.jl")
 
+### Marginal samples
 ## Sampling
 Random.seed!(619);
 precisions = [1, 10, 50, 100, 1000, 100000];
@@ -55,3 +56,35 @@ begin
 end
 
 # CairoMakie.save("monography/figures/DP - Urn.png", fig)
+
+### Asymptotic results
+Random.seed!(219);
+n_values = 1000:2000:50000;
+ek_values = Vector{Float64}(undef, length(n_values));
+M = 100;
+
+function n_unique(n, M)
+    sim_data = DataDp(n, M, (6, 1), "Gamma")
+    k = length(unique(sim_data))
+end
+
+for (i, n) in enumerate(n_values)
+    k_sim = [n_unique(n, M) for _ in 1:20]
+    ek_values[i] = mean(k_sim)
+end
+
+begin
+    CairoMakie.activate!()
+    fig = Figure(resolution=(1440, 700))
+    xrange = range(1000, 50000, length = 500)
+
+    ax = Axis(fig[1, 1], xgridvisible=false, ygridvisible=false, ylabel="k", xlabel="n")
+    l1 = lines!(xrange, x -> M * log(1 + x/M), color=:red, linewidth=3)
+    l2 = lines!(xrange, x -> M * log(x), color=:blue, linewidth=3)
+    p1 = scatter!(n_values, ek_values, color=:green, markersize=15)
+
+    Legend(fig[1, 2], [l1, l2, p1], ["Antoniak", "Korwar & Hollander", "Simulación"])
+    fig
+end
+
+CairoMakie.save("monography/figures/DP - AKH.png", fig)
