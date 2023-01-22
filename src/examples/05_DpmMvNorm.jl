@@ -1,6 +1,6 @@
-include("../00_helpers.jl");
-include("../01_DpmData.jl");
-include("../03_DpmMvNorm.jl");
+include("../helpers.jl");
+include("../DpmData.jl");
+include("../DpmMvNorm.jl");
 
 ## Algorithm 1 - Fixed hyperparameters
 # Recovering parameters

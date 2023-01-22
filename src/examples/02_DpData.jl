@@ -1,6 +1,6 @@
 using CairoMakie
-include("../00_helpers.jl")
-include("../01_DpData.jl")
+include("../helpers.jl")
+include("../DpData.jl")
 
 ## Sampling
 Random.seed!(619);
