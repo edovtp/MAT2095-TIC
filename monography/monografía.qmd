@@ -226,7 +226,7 @@ Los parámetros $G_0$ y $M$ se denominan la \textbf{medida de centralización} y
 \end{nota}
 ```
 
-En su artículo, Ferguson muestra que $G$ existe para todo $G_0$ . Además, señala algunas de las propiedades estadísticas de los DP, que se deducen directamente de la definición del proceso al considerar la partición $\{B, B^c\}$.
+En su artículo, Ferguson muestra que $G$ existe para todo $G_0$. Además, señala algunas propiedades de los DP, algunas de las cuales se deducen directamente de la definición del proceso al considerar la partición $\{B, B^c\}$.
 
 \newpage
 ```{=tex}
@@ -272,7 +272,7 @@ donde $\sum_{h=1}^\infty w_h = 1$ y $\delta_{x}(\cdot)$ denota la medida de Dira
 Naturaleza discreta del Proceso de Dirichlet
 :::
 
-Por último, Ferguson tambien demuestra que un DP es conjugado para una muestra i.i.d. de esta distribución, donde para la medida de centralización se considera un promedio ponderado entre la medida a priori $G_0$ y la función de distribución empírica de los datos, mientras que la precisión aumenta en el número de observaciones.
+Por último, Ferguson tambien demuestra que un DP es conjugado para una muestra i.i.d. de esta distribución, donde para la medida de centralización se considera un promedio ponderado entre la medida a priori $G_0$ y la función de distribución empírica de los datos, mientras que la precisión aumenta con el número de observaciones.
 
 ```{=tex}
 % Posteriori Proceso de Dirichlet
@@ -329,8 +329,8 @@ Lo que muestran Blackwell y MacQueen es que, siguiendo este proceso de forma inf
 
 De ([-@eq-dp-marginal]) también se pueden observar tres cosas importantes:
 
-* Dada la intercambiabilidad de $y_1, ..., y_n$, las distribuciones condicionales completas $p(y_i|y_{-i})$ toman la misma forma que para $i = n$. Estas distribuciones son la pieza clave para realizar simulación a posteriori mediante muestreo de Gibbs.
-* La distribución a priori predictiva toma la misma forma para $i = n + 1$.
+* Dada la intercambiabilidad de $y_1, ..., y_n$, las distribuciones condicionales completas $p(y_i|y_{-i})$ toman la misma forma que para $i = n$ en ([-@eq-dp-marginal]). Estas distribuciones son la pieza clave para realizar simulación a posteriori mediante muestreo de Gibbs.
+* La distribución a priori predictiva toma la misma forma que para $i = n + 1$.
 * Las condicionales ([-@eq-dp-marginal]) se pueden simplificar considerando solo los valores iguales de $y_1, ..., y_{i-1}$. Sean $y^{*}_1, ..., y^{*}_k$ los valores únicos y $n_j$, $j=1,...,k$ el número de veces que se repite cada valor. Luego podemos escribir la distribución marginal de forma equivalente como
 
 $$
@@ -339,7 +339,9 @@ $$
 
 ```{=tex}
 \begin{ejemplo}[Urnas de Pólya]
-  Para ilustrar los resultados anteriores, en la Figura 3 se presentan muestras aleatorias de tamaño 100 de un proceso de Dirichlet con medida de centralización Gamma(6, 4) y diferentes valores de $M = 1, 10, 50, 100, 1000, 10000$. \\
+  Para ilustrar los resultados anteriores, en la Figura 3 se presentan muestras aleatorias de tamaño 100 de la distribución marginal de un proceso de Dirichlet, considerando una medida de centralización Gamma(6, 1) y diferentes valores de $M$. \\
+
+  Para replicar esta figura, ver el código \texttt{02\_DpData.jl}.
 \end{ejemplo}
 ```
 
@@ -351,59 +353,45 @@ Muestra simulada directamente de la distribución marginal de un proceso de Diri
 
 ### Stick-Breaking
 
-La forma de trabajar directamente con un Proceso de Dirichlet vino dada por una construcción stick-breaking indefinida.
+La construcción anterior entrega la forma de trabajar con procesos de Dirichlet de forma indirecta, por lo que es natural preguntarnos si existirá alguna opción directa. En esta línea, en los años 90 se obtiene un resultado que permite trabajar directamente con estos procesos [@sethuraman_constructive_1994]. Es importante poner énfasis en la fecha de este resultado, ya que el anterior que vimos se dio en 1973, lo cual explica por qué mucho del desarrollo en estos procesos utilizaba la construcción previa.
 
 \newpage
+En particular, se demuestra el siguiente teorema.
+
 ```{=tex}
 \begin{theo}[(Sethuraman, 1994)]
-  Sea $w_h = \upsilon \prod_{l<h} (1 - \upsilon_l)$ con $\upsilon_h \overset{i.i.d.}{\sim} \text{Beta}(1, \alpha)$ y $m_h \overset{i.i.d.}{\sim} G_0$, donde $(\upsilon_h)$ y $(m_h)$ son independientes entre sí. Luego,
+  Sea $w_h = \upsilon_h \prod_{l<h} (1 - \upsilon_l)$ con $\upsilon_h \overset{i.i.d.}{\sim} \text{Beta}(1, M)$ y $m_h \overset{i.i.d.}{\sim} G_0$, donde $(\upsilon_h)$ y $(m_h)$ son independientes entre sí. Luego,
 
   \begin{equation*}
-    G(\cdot) = \sum_{h=1}^\infty w_h \delta_{m_h}(\cdot)
+    G(\cdot) = \sum_{h=1}^\infty w_h \delta_{m_h}(\cdot) \sim \text{DP}(M, G_0)
   \end{equation*}
-  
-  define un Proceso de Dirichlet de parámetros $\alpha$ y $G_0$.
 \end{theo}
 ```
 
-En la Figura 4 se pequeña una pequeña ilustración del proceso stick-breaking para obtener un Proceso de Dirichlet.
+Esta construcción recibe el nombre de \textbf{stick-breaking}, lo cual puede verse al pensar en los $\upsilon_h$ como las proporciones que se van eliminando de una varilla que inicialmente es de largo 1, mientras que los $w_h$ serían la proporción del total de la varilla que toma como peso para el átomo $m_h$. La Figura 4 presenta una pequeña ilustración de esta construcción.
+
+Ahora, la construcción anterior sigue teniendo un pequeño problema, y es que claramente no podemos repetir el proceso de obtención de pesos y átomos de manera infinita. Una de las formas de evitar este problema es simplemente truncar la representación hasta un número $H$ fijo, fijando $\upsilon_H = 1$, denominado un \textbf{DP finito} [@ishwaran_markov_2000], u obtener los pesos $w_h$ hasta cubrir un cierto número fijo cercano a 1 de probabilidad, denominado un $\boldsymbol\epsilon$-\textbf{DP} [@muliere_approximating_1998].
 
 ::: {#fig-stickbreaking}
 ![](figures/DP%20-%20Stick%20Breaking.jpg)
 
-Ilustación del proceso de Stick-Breaking
+Ilustación del proceso de Stick-Breaking. (a) Inicialmente se parte con una varilla de largo 1. (b) Se toma una proporción $\upsilon_1$ del total para el primer átomo, dándole un peso $w_1$. (c) De la varilla restante, se toma una proporción $\upsilon_2$ para el segundo átomo.
 :::
-
-Ahora, lo anterior sigue teniendo un pequeño problema, y es que claramente no podemos repetir el proceso una cantidad infinita de veces para obtener las secuencias infinitas de pesos y localizaciones. Para arreglar esto, se propone simplemente truncar la representación hasta un valor $H$ fijo, considerando $\upsilon_H = 1$, u obtener los pesos $w_h$ hasta cubrir un cierto número fijo, cercano a 1, de probabilidad.
 
 ```{=tex}
 \begin{ejemplo}[Stick-Breaking]
+  Para ilustrar esta construcción, en la Figura 4 se presentan simulaciones de procesos de Dirichlet, considerando una medida de centralización Gamma(6, 1) y diferentes valores de $M$. Específicamente, se presentan las simulaciones de $G((0, x))$ (i.e. la función de distribución acumulada).
+
+  Para replicar esta figura, ver el código \texttt{01\_Dp.jl}.
 \end{ejemplo}
 ```
 
-```{julia}
-#| label: fig-dp-normal
-#| echo: false
-#| fig-cap: Simulaciones Proceso de Dirichlet con medida de centralización Normal (en rojo)
-#| fig-subcap:
-#|   - $\alpha$ = 1
-#|   - $\alpha$ = 10
-#|   - $\alpha$ = 50
-#|   - $\alpha$ = 100
-#|   - $\alpha$ = 500
-#|   - $\alpha$ = 1000
-#| layout-ncol: 3
-#| layout-nrow: 2
+::: {#fig-dp-sb-eg}
+![](figures/DP%20-%20Stick%20Breaking%20eg.png)
 
-# Random.seed!(219);
-# G0 = Distributions.Normal(0, 1)
-# display(tic_rdp_example(15, 1, G0, -10, 10, (-3, 3)))
-# display(tic_rdp_example(15, 10, G0, -10, 10, (-3, 3)))
-# display(tic_rdp_example(15, 50, G0, -10, 10, (-3, 3)))
-# display(tic_rdp_example(15, 100, G0, -10, 10, (-3, 3)))
-# display(tic_rdp_example(15, 500, G0, -10, 10, (-3, 3)))
-# display(tic_rdp_example(15, 1000, G0, -10, 10, (-3, 3)))
-```
+Muestras de un proceso de Dirichlet, representadas en gris, junto a la función de distribución acumulada de $G_0$, representada en rojo. Es posible ver cómo las simulaciones se concentran alrededor de $G_0$ y que, a medida que $M$ aumenta, la concentración es mayor, lo que concuerda con las propiedades vistas anteriormente.
+:::
+
 
 ```{=tex}
 \begin{nota}
@@ -414,16 +402,6 @@ Ahora, lo anterior sigue teniendo un pequeño problema, y es que claramente no p
 ## Algunos resultados asintóticos
 
 Resultados de Antoniak, Korwar & Hollander.
-
-```{julia}
-#| echo: false
-
-# Random.seed!(219)
-# n_values = 1000:2000:21000
-
-# akh_empirical(n_values, 100)
-```
-
 
 \newpage
 # Dirichlet Process Mixture Models
