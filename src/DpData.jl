@@ -1,7 +1,7 @@
 function DataDp(n::Int64, M, par, dist)
     """
-    Data simulation from a Dirichlet process with Normal base measure using the
-    Pólya Urn representation of Blackwell and McQueen (1973)
+    Data simulation from a Dirichlet process using the Pólya Urn representation of
+    Blackwell and McQueen (1973)
 
     It is straightforward to change the dist parameter to an arbitrary function G0, but
     I prefer to be explicit for now.
