@@ -209,7 +209,7 @@ Presentamos a continuación la definición formal de estos procesos.
 
 ```{=tex}
 % Definición Proceso de Dirichlet
-\begin{definicion}[(Ferguson, 1973)]
+\begin{definicion}[Proceso de Dirichlet]
   Sea $M>0$ y $G_0$ una medida de probabilidad definida sobre $S$. Un \textbf{Proceso de Dirichlet (DP)} de parámetros $(M, G_0)$, denotado por $\text{DP}(M, G_0)$, es una medida de probabilidad aleatoria $G$ definida en $S$ que asigna probabilidad $G(B)$ a todo conjunto medible $B$ tal que, para toda partición medible finita $\{B_1, ..., B_k\}$ de $S$, la distribución conjunta del vector $(G(B_1), ..., G(B_k))$ es Dirichlet con parámetros
 
 $$
@@ -226,13 +226,13 @@ Los parámetros $G_0$ y $M$ se denominan la \textbf{medida de centralización} y
 \end{nota}
 ```
 
-En su artículo, Ferguson muestra que $G$ existe para todo $G_0$. Además, señala algunas propiedades de los DP, algunas de las cuales se deducen directamente de la definición del proceso al considerar la partición $\{B, B^c\}$.
+En su artículo, Ferguson muestra que, bajo ciertas condiciones de regularidad, $G$ existe para todo $G_0$. Además, señala algunas propiedades de los DP, algunas de las cuales se deducen directamente de la definición del proceso al considerar la partición $\{B, B^c\}$.
 
 \newpage
 ```{=tex}
 \begin{propiedad}[(Propiedades Proceso de Dirichlet)]
   Sea $G \sim \text{DP}(M, G_0$), $B, B_1$ y $B_2$ conjuntos medibles, con $B_1 \cap B_2 = \emptyset$. Luego,
-  \begin{itemize}
+  \begin{enumerate}
     \item El soporte de $G$ coincide con el de $G_0$. Esto es,
     \begin{equation*}
       G_0(B) = 0 \implies P(G(B) = 0) = 1
@@ -244,11 +244,11 @@ En su artículo, Ferguson muestra que $G$ existe para todo $G_0$. Además, seña
     \item $\text{E}(G(B)) = G_0(B)$
     \item $\text{Var}(G(B)) = \frac{G_0(B)(1 - G_0(B)}{1 + M}$
     \item $\text{Cov}(G(B_1), G(B_2)) = \frac{-G_0(B_1)G_0(B_2)}{1 + M}$
-  \end{itemize}
+  \end{enumerate}
 \end{propiedad}
 ```
 
-La segunda propiedad nos muestra la razón por la que $G_0$ recibe el nombre de *medida de centralización*. Por otro lado, la tercera propiedad nos da la intuición por la que el parámetro M recibe el nombre de *parámetro de precisión*, al controlar el grado de concentración en la media $G_0(B)$. Por último, la última propiedad nos entrega una característica bastante interesante, y es que la covarianza entre dos conjuntos cualesquiera es siempre negativa. Lo anterior puede ser una característica no deseada, donde esperaríamos que exista una alta correlación entre conjuntos $B_1$ y $B_2$ cercanos entre sí, pero aquellas extensiones están fuera del alcance de este trabajo.
+La segunda propiedad nos muestra la razón por la que $G_0$ recibe el nombre de *medida de centralización*. Por otro lado, la tercera propiedad nos da la intuición por la que el parámetro M recibe el nombre de *parámetro de precisión*, al controlar el grado de concentración en la media $G_0(B)$. Por último, la última propiedad nos entrega una característica bastante interesante, y es que la covarianza entre dos conjuntos cualesquiera es siempre negativa. Lo anterior puede ser una característica no deseada, donde esperaríamos que exista una correlación positiva entre conjuntos $B_1$ y $B_2$ cercanos entre sí, pero aquellas extensiones están fuera del alcance de este trabajo.
 
 ```{=tex}
 \begin{nota}
@@ -331,10 +331,10 @@ De ([-@eq-dp-marginal]) también se pueden observar tres cosas importantes:
 
 * Dada la intercambiabilidad de $y_1, ..., y_n$, las distribuciones condicionales completas $p(y_i|y_{-i})$ toman la misma forma que para $i = n$ en ([-@eq-dp-marginal]). Estas distribuciones son la pieza clave para realizar simulación a posteriori mediante muestreo de Gibbs.
 * La distribución a priori predictiva toma la misma forma que para $i = n + 1$.
-* Las condicionales ([-@eq-dp-marginal]) se pueden simplificar considerando solo los valores iguales de $y_1, ..., y_{i-1}$. Sean $y^{*}_1, ..., y^{*}_k$ los valores únicos y $n_j$, $j=1,...,k$ el número de veces que se repite cada valor. Luego podemos escribir la distribución marginal de forma equivalente como
+* Las condicionales ([-@eq-dp-marginal]) se pueden simplificar considerando solo los valores iguales de $y_1, ..., y_{i-1}$. Sean $y^{*}_1, ..., y^{*}_k$ los valores únicos y $n_j$, $j=1,...,k$ el número de veces que se repite cada valor. Luego, podemos escribir la distribución marginal de forma equivalente como
 
 $$
-p(y_i|y_1, ..., y_{i-1}) = \frac{n_j}{M + i - 1}\sum_{j=1}^{k}\delta_{y_j^{*}}(y_i) + \frac{M}{M + i - 1}G_0(y_i)
+p(y_i|y_1, ..., y_{i-1}) = \frac{1}{M + i - 1}\sum_{j=1}^{k}n_j\delta_{y_j^{*}}(y_i) + \frac{M}{M + i - 1}G_0(y_i)
 $$
 
 ```{=tex}
@@ -401,7 +401,7 @@ Muestras de un proceso de Dirichlet, representadas en gris, junto a la función 
 
 ## Otros resultados y extensiones
 
-En las secciones anteriores vimos que, dada la naturaleza discreta del proceso de Dirichlet, existe una probabilidad positiva de repeticiones en los valores $y_1, ..., y_n$, los que denotamos por $y_1^*, ..., y_k^*$, $k \leq n$. En esta sección veremos algunos resultados con respecto a la distribución y comportamiento de $k$, el número de valores únicos.
+En las secciones anteriores vimos que, dada la naturaleza discreta del proceso de Dirichlet, existe una probabilidad positiva de repeticiones en los valores $y_1, ..., y_n$, los que denotamos por $y_1^*, ..., y_k^*$, $k \leq n$. En esta sección veremos algunos resultados con respecto a la distribución y comportamiento de $k$, el número de valores únicos en la muestra.
 
 En primer lugar, tenemos que el comportamiento asintótico de $k$ se comporta como $M \log (n)$ cuando $n \to \infty$ [@korwar_contributions_1973]. Por otro lado, Antoniak [-@antoniak_mixtures_1974] entrega la distribución a priori de $k$, dada por
 
@@ -409,19 +409,54 @@ $$
 p(k|M, n) = c_n(k) n! M^k \frac{\Gamma(M)}{\Gamma(M + n)}
 $$
 
-con $c_n(k) = P(k|M = 1, n)$ (este es el resultado que entrega Escobar y West, pero revisando el paper de Antoniak no logro ver que sean iguales). Además, muestra que:
+donde $c_n(k) = P(k|M = 1, n)$ (este es el resultado que entrega Escobar y West, pero revisando el paper de Antoniak no logro ver que sean iguales). Además, muestra que:
 
 $$
 E(k|M, n) = \sum_{i=1}^n \frac{M}{M + i - 1} \approx M \left(\log (n/M + 1)\right)
+$${#eq-dp-k}
+
+Estos resultados muestran otra de las formas en que se encuentran "limitados" estos procesos. En particular, puede ser que para algún problema específico el comportamiento de $k$ no sea adecuado o, como vimos anteriormente, que la correlación entre conjuntos sea siempre negativa, independiente de la cercanía entre ellos. Nos interesan entonces generalizaciones o extensiones de los DPs.
+
+Una de las generalizaciones son los denominados **Species Sampling Models (SSM)** [@pitman_developments_1996], con un caso especial correspondientes a las **prioris stick-breaking**, las cuales toman la misma forma que la construcción mediante stick-breaking de un DP, pero variando los parámetros de $\upsilon_h$.
+
+De estas construcciones, probablemente la más conocida sea el **proceso de Pitman-Yor** [@pitman_two-parameter_1997], también denominado DP de 2 parámetros, el cual ya no considera los $\upsilon_h$ idénticamente distribuidos, sino que
+
+$$
+  \upsilon_h \overset{ind.}{\sim} \text{Beta}(1 - b, M + bh), \quad b \in [0, 1), \quad M > -b
 $$
 
-La Figura 6 ilustra estos resultados. Para la simulación se utilizaron 15 muestras para tamaños de muestra que van desde 1000 hasta 50000.
+lo cual denotamos por $\text{PY}(M, b, G_0)$, donde el parámetro $b$ suele recibir el nombre de *parámetro de descuento*. Notamos que, para $M > 0$, se tiene que $\text{PY}(M, 0, G_0) \equiv \text{DP}(M, G_0)$. En este caso, se obtiene que la representación por urnas de Pólya está dada por
 
-::: {#fig-stickbreaking}
-![](figures/DP%20-%20AKH.png)
+$$
+p(y_i|y_1, ..., y_{i-1}) = \frac{1}{M + i - 1}\sum_{j = 1}^{k_{i-1}} (n_j - b)\delta_{y_j^*}(y_i) + \frac{M + bk_{i-1}}{M + i - 1}G_0
+$$
 
-Ilustación de los resultados de Antoniak, Korwar y Hollander, junto con estimaciones empíricas de $E(k)$ mediante simulación. Vemos que efectivamente la aproximación dada por 
-Antoniak es bastante certera.
+y, además, en la misma línea que Antoniak, Pitman entrega una aproximación para la esperanza de $k$ [@pitman_combinatorial_2006], dada por
+
+$$
+E(k|M, n) = \frac{M}{b}\left(\prod_{j=1}^n \frac{M + b + j - 1}{M + j - 1} - 1\right) \approx \frac{\Gamma(M + 1)}{b\Gamma(M + b)}n^b
+$${#eq-py-k}
+
+```{=tex}
+\begin{ejemplo}[Proceso de Pitman-Yor]
+  En la Figura 6 se presentan muestras aleatorias de tamaño 100 de la distribución marginal de un proceso de Pitman-Yor con medida de centralización Gamma(6, 1), parámetro de descuento 0.6 y diferentes valores de M.
+
+  Por otro lado, la Figura 7 ilustra el comportamiento de $k$ tanto para el proceso de Dirichlet y el proceso de Pitman-Yor mediante simulación. Para la aproximación de $\text{E}(k)$ se utilizaron 30 muestras para tamaños de muestra que van desde 1000 hasta 50000.
+
+  Para replicar ambas figuras, ver los códigos \texttt{01\_Py.jl} y \texttt{02\_PyData.jl}.
+\end{ejemplo}
+```
+
+::: {#fig-urn-py}
+![](figures/PY%20-%20Urn.png)
+
+Muestra simulada directamente de la distribución marginal de un proceso de Pitman-Yor con parámetro de descuento 0.6. En este caso vemos que el número de componentes únicos es mayor a medida que $M$ aumenta.
+:::
+
+::: {#fig-stickbreaking-py}
+![](figures/PY%20DP%20comparison.png)
+
+Estimaciones empíricas de $E(k)$ mediante simulación tanto para el proceso de Dirichlet y el proceso de Pitman-Yor. Vemos que la tasa de crecimiento de $k$ es más alta en el proceso de Pitman-Yor.
 :::
 
 \newpage
