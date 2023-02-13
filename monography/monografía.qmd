@@ -18,6 +18,7 @@ crossref:
   fig-title: Figura
   tbl-title: Tabla
 bibliography: references.bib
+jupyter: julia-1.8
 ---
 
 ```{julia}
@@ -199,7 +200,7 @@ Necesidad de métodos flexibles
 \newpage
 # Procesos de Dirichlet
 
-Consideremos, en primer lugar, el problema de estimación de densidades. Específicamente, consideremos una muestra aleatoria $y_1, ..., y_n$ de una medida de probabilidad $G$ no especificada, denotado por $y_1, ..., y_n | G \overset{i.i.d.}{\sim} G$.
+Consideremos, en primer lugar, el problema de estimación de densidades, esto es, la estimación de la posteriori predictiva $p(y_{n+1}|\mathbf{y})$. Específicamente, consideremos una muestra aleatoria $y_1, ..., y_n$ de una medida de probabilidad $G$ no especificada, denotado por $y_1, ..., y_n | G \overset{i.i.d.}{\sim} G$.
 
 Considerando el paradigma Bayesiano, lo anterior debe ser completado con una medida de probabilidad sobre $G$, esto es, sobre el espacio de las medidas de probabilidad. Una de estas opciones es la del Proceso de Dirichlet [@ferguson_bayesian_1973], que probablemente sea uno de los puntos de partida más usuales a los modelos no paramétricos, y que tomará una gran importancia en los siguientes capítulos.
 
@@ -233,7 +234,7 @@ En su artículo, Ferguson muestra que, bajo ciertas condiciones de regularidad, 
 \begin{propiedad}[(Propiedades Proceso de Dirichlet)]
   Sea $G \sim \text{DP}(M, G_0$), $B, B_1$ y $B_2$ conjuntos medibles, con $B_1 \cap B_2 = \emptyset$. Luego,
   \begin{enumerate}
-    \item El soporte de $G$ coincide con el de $G_0$. Esto es,
+    \item El soporte de $G$ coincide (casi seguramente) con el de $G_0$. Esto es,
     \begin{equation*}
       G_0(B) = 0 \implies P(G(B) = 0) = 1
     \end{equation*}
@@ -272,7 +273,7 @@ donde $\sum_{h=1}^\infty w_h = 1$ y $\delta_{x}(\cdot)$ denota la medida de Dira
 Naturaleza discreta del Proceso de Dirichlet
 :::
 
-Por último, Ferguson tambien demuestra que un DP es conjugado para una muestra i.i.d. de esta distribución, donde para la medida de centralización se considera un promedio ponderado entre la medida a priori $G_0$ y la función de distribución empírica de los datos, mientras que la precisión aumenta con el número de observaciones.
+Por último, Ferguson tambien demuestra que un DP es conjugado para una muestra i.i.d. de esta distribución, donde para la medida de centralización se considera un promedio ponderado entre la medida a priori $G_0$ y la función de distribución empírica de los datos, mientras que la precisión aumenta con el número de observaciones. En particular, tenemos el siguiente resultado.
 
 ```{=tex}
 % Posteriori Proceso de Dirichlet
@@ -331,7 +332,7 @@ De ([-@eq-dp-marginal]) también se pueden observar tres cosas importantes:
 
 * Dada la intercambiabilidad de $y_1, ..., y_n$, las distribuciones condicionales completas $p(y_i|y_{-i})$ toman la misma forma que para $i = n$ en ([-@eq-dp-marginal]). Estas distribuciones son la pieza clave para realizar simulación a posteriori mediante muestreo de Gibbs.
 * La distribución a priori predictiva toma la misma forma que para $i = n + 1$.
-* Las condicionales ([-@eq-dp-marginal]) se pueden simplificar considerando solo los valores iguales de $y_1, ..., y_{i-1}$. Sean $y^{*}_1, ..., y^{*}_k$ los valores únicos y $n_j$, $j=1,...,k$ el número de veces que se repite cada valor. Luego, podemos escribir la distribución marginal de forma equivalente como
+* Las condicionales ([-@eq-dp-marginal]) se pueden simplificar considerando solo los valores iguales de $y_1, ..., y_{i-1}$ (lo cual tiene probabilidad positiva dada la naturaleza discreta de $G$). Sean $y^{*}_1, ..., y^{*}_k$ los valores únicos y $n_j$, $j=1,...,k$ el número de veces que se repite cada valor. Luego, podemos escribir la distribución marginal de forma equivalente como
 
 $$
 p(y_i|y_1, ..., y_{i-1}) = \frac{1}{M + i - 1}\sum_{j=1}^{k}n_j\delta_{y_j^{*}}(y_i) + \frac{M}{M + i - 1}G_0(y_i)
@@ -339,7 +340,7 @@ $$
 
 ```{=tex}
 \begin{ejemplo}[Urnas de Pólya]
-  Para ilustrar los resultados anteriores, en la Figura 3 se presentan muestras aleatorias de tamaño 100 de la distribución marginal de un proceso de Dirichlet, considerando una medida de centralización Gamma(6, 1) y diferentes valores de $M$. \\
+  Para ilustrar los resultados anteriores, en la Figura 3 se presentan muestras $y_1, ..., y_n$ de tamaño 100 de la distribución marginal de un proceso de Dirichlet, considerando una medida de centralización Gamma(6, 1) y diferentes valores de $M$. \\
 
   Para replicar esta figura, ver el código \texttt{02\_DpData.jl}.
 \end{ejemplo}
@@ -380,7 +381,7 @@ Ilustación del proceso de Stick-Breaking. (a) Inicialmente se parte con una var
 
 ```{=tex}
 \begin{ejemplo}[Stick-Breaking]
-  Para ilustrar esta construcción, en la Figura 4 se presentan simulaciones de procesos de Dirichlet, considerando una medida de centralización Gamma(6, 1) y diferentes valores de $M$. Específicamente, se presentan las simulaciones de $G((0, x))$ (i.e. la función de distribución acumulada).
+  Para ilustrar esta construcción, en la Figura 5 se presentan simulaciones de procesos de Dirichlet, considerando una medida de centralización Gamma(6, 1) y diferentes valores de $M$. Específicamente, se presentan las simulaciones de $G((0, x))$ (i.e. la función de distribución acumulada).
 
   Para replicar esta figura, ver el código \texttt{01\_Dp.jl}.
 \end{ejemplo}
@@ -403,13 +404,13 @@ Muestras de un proceso de Dirichlet, representadas en gris, junto a la función 
 
 En las secciones anteriores vimos que, dada la naturaleza discreta del proceso de Dirichlet, existe una probabilidad positiva de repeticiones en los valores $y_1, ..., y_n$, los que denotamos por $y_1^*, ..., y_k^*$, $k \leq n$. En esta sección veremos algunos resultados con respecto a la distribución y comportamiento de $k$, el número de valores únicos en la muestra.
 
-En primer lugar, tenemos que el comportamiento asintótico de $k$ se comporta como $M \log (n)$ cuando $n \to \infty$ [@korwar_contributions_1973]. Por otro lado, Antoniak [-@antoniak_mixtures_1974] entrega la distribución a priori de $k$, dada por
+En primer lugar, tenemos que el comportamiento asintótico de $k$ se comporta como $M \log (n)$ cuando $n \to \infty$ [@korwar_contributions_1973] y, en particular, $k \to \infty$ casi seguramente. Por otro lado, Antoniak [-@antoniak_mixtures_1974] entrega la distribución a priori de $k$, dada por
 
 $$
 p(k|M, n) = c_n(k) n! M^k \frac{\Gamma(M)}{\Gamma(M + n)}
 $$
 
-donde $c_n(k) = P(k|M = 1, n)$ (este es el resultado que entrega Escobar y West, pero revisando el paper de Antoniak no logro ver que sean iguales). Además, muestra que:
+donde $c_n(k) = P(k|M = 1, n)$. Además, muestra que:
 
 $$
 E(k|M, n) = \sum_{i=1}^n \frac{M}{M + i - 1} \approx M \left(\log (n/M + 1)\right)
@@ -425,7 +426,7 @@ $$
   \upsilon_h \overset{ind.}{\sim} \text{Beta}(1 - b, M + bh), \quad b \in [0, 1), \quad M > -b
 $$
 
-lo cual denotamos por $\text{PY}(M, b, G_0)$, donde el parámetro $b$ suele recibir el nombre de *parámetro de descuento*. Notamos que, para $M > 0$, se tiene que $\text{PY}(M, 0, G_0) \equiv \text{DP}(M, G_0)$. En este caso, se obtiene que la representación por urnas de Pólya está dada por
+lo cual denotamos por $\text{PY}(M, b, G_0)$, donde el parámetro $b$ suele recibir el nombre de *parámetro de descuento*. Podemos notar que un proceso de Dirichlet es un caso especial del proceso de Pitman-Yor con $\text{PY}(M, 0, G_0) \equiv \text{DP}(M, G_0)$. En este caso, se obtiene que la representación por urnas de Pólya está dada por
 
 $$
 p(y_i|y_1, ..., y_{i-1}) = \frac{1}{M + i - 1}\sum_{j = 1}^{k_{i-1}} (n_j - b)\delta_{y_j^*}(y_i) + \frac{M + bk_{i-1}}{M + i - 1}G_0
@@ -441,7 +442,7 @@ $${#eq-py-k}
 \begin{ejemplo}[Proceso de Pitman-Yor]
   En la Figura 6 se presentan muestras aleatorias de tamaño 100 de la distribución marginal de un proceso de Pitman-Yor con medida de centralización Gamma(6, 1), parámetro de descuento 0.6 y diferentes valores de M.
 
-  Por otro lado, la Figura 7 ilustra el comportamiento de $k$ tanto para el proceso de Dirichlet y el proceso de Pitman-Yor mediante simulación. Para la aproximación de $\text{E}(k)$ se utilizaron 30 muestras para tamaños de muestra que van desde 1000 hasta 50000.
+  Por otro lado, la Figura 7 ilustra el comportamiento de $k$ tanto para el proceso de Dirichlet y el proceso de Pitman-Yor, utilizando simulaciones. Para la aproximación de $\text{E}(k)$ se utilizaron 30 muestras para tamaños de muestra que van desde 1000 hasta 50000.
 
   Para replicar ambas figuras, ver los códigos \texttt{01\_Py.jl} y \texttt{02\_PyData.jl}.
 \end{ejemplo}
@@ -464,15 +465,23 @@ Estimaciones empíricas de $E(k)$ mediante simulación tanto para el proceso de 
 
 ## Introducción
 
-Obtener distribuciones discretas puede no ser adecuado para diferentes problemas. Nos interesa entonces extender los procesos de Dirichlet para formular modelos que los utilicen y reflejen realmente el problema considerado. En lo que sigue, utilizaremos principalmente la notación de Neal (2000), mezclándola en parte con la del libro *Bayesian Nonparametric Data Analysis* [@muller_bayesian_2015].
+Utilizar distribuciones aleatorias discretas puede no ser adecuado para diferentes problemas. Nos interesa entonces extender los procesos de Dirichlet para formular modelos que los utilicen y reflejen realmente el problema considerado. En lo que sigue, utilizaremos principalmente la notación de Neal (2000), mezclándola en parte con la del libro *Bayesian Nonparametric Data Analysis* [@muller_bayesian_2015].
 
-Una opción es usar estas medidas de probabilidad aleatoria como la *mixing distribution* en un modelo de mezcla, esto es,
+Una opción es usar alguna medida de probabilidad aleatoria $G$ como la distribución mezclante en un modelo de mezcla, esto es, $f_G(y) = \int f_\theta(y)dG(\theta)$. En particular, utilizando una priori stick-breaking, obtenemos
 
 $$
-f_G(y) = \int f_\theta(y)dG(\theta)
-$$
+f_G(y) = \int f_\theta(y)dG(\theta) = \int f_\theta(y) d \sum_{h=1}^\infty w_h \delta_{m_h}(\theta) = \sum_{h=1}^\infty w_h f_{m_h}(y) 
+$${#eq-dpm-mezcla}
 
-Equivalentemente, lo anterior puede ser escrito a través de un modelo jerárquico, introduciendo variables latentes $\theta_i$ para cada una de las observaciones. Esto es,
+Luego, notamos que el uso de estas distribuciones entrega una extensión natural de los modelos de mezcla finita a un número infinito de componentes. En lo que sigue, nos concentraremos en el caso $G \sim \text{DP}(M, G_0)$, pero debemos recordar que en la práctica podemos utilizar cualquier medida de probabilidad aleatoria. Con esta elección, el modelo dado en ([-@eq-dpm-mezcla]) recibe el nombre de **Dirichlet Process Mixture Model (DPM)**.
+
+```{=tex}
+\begin{nota}
+  Esto no fue mencionado anteriormente, pero la distribución de $w = (w_1, w_2, ...)$ en un proceso de Dirichlet, definida sobre el "simplex infinito-dimensional", recibe el nombre de distribución de \textbf{Griffiths-Engen-McCloskey (GEM)}. Así, tenemos que si $w \sim \text{GEM}(1, M)$ y $m_1, m_2, ... \overset{i.i.d.}{\sim} G_0$, entonces $\sum w_h \delta_{m_h}(\cdot) \sim \text{DP}(M, G_0)$. 
+\end{nota}
+```
+
+De manera equivalente, el modelo dado en ([-@eq-dpm-mezcla]) puede ser escrito a través de un modelo jerárquico al introducir variables latentes $\theta_i$ para cada una de las observaciones, esto es,
 
 $$
 \begin{aligned}
@@ -480,7 +489,15 @@ y_i|\theta_i &\overset{ind.}{\sim} F(\theta_i) \\
 \theta_i|G &\overset{i.i.d.}{\sim} G \\
 G &\sim \text{DP}(\alpha, G_0)
 \end{aligned}
-$$
+$${#eq-dpm-simple}
+
+Se obtiene además el siguiente resultado sobre la distribución a posteriori de $G$ luego de marginalizar con respecto a $\theta$.
+
+
+
+
+
+En nuestro caso, siguiendo la discusión del capítulo anterior, trabajaremos con la distribución de $G$ marginalizada, esto es, la construcción mediante urnas de Pólya.
 
 De lo anterior sale una característica de este modelo que será clave en lo que sigue, particularmente en el contexto de clustering y es lo que vimos en la sección anterior con respecto a la distribución marginal de los $\theta_i$. En particular,
 

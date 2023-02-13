@@ -1,8 +1,8 @@
 function Dp(M, G0::Distribution, ε=1e-6)
     """
-    Dirichlet Process simulation using the stick-breaking construction given by Sethuraman 
-    (1994) and the ε-DP approximation (Mulliere, Tardella 1998). It is necessary to be
-    able to draw at least one sample from G0.
+    Dirichlet Process simulation using the stick-breaking construction (Sethuraman, 1994) and the
+    ε-DP approximation (Mulliere, Tardella 1998). It is necessary that G0 be a distribution from
+    which we can draw a sample of size 1.
 
     M  : precision parameter
     G0 : centering measure
