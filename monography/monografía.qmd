@@ -38,11 +38,11 @@ using StatsPlots
 
 El presente material, incluyendo la monografía, códigos e ilustraciones, fue confeccionado durante mi Taller de Iniciación Científica (MAT2095), guiado por el profesor Fernando Quintana, durante el segundo semestre del 2022 y verano del 2023. Todo el material se encuentra disponible en el siguiente [repositorio](https://github.com/edovtp/MAT2095-TIC) de Github.
 
-El objetivo principal de este taller fue implementar el algoritmo SIGN [@ni_scalable_2020], que permite aplicar modelos de Mezcla Proceso de Dirichlet (DPM) para bases de datos relativamente grandes. Lo anterior suponía un conocimiento previo de Estadística Bayesiana No Paramétrica, por lo que, en realidad, la mayor parte del trabajo se enfocó en aprender sobre lo anterior, especialmente sobre Procesos de Dirichlet, Mezclas de Procesos de Dirichlet y Modelos de Particiones Aleatorias, incluyendo tanto la teoría como los métodos computacionales disponibles.
+El objetivo principal de este taller fue implementar el algoritmo SIGN [@ni_scalable_2020], que permite aplicar modelos de Mezcla Proceso de Dirichlet (DPM) para bases de datos relativamente grandes. Lo anterior suponía un conocimiento previo de Estadística Bayesiana No Paramétrica, por lo que, en realidad, la mayor parte del trabajo se enfocó en aprender sobre esta área, especialmente sobre Procesos de Dirichlet, Mezclas de Procesos de Dirichlet y Modelos de Particiones Aleatorias, incluyendo tanto la teoría como los métodos computacionales disponibles.
 
 En cuanto a la parte computacional, en R existen diferentes paquetes que implementan diferentes modelos Bayesianos no paramétricos, como `DPPackage` [@jara_dppackage_2011] y `dirichletprocess` [@ross_dirichletprocess_2020], así como modelos de particiones aleatorias como `salso` [@dahl_search_2022] y `ppmSuite` [@page_ppmsuite_2022]. Por otro lado, en Julia [@bezanson_julia_2017], que recientemente ha aumentado considerablemente el número de usuarios, no existe mucho desarrollo respecto a los modelos anteriores. Considerando lo anterior, todos los códigos fueron implementados en este lenguaje. Como proyecto a futuro, se podría incluso formar una librería con este material.
 
-La monografía incluye una pequeña introducción tanto a la estadística Bayesiana como al enfoque no paramétrico, para así entender cómo se mezclan ambos conceptos. Luego, se presentan los Procesos de Dirichlet (DP), que es probablemente el punto de partida más común en la estadística Bayesiana no paramétrica. Ya entendiendo estos procesos, pasaremos a una extensión que será el enfoque principal de todo este trabajo, que son los Dirichlet Process Mixture Models (DPM), realizando una pequeña revisión histórica de los métodos de simulación. Finalmente, veremos la conexión entre estos modelos con los Modelos de Particiones Aleatorias, para luego aplicarlo en el contexto de clustering.
+La monografía incluye una pequeña introducción tanto a la estadística Bayesiana como al enfoque no paramétrico, para así entender cómo se mezclan ambos conceptos. Luego, se presentan los Procesos de Dirichlet (DP), que es probablemente el punto de partida más común en la estadística Bayesiana no paramétrica. Ya entendiendo estos procesos, pasaremos a una extensión que será el enfoque principal de todo este trabajo, que son los Dirichlet Process Mixture Models (DPM), realizando una pequeña revisión histórica de los métodos de simulación desarrollados. Finalmente, veremos la conexión entre estos modelos con los Modelos de Particiones Aleatorias, para luego aplicarlo en el contexto de clustering.
 
 \newpage
 # Introducción
@@ -200,9 +200,9 @@ Necesidad de métodos flexibles
 \newpage
 # Procesos de Dirichlet
 
-Consideremos, en primer lugar, el problema de estimación de densidades, esto es, la estimación de la posteriori predictiva $p(y_{n+1}|\mathbf{y})$. Específicamente, consideremos una muestra aleatoria $y_1, ..., y_n$ de una medida de probabilidad $G$ no especificada, denotado por $y_1, ..., y_n | G \overset{i.i.d.}{\sim} G$.
+Consideremos, en primer lugar, el problema de estimación de densidades, lo cual en el contexto bayesiano se traduce a la estimación de la posteriori predictiva $p(y_{n+1}|\mathbf{y})$. Específicamente, consideremos una muestra condicionalmente independiente dado $G$, $y_1, ..., y_n$, donde $G$ es una medida de probabilidad no especificada, denotado por $y_1, ..., y_n | G \overset{i.i.d.}{\sim} G$.
 
-Considerando el paradigma Bayesiano, lo anterior debe ser completado con una medida de probabilidad sobre $G$, esto es, sobre el espacio de las medidas de probabilidad. Una de estas opciones es la del Proceso de Dirichlet [@ferguson_bayesian_1973], que probablemente sea uno de los puntos de partida más usuales a los modelos no paramétricos, y que tomará una gran importancia en los siguientes capítulos.
+Considerando el paradigma Bayesiano, lo anterior debe ser completado con una medida de probabilidad sobre $G$, esto es, sobre el espacio de las medidas de probabilidad. Una de estas opciones es la del Proceso de Dirichlet [@ferguson_bayesian_1973], que probablemente sea uno de los puntos de partida más usuales a los modelos no paramétricos y que tomará una gran importancia en los siguientes capítulos.
 
 ## Definición
 
@@ -249,7 +249,7 @@ En su artículo, Ferguson muestra que, bajo ciertas condiciones de regularidad, 
 \end{propiedad}
 ```
 
-La segunda propiedad nos muestra la razón por la que $G_0$ recibe el nombre de *medida de centralización*. Por otro lado, la tercera propiedad nos da la intuición por la que el parámetro M recibe el nombre de *parámetro de precisión*, al controlar el grado de concentración en la media $G_0(B)$. Por último, la última propiedad nos entrega una característica bastante interesante, y es que la covarianza entre dos conjuntos cualesquiera es siempre negativa. Lo anterior puede ser una característica no deseada, donde esperaríamos que exista una correlación positiva entre conjuntos $B_1$ y $B_2$ cercanos entre sí, pero aquellas extensiones están fuera del alcance de este trabajo.
+La segunda propiedad nos muestra la razón por la que $G_0$ recibe el nombre de *medida de centralización*. Por otro lado, la tercera propiedad nos da la intuición por la que el parámetro M recibe el nombre de *parámetro de precisión*, al controlar el grado de concentración en la media $G_0(B)$. Por último, la cuarta propiedad nos entrega una característica bastante interesante, y es que la covarianza entre dos conjuntos cualesquiera es siempre negativa. Lo anterior puede ser una característica no deseada, donde esperaríamos que exista una correlación positiva entre conjuntos $B_1$ y $B_2$ cercanos entre sí, pero aquellas extensiones están fuera del alcance de este trabajo.
 
 ```{=tex}
 \begin{nota}
@@ -335,8 +335,8 @@ De ([-@eq-dp-marginal]) también se pueden observar tres cosas importantes:
 * Las condicionales ([-@eq-dp-marginal]) se pueden simplificar considerando solo los valores iguales de $y_1, ..., y_{i-1}$ (lo cual tiene probabilidad positiva dada la naturaleza discreta de $G$). Sean $y^{*}_1, ..., y^{*}_k$ los valores únicos y $n_j$, $j=1,...,k$ el número de veces que se repite cada valor. Luego, podemos escribir la distribución marginal de forma equivalente como
 
 $$
-p(y_i|y_1, ..., y_{i-1}) = \frac{1}{M + i - 1}\sum_{j=1}^{k}n_j\delta_{y_j^{*}}(y_i) + \frac{M}{M + i - 1}G_0(y_i)
-$$
+p(y_i|y_1^*, ..., y_k^*) = \frac{1}{M + i - 1}\sum_{j=1}^{k}n_j\delta_{y_j^{*}}(y_i) + \frac{M}{M + i - 1}G_0(y_i)
+$${#eq-dp-marginal-equal}
 
 ```{=tex}
 \begin{ejemplo}[Urnas de Pólya]
@@ -360,13 +360,13 @@ La construcción anterior entrega la forma de trabajar con procesos de Dirichlet
 En particular, se demuestra el siguiente teorema.
 
 ```{=tex}
-\begin{theo}[(Sethuraman, 1994)]
+\begin{proposicion}[(Sethuraman, 1994)]
   Sea $w_h = \upsilon_h \prod_{l<h} (1 - \upsilon_l)$ con $\upsilon_h \overset{i.i.d.}{\sim} \text{Beta}(1, M)$ y $m_h \overset{i.i.d.}{\sim} G_0$, donde $(\upsilon_h)$ y $(m_h)$ son independientes entre sí. Luego,
 
   \begin{equation*}
     G(\cdot) = \sum_{h=1}^\infty w_h \delta_{m_h}(\cdot) \sim \text{DP}(M, G_0)
   \end{equation*}
-\end{theo}
+\end{proposicion}
 ```
 
 Esta construcción recibe el nombre de \textbf{stick-breaking}, lo cual puede verse al pensar en los $\upsilon_h$ como las proporciones que se van eliminando de una varilla que inicialmente es de largo 1, mientras que los $w_h$ serían la proporción del total de la varilla que toma como peso para el átomo $m_h$. La Figura 4 presenta una pequeña ilustración de esta construcción.
@@ -432,7 +432,7 @@ $$
 p(y_i|y_1, ..., y_{i-1}) = \frac{1}{M + i - 1}\sum_{j = 1}^{k_{i-1}} (n_j - b)\delta_{y_j^*}(y_i) + \frac{M + bk_{i-1}}{M + i - 1}G_0
 $$
 
-y, además, en la misma línea que Antoniak, Pitman entrega una aproximación para la esperanza de $k$ [@pitman_combinatorial_2006], dada por
+y, además, en la misma línea que Antoniak, Pitman entrega la esperanza de $k$ a priori [@pitman_combinatorial_2006] dada por
 
 $$
 E(k|M, n) = \frac{M}{b}\left(\prod_{j=1}^n \frac{M + b + j - 1}{M + j - 1} - 1\right) \approx \frac{\Gamma(M + 1)}{b\Gamma(M + b)}n^b
@@ -463,9 +463,11 @@ Estimaciones empíricas de $E(k)$ mediante simulación tanto para el proceso de 
 \newpage
 # Dirichlet Process Mixture Models
 
-## Introducción
+## Introducción y definición
 
-Utilizar distribuciones aleatorias discretas puede no ser adecuado para diferentes problemas. Nos interesa entonces extender los procesos de Dirichlet para formular modelos que los utilicen y reflejen realmente el problema considerado. En lo que sigue, utilizaremos principalmente la notación de Neal (2000), mezclándola en parte con la del libro *Bayesian Nonparametric Data Analysis* [@muller_bayesian_2015].
+La generación de distribuciones discretas puede no ser adecuada para diferentes problemas, por lo que entonces, con el objetivo de formular modelos que realmente reflejen el problema considerado, nos interesa extender los procesos de Dirichlet [^4].
+
+[^4]: En lo que sigue, utilizaremos principalmente la notación de Neal (2000), mezclándola en parte con la del libro *Bayesian Nonparametric Data Analysis* [@muller_bayesian_2015].
 
 Una opción es usar alguna medida de probabilidad aleatoria $G$ como la distribución mezclante en un modelo de mezcla, esto es, $f_G(y) = \int f_\theta(y)dG(\theta)$. En particular, utilizando una priori stick-breaking, obtenemos
 
@@ -477,29 +479,73 @@ Luego, notamos que el uso de estas distribuciones entrega una extensión natural
 
 ```{=tex}
 \begin{nota}
-  Esto no fue mencionado anteriormente, pero la distribución de $w = (w_1, w_2, ...)$ en un proceso de Dirichlet, definida sobre el "simplex infinito-dimensional", recibe el nombre de distribución de \textbf{Griffiths-Engen-McCloskey (GEM)}. Así, tenemos que si $w \sim \text{GEM}(1, M)$ y $m_1, m_2, ... \overset{i.i.d.}{\sim} G_0$, entonces $\sum w_h \delta_{m_h}(\cdot) \sim \text{DP}(M, G_0)$. 
+  Esto no fue mencionado anteriormente, pero la distribución de $w = (w_1, w_2, ...)$ en un proceso de Dirichlet, definida sobre el "simplex infinito-dimensional", se denomina la \textbf{distribución de Griffiths-Engen-McCloskey (GEM)}. Así, tenemos que si $w \sim \text{GEM}(1, M)$ y $m_1, m_2, ... \overset{i.i.d.}{\sim} G_0$, entonces $\sum w_h \delta_{m_h}(\cdot) \sim \text{DP}(M, G_0)$. 
 \end{nota}
 ```
 
-De manera equivalente, el modelo dado en ([-@eq-dpm-mezcla]) puede ser escrito a través de un modelo jerárquico al introducir variables latentes $\theta_i$ para cada una de las observaciones, esto es,
+De manera equivalente, el modelo dado en ([-@eq-dpm-mezcla]) puede ser escrito a través de un modelo jerárquico, al introducir variables latentes $\theta_i$ para cada una de las observaciones:
 
 $$
 \begin{aligned}
-y_i|\theta_i &\overset{ind.}{\sim} F(\theta_i) \\
-\theta_i|G &\overset{i.i.d.}{\sim} G \\
-G &\sim \text{DP}(\alpha, G_0)
+y_i|\theta_i \overset{ind.}&{\sim} f_{\theta_i} \\
+\theta_i|G \overset{i.i.d.}&{\sim} G \\
+G &\sim \text{DP}(M, G_0)
 \end{aligned}
 $${#eq-dpm-simple}
 
-Se obtiene además el siguiente resultado sobre la distribución a posteriori de $G$ luego de marginalizar con respecto a $\theta$.
+De manera aún más general, podemos incluir en el modelo inferencia sobre $M$ y los hiperparámetros de la medida de centralización $G_0$, definiendo una distribución sobre este espacio conjunto, escogidas generalmente de manera independiente. Esto es,
 
+$$
+\begin{aligned}
+  y_i|\theta_i \overset{ind.}&{\sim} f_{\theta_i} \\
+  \theta_i | G \overset{i.i.d.}&{\sim} G \\
+  G &\sim \text{DP}(M, G_\eta) \\
+  M &\sim \pi_{M} \\
+  \eta &\sim \pi_{\eta}
+\end{aligned}
+$${#eq-dpm}
 
+Este último modelo será el enfoque de este capítulo, pero, con el objetivo de aterrizar los resultados, nos concentraremos inicialmente en el modelo ([-@eq-dpm-simple]).
 
+### Estimación de densidades utilizando DPMs
 
+Recordemos que nuestra motivación inicial para estudiar medidas aleatorias es la estimación de la densidad a posteriori predictiva $p(y_{n+1}|\mathbf{y})$, lo cual podemos obtener al integrar con respecto a la variable latente $\theta_{n+1}$ correspondiente, esto es,
 
-En nuestro caso, siguiendo la discusión del capítulo anterior, trabajaremos con la distribución de $G$ marginalizada, esto es, la construcción mediante urnas de Pólya.
+$$
+p(y_{n+1}|\mathbf{y}) = \int f_{\theta_{n+1}}(y_{n+1})dP(\theta_{n+1}|\mathbf{y})
+$$
 
-De lo anterior sale una característica de este modelo que será clave en lo que sigue, particularmente en el contexto de clustering y es lo que vimos en la sección anterior con respecto a la distribución marginal de los $\theta_i$. En particular,
+Lo anterior puede llegar a ser muy complejo de calcular analíticamente (esto no es algo que ocurra solo con modelos no paramétricos), por lo que tenemos que recurrir al uso de métodos de simulación. En particular, si denotamos por $\theta_{n+1}^{(t)}$, $t=1, ...T$, muestras de $\theta_{n+1}|\mathbf{y}$, entonces
+
+$$
+p(y_{n+1}|\mathbf{y}) \approx (1/T)\sum_{t=1}^T f_{\theta_{n+1}^{(t)}}(y_{n+1})
+$$
+
+luego, nuestra meta será la obtención de muestras de $\theta_{n+1}$ a posteriori.
+
+La primera opción para obtener estas muestras es a través del típico proceso lineal de simulación en modelos jerárquicos, donde primero simulamos $G$ de su distribución a posteriori, para luego simular $\theta_{n+1}$ de $\theta_{n+1}|G$ (no es necesario pasar por $\theta$ dada la independencia condicional). En esta línea, para poder simular $G$ tenemos el siguiente resultado sobre su distribución a posteriori, luego de marginalizar con respecto a $\theta = (\theta_1, ..., \theta_n)$ [@antoniak_mixtures_1974].
+
+```{=tex}
+\begin{proposicion}
+  Considerando el modelo dado en (7), se tiene que
+  $$
+  G | y \sim \int \text{DP}(M + \sum_{i=1}^n \delta_{\theta_i})dP(\theta|\mathbf{y})
+  $$
+\end{proposicion}
+```
+
+Ahora, si en el capítulo anterior vimos que era difícil simular de la posteriori de $G$, este caso es aún peor, por lo cual debemos considerar una segunda opción, que sí sea feasible, para obtener las muestras deseadas. Al igual que antes, la idea es trabajar con la marginalización con respecto a $G$, i.e. la representación por urnas de Pólya. En este caso, el proceso de simulación consiste en:
+
+1. Simular de $p(\theta|\mathbf{y})$
+2. Simular de $p(\theta_{n+1}|\theta)$
+
+Notamos que el segundo paso ya sabemos cómo realizarlo, que es utilizando la distribución dada en ([-@eq-dp-marginal]) o, equivalentemente, la dada en ([-@eq-dp-marginal-equal]), con $i = n + 1$. Así, lo nuevo en este caso será la obtención de $p(\theta|\mathbf{y})$ y su correspondiente simulación.
+
+## Simulación a posteriori
+
+Una de las formas que tenemos de simular de la distribución deseada es utilizando el algoritmo de Gibbs [@geman_stochastic_1984], la cual requiere la obtención y posible simulación de las distribuciones condicionales completas, que en este caso corresponden a $p(\theta_{i}|\theta_{-i}, \mathbf{y})$.
+
+La obtención de estas distribuciones 
 
 $$
 \theta_i | \theta_{-i}, y_i \sim \sum_{j\neq i}q_{i,j}\delta(\theta_j) + r_i H_i
@@ -519,22 +565,9 @@ donde $b$ es tal que $\sum_{j\neq i}q_{i,j} + r_i = 1$ y $H_i$ es la posteriori 
 * Resultado $\alpha$: depende solo del número de valores únicos en $\theta$.
 * Resultado $\eta$: proporcional a su priori multiplicada por $\prod_{c} G_0(\theta_i)$.
 
-**Resultado de Antoniak**
-
-De manera más general podemos incluir inferencia sobre $\alpha$ e hiperparámetros de la medida de centro $G_0$. Procedemos entonces con el siguiente modelo:
+De manera más general podemos incluir 
 
 
-$$
-\begin{aligned}
-  y_i|\theta_i \overset{ind.}&{\sim} F(\theta_i) \\
-  \theta_i | G \overset{i.i.d.}&{\sim} G \\
-  G &\sim \text{DP}(\alpha, G_\eta) \\
-  (\alpha, \eta) &\sim \pi
-\end{aligned}
-$${#eq-dpm}
-
-
-## Simulación a posteriori
 
 Radford Neal presenta una revisión histórica de los algoritmos de simulación para el modelo ([-@eq-dpm]), los cuales se basan principalmente en Gibbs Sampling [@geman_stochastic_1984].
 
