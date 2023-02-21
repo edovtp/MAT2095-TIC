@@ -1,6 +1,6 @@
 function DpmNorm1f(y, prior_par, iter, warmup=floor(Int64, iter / 2))
     """
-    Implementation of algorithm 1 (Neal, 2000) for the Normal model with conjugate prior G0
+    Implementation of Algorithm 1 (Neal, 2000) for the Normal model with conjugate prior G0
     and fixed hyperparameters. That is,
 
         y_i | θ_i ~ Normal(μ_i, V_i)
@@ -77,19 +77,7 @@ function DpmNorm1f(y, prior_par, iter, warmup=floor(Int64, iter / 2))
     return (μ_samples=μ_samples, V_samples=V_samples, θ_new=θ_new)
 end
 
-function DpmNorm1()
-
-end
-
-function DpmNorm2f()
-
-end
-
 function DpmNorm2()
-
-end
-
-function DpmNorm8f()
 
 end
 
