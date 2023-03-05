@@ -273,7 +273,7 @@ donde $\sum_{h=1}^\infty w_h = 1$ y $\delta_{x}(\cdot)$ denota la medida de Dira
 Naturaleza discreta del Proceso de Dirichlet
 :::
 
-Por último, Ferguson tambien demuestra que un DP es conjugado para una muestra i.i.d. de esta distribución, donde para la medida de centralización se considera un promedio ponderado entre la medida a priori $G_0$ y la función de distribución empírica de los datos, mientras que la precisión aumenta con el número de observaciones. En particular, tenemos el siguiente resultado.
+Por último, Ferguson tambien demuestra que un DP es conjugado para una muestra i.i.d. de esta distribución, donde para la medida de centralización se considera un promedio ponderado entre la medida a priori $G_0$ y la medida empírica de los datos, mientras que la precisión aumenta con el número de observaciones. En particular, tenemos el siguiente resultado.
 
 ```{=tex}
 % Posteriori Proceso de Dirichlet
@@ -282,7 +282,7 @@ Por último, Ferguson tambien demuestra que un DP es conjugado para una muestra 
   \begin{equation*}
     G | y_1, ..., y_n \sim \text{DP}\left(M + n, \frac{M G_0 + n \hat{f}_n}{M + n}\right)
   \end{equation*}
-  donde $\hat{f}_n$ es la distribución empírica obtenida a partir de los datos, i.e.
+  donde $\hat{f}_n$ es la medida empírica obtenida a partir de los datos, i.e.
   \begin{equation*}
     \hat{f}_n(\cdot) = \frac{1}{n}\sum_{i=1}^n \delta_{y_i}(\cdot)
   \end{equation*}
@@ -342,7 +342,7 @@ $${#eq-dp-marginal-equal}
 \begin{ejemplo}[Urnas de Pólya]
   Para ilustrar los resultados anteriores, en la Figura 3 se presentan muestras $y_1, ..., y_n$ de tamaño 100 de la distribución marginal de un proceso de Dirichlet, considerando una medida de centralización Gamma(6, 1) y diferentes valores de $M$. \\
 
-  Para replicar esta figura, ver el código \texttt{02\_DpData.jl}.
+  Para replicar esta figura, ver el código \texttt{examples/02\_DpData.jl}.
 \end{ejemplo}
 ```
 
@@ -383,7 +383,7 @@ Ilustación del proceso de Stick-Breaking. (a) Inicialmente se parte con una var
 \begin{ejemplo}[Stick-Breaking]
   Para ilustrar esta construcción, en la Figura 5 se presentan simulaciones de procesos de Dirichlet, considerando una medida de centralización Gamma(6, 1) y diferentes valores de $M$. Específicamente, se presentan las simulaciones de $G((0, x))$ (i.e. la función de distribución acumulada).
 
-  Para replicar esta figura, ver el código \texttt{01\_Dp.jl}.
+  Para replicar esta figura, ver el código \texttt{examples/01\_Dp.jl}.
 \end{ejemplo}
 ```
 
@@ -444,7 +444,7 @@ $${#eq-py-k}
 
   Por otro lado, la Figura 7 ilustra el comportamiento de $k$ tanto para el proceso de Dirichlet y el proceso de Pitman-Yor, utilizando simulaciones. Para la aproximación de $\text{E}(k)$ se utilizaron 30 muestras para tamaños de muestra que van desde 1000 hasta 50000.
 
-  Para replicar ambas figuras, ver los códigos \texttt{01\_Py.jl} y \texttt{02\_PyData.jl}.
+  Para replicar ambas figuras, ver los códigos \texttt{examples/01\_Py.jl} y \texttt{examples/02\_PyData.jl}.
 \end{ejemplo}
 ```
 
@@ -465,7 +465,7 @@ Estimaciones empíricas de $E(k)$ mediante simulación tanto para el proceso de 
 
 ## Introducción y definición
 
-La generación de distribuciones discretas puede no ser adecuada para diferentes problemas, por lo que entonces, con el objetivo de formular modelos que realmente reflejen el problema considerado, nos interesa extender los procesos de Dirichlet [^4].
+La generación de distribuciones discretas puede no ser adecuada para algunas situaciones, por lo que entonces, con el objetivo de formular modelos que realmente reflejen el problema considerado, nos interesa extender los procesos de Dirichlet [^4].
 
 [^4]: En lo que sigue, utilizaremos principalmente la notación de Neal (2000), mezclándola en parte con la del libro *Bayesian Nonparametric Data Analysis* [@muller_bayesian_2015].
 
@@ -475,7 +475,9 @@ $$
 f_G(y) = \int f_\theta(y)dG(\theta) = \int f_\theta(y) d \sum_{h=1}^\infty w_h \delta_{m_h}(\theta) = \sum_{h=1}^\infty w_h f_{m_h}(y) 
 $${#eq-dpm-mezcla}
 
-Luego, notamos que el uso de estas distribuciones entrega una extensión natural de los modelos de mezcla finita a un número infinito de componentes. En lo que sigue, nos concentraremos en el caso $G \sim \text{DP}(M, G_0)$, pero debemos recordar que en la práctica podemos utilizar cualquier medida de probabilidad aleatoria. Con esta elección, el modelo dado en ([-@eq-dpm-mezcla]) recibe el nombre de **Dirichlet Process Mixture Model (DPM)**.
+Luego, notamos que el uso de estas distribuciones entrega una extensión natural de los modelos de mezcla finita a un número infinito de componentes. En este caso se vuelve necesario realizar una pequeña distinción, ya que pese a que consideramos un número infinito de componentes el número de datos es finito y, por lo tanto, tendremos a lo más un número finito de componentes "poblados", donde decimos que dos observaciones $y_i$, $y_j$, $i\neq j$ están en el mismo grupo o \textit{cluster} si los parámetros correspondientes, $\theta_i$ y $\theta_j$ son iguales. De aquí en adelante, cuando hablemos del número de componentes, nos referiremos exclusivamente al número de componentes poblados $k$. Notamos que el número de datos $n$ será siempre una cota superior de este número.
+
+Volviendo al modelo anterior, nos concentraremos en el caso $G \sim \text{DP}(M, G_0)$, pero debemos recordar que en la práctica podemos utilizar cualquier medida de probabilidad aleatoria. Con esta elección, el modelo dado en ([-@eq-dpm-mezcla]) recibe el nombre de **Dirichlet Process Mixture Model (DPM)**.
 
 ```{=tex}
 \begin{nota}
@@ -499,7 +501,7 @@ $$
 \begin{aligned}
   y_i|\theta_i \overset{ind.}&{\sim} f_{\theta_i} \\
   \theta_i | G \overset{i.i.d.}&{\sim} G \\
-  G &\sim \text{DP}(M, G_\eta) \\
+  G| M, \eta &\sim \text{DP}(M, G_\eta) \\
   M &\sim \pi_{M} \\
   \eta &\sim \pi_{\eta}
 \end{aligned}
@@ -507,15 +509,15 @@ $${#eq-dpm}
 
 Este último modelo será el enfoque de este capítulo, pero, con el objetivo de aterrizar los resultados, nos concentraremos inicialmente en el modelo ([-@eq-dpm-simple]).
 
-### Estimación de densidades utilizando DPMs
+## Estimación de densidades utilizando DPMs
 
-Recordemos que nuestra motivación inicial para estudiar medidas aleatorias es la estimación de la densidad a posteriori predictiva $p(y_{n+1}|\mathbf{y})$, lo cual podemos obtener al integrar con respecto a la variable latente $\theta_{n+1}$ correspondiente, esto es,
+Recordemos que nuestra motivación inicial para estudiar medidas aleatorias es la estimación de la densidad a posteriori predictiva $p(y_{n+1}|\mathbf{y})$, la cual podemos obtener al integrar con respecto a la variable latente $\theta_{n+1}$ correspondiente:
 
 $$
 p(y_{n+1}|\mathbf{y}) = \int f_{\theta_{n+1}}(y_{n+1})dP(\theta_{n+1}|\mathbf{y})
 $$
 
-Lo anterior puede llegar a ser muy complejo de calcular analíticamente (esto no es algo que ocurra solo con modelos no paramétricos), por lo que tenemos que recurrir al uso de métodos de simulación. En particular, si denotamos por $\theta_{n+1}^{(t)}$, $t=1, ...T$, muestras de $\theta_{n+1}|\mathbf{y}$, entonces
+Lo anterior puede llegar a ser muy complejo de calcular analíticamente (esto no es algo que ocurra solo con modelos no paramétricos), por lo que generalmente recurrimos al uso de métodos de simulación. En particular, si denotamos por $\theta_{n+1}^{(t)}$, $t=1, ..., T$, muestras de $\theta_{n+1}|\mathbf{y}$, tenemos que:
 
 $$
 p(y_{n+1}|\mathbf{y}) \approx (1/T)\sum_{t=1}^T f_{\theta_{n+1}^{(t)}}(y_{n+1})
@@ -527,285 +529,224 @@ La primera opción para obtener estas muestras es a través del típico proceso 
 
 ```{=tex}
 \begin{proposicion}
-  Considerando el modelo dado en (7), se tiene que
+  Considerando el modelo dado en (8), se tiene que
   $$
   G | y \sim \int \text{DP}(M + \sum_{i=1}^n \delta_{\theta_i})dP(\theta|\mathbf{y})
   $$
 \end{proposicion}
 ```
 
-Ahora, si en el capítulo anterior vimos que era difícil simular de la posteriori de $G$, este caso es aún peor, por lo cual debemos considerar una segunda opción, que sí sea feasible, para obtener las muestras deseadas. Al igual que antes, la idea es trabajar con la marginalización con respecto a $G$, i.e. la representación por urnas de Pólya. En este caso, el proceso de simulación consiste en:
+Ahora, si en el capítulo anterior vimos que era difícil simular de la posteriori de $G$, este caso es aún peor, por lo cual debemos buscar una segunda opción que sí sea feasible para obtener las muestras deseadas. Como en el capítulo anterior, la idea será trabajar con la marginalización con respecto a $G$, i.e. la representación por urnas de Pólya. En este caso, el proceso de simulación consiste en:
 
 1. Simular de $p(\theta|\mathbf{y})$
 2. Simular de $p(\theta_{n+1}|\theta)$
 
-Notamos que el segundo paso ya sabemos cómo realizarlo, que es utilizando la distribución dada en ([-@eq-dp-marginal]) o, equivalentemente, la dada en ([-@eq-dp-marginal-equal]), con $i = n + 1$. Así, lo nuevo en este caso será la obtención de $p(\theta|\mathbf{y})$ y su correspondiente simulación.
+Notamos que el segundo paso ya sabemos cómo realizarlo, que es utilizando la distribución dada en ([-@eq-dp-marginal]) con $i=n+1$ o, equivalentemente, la dada en ([-@eq-dp-marginal-equal]). Así, lo nuevo en este caso será la obtención de $p(\theta|\mathbf{y})$ junto con la correspondiente forma de simular de esta distribución.
 
 ## Simulación a posteriori
 
-Una de las formas que tenemos de simular de la distribución deseada es utilizando el algoritmo de Gibbs [@geman_stochastic_1984], la cual requiere la obtención y posible simulación de las distribuciones condicionales completas, que en este caso corresponden a $p(\theta_{i}|\theta_{-i}, \mathbf{y})$.
+Una de las formas que tenemos de simular de la distribución deseada es utilizar algoritmos tipo MCMC, en particular el algoritmo de muestreo de Gibbs [@geman_stochastic_1984], lo cual requiere la obtención y posible simulación de las distribuciones condicionales completas $p(\theta_{i}|\theta_{-i}, \mathbf{y})$, $i = 1, ..., n$.
 
-La obtención de estas distribuciones 
-
-$$
-\theta_i | \theta_{-i}, y_i \sim \sum_{j\neq i}q_{i,j}\delta(\theta_j) + r_i H_i
-$$
-
-donde,
+Para la obtención de estas distribuciones, ya sabemos que las prioris $p(\theta_i|\theta_{-i})$ vienen dadas por ([-@eq-dp-marginal]) con $i = n$. Mezclando esto con el hecho que $y_i|\theta_i \sim f_{\theta_i}$ y la independencia condicional, tenemos que (siendo un poco desprolijos con la notación):
 
 $$
 \begin{aligned}
-  q_{i,j} &= bF(y_i, \theta_j) \\
-  r_i &= b\alpha \int F(y_i, \theta)dG_0(\theta)
+  p(\theta_i|\theta_{-i}, \mathbf{y}) &\propto p(\mathbf{y}|\theta)p(\theta_i|\theta_{-i}) \\
+  &= \prod_{j=1}^n f_{\theta_j}(y_j) \left[\frac{1}{M + n - 1} \sum_{j\neq i}\delta_{\theta_j}(\theta_i) + \frac{M}{M + n - 1}G_0(\theta_i)\right] \\
+  &\propto \sum_{j\neq i}f_{\theta_i}(y_i)\delta_{\theta_j}(\theta_i) + Mf_{\theta_i}(y_i)G_0(\theta_i)
 \end{aligned}
 $$
 
-donde $b$ es tal que $\sum_{j\neq i}q_{i,j} + r_i = 1$ y $H_i$ es la posteriori que se obtiene al considerar un modelo con $G_0$ como priori y una única observación de la verosimilitud $F(y_i, \theta_i)$.
+Finalmente, al normalizar las expresiones anteriores, obtenemos que
 
-* Resultado $\alpha$: depende solo del número de valores únicos en $\theta$.
-* Resultado $\eta$: proporcional a su priori multiplicada por $\prod_{c} G_0(\theta_i)$.
+$$
+\theta_i | \theta_{-i}, y_i \sim \sum_{j\neq i}q_{i,j}\delta_{\theta_j} + r_i H_i
+$${#eq-post1}
 
-De manera más general podemos incluir 
-
-
-
-Radford Neal presenta una revisión histórica de los algoritmos de simulación para el modelo ([-@eq-dpm]), los cuales se basan principalmente en Gibbs Sampling [@geman_stochastic_1984].
-
-En particular, nuestra meta principal es poder obtener muestras de la distribución a posteriori de $\theta = (\theta_1, ..., \theta_n)$. Estas muestras nos permiten entonces evaluar la cantidad de interés en estimación de densidades, que es (* LINK O ECUACIÓN DE LA POSTERIORI PREDICTIVA). En particular,
+donde $H_i$ corresponde a la distribución a posteriori que se obtendría al considerar el modelo $y_i|\theta_i \sim f_{\theta_i}$ y $\theta_i \sim G_0$, esto es, $H_i \propto f_{\theta_i}(y_i)G_0(\theta_i)$, mientras que los pesos $q_{i, j}$ y $r_i$ están dados por 
 
 $$
 \begin{aligned}
-  p(y_{n+1}|\mathbf{y}) &= \int F(\theta_{n+1})dP(\theta_{n + 1}|\mathbf{y}) \\
-  &= \int F(\theta_{n+1})p(\theta_{n+1}|\theta)dP(\theta|\mathbf{y}) \\
-  &\approx (1 / T) \sum_{t=1}^T F(\theta_{n+1}^{(t)})
+  q_{i,j} &= bf_{\theta_j}(y_i) \\
+  r_i &= b M \int f_{\theta}(y_i) dG_0(\theta)
 \end{aligned}
 $$
 
-donde $\theta_{n+1}^{(t)}$, $t=1,...,T$, corresponden a muestras de $\theta_{n+1}|\theta$, dadas por (* INSERTAR ECUACIÓN DE LA POSTERIORI PREDICTIVA).
+donde $b$ es la constante tal que la suma de los pesos sea 1. Notamos entonces que hay dos problemas claves: obtener muestras de la distribución $H_i$, $i = 1,...,n$, así como calcular la integral presente en $r_i$.
 
-La clave entonces es poder simular de la posteriori. El muestreo de Gibbs nos dice que una forma de realizar lo anterior es muestrear de las distribuciones condicionales completas a posteriorio, lo cual está dado por la (* LINK A ECUACIÓN ANTERIOR). Notamos entonces que hay dos problemas claves:
-
-* Muestrear de la distribución $H_i$, $i = 1,...,n$
-* Calcular la integral en $r_i$
-
-A continuación, veremos algunos casos para mitigar ambos problemas, realizando una revisión histórica de los diferentes algoritmos basados en muestreo de Gibbs, que culmina en lo que se denomina el *Algoritmo 8* de Neal, que permite realizar simulación en el modelo general dado en ([@eq-dpm]).
+A continuación, veremos algunas formas de lidiar con ambos problemas, realizando una revisión histórica de los diferentes algoritmos basados en muestreo de Gibbs. Culminaremos en lo que se denomina el *Algoritmo 8* de Neal [-@neal_markov_2000], que permite realizar simulación en el modelo general dado en ([-@eq-dpm]).
 
 ### Caso conjugado
 
-#### Escobar & West (1995)
+Una forma de mitigar el problema de muestrear de $H_i$ es elegir directamente $G_0$ tal que obtengamos una distribución conocida de la cual sepamos muestrear. La forma más simple de hacer esto es utilizar modelos conjugados, esto es, que $H_i \propto f_\theta G_0$ tenga la misma distribución que $G_0$. Esto suele también arreglar el problema de calcular $r_i$ ya que, generalmente, podemos obtener una expresión analítica de la integral correspondiente.
 
-```{=tex}
-\begin{ejemplo}[(Datos de Galaxias)]
-Modelo propuesto por Escobar y West en el paper del 1995
-
-To finalize the article, the authors present a final extension of the previous algorithm that now includes learning about the precision parameter $\alpha$.
-
-This final model is represented as,
-
+Como ejemplo, consideremos el modelo DPM con verosimilitud $f_{\theta_i}(y_i) \equiv \text{Normal}(y_i|\mu_i, V_i)$, donde denotamos $\theta_i = (\mu_i, V_i)$. En este caso, una de las opciones conjugadas es utilizar una distribución Normal-Gamma-Inversa (NIG):
 $$
 \begin{aligned}
-  Y_i | \pi_i &\overset{ind.}{\sim} \text{N}(\mu_i, V_i), \quad i = 1, ..., n \\
-  \pi_1, ..., \pi_n &\overset{i.i.d.}{\sim} G  \\
-  G &\sim DP(\alpha, G_0) \\
-  G_0 &= N-\Gamma^{-1}(m, 1/\tau, s/2, S/2) \\
-  \tau &\sim \Gamma^{-1}(w/2, W/2) \\
-  m &\sim N(0, A), \quad A \to \infty \\
-  \alpha & \sim \Gamma(a, b) 
+  y_i | \theta_i &\sim \text{Normal}(\mu_i, V_i) \\
+  \theta_i | G &\sim G \\
+  G &\sim \text{DP}(M, G_0) \\
+  G_0 &= \text{NIG}(m, \gamma, s/2, S/2)
 \end{aligned}
 $$
 
-It follows that,
+donde $\gamma$ corresponde al parámetro de escala, esto es, $G_0 \equiv \text{Normal}(\mu | m, \gamma V)\cdot \text{IG}(V | s/2, S/2)$. Con esta especificación, obtenemos que:
 
-* The full conditional of $\alpha$ is given by,
+\begin{enumerate}
+  \item La distribución de $H_i$ es $\text{NIG}(m', \gamma', s'/2, S'/2)$, donde
+  \begin{itemize}
+    \item $m' = (m + \gamma y_i)/(1 + \gamma)$
+    \item $\gamma' = \gamma (1 + \gamma)$
+    \item $s' = s + 1$
+    \item $S' = S + (y_i - m)^2/(1 + \gamma)$
+  \end{itemize}
+  \item $r_i = M \text{t}(y_i|s, m, \sqrt{S/s (1 + \gamma)})$, donde denotamos por $t(y_i|s, m, \sigma)$ la densidad de la distribución t-Student con $s$ grados de libertad, media $m$ y escala $\sigma$, evaluada en $y_i$.
+\end{enumerate}
 
-$$
-\alpha | \pi, m, \tau, D_n \equiv \alpha | \eta, k \sim \pi_\eta \Gamma(a + k, b - \log \eta) + (1 - \pi_\eta)\Gamma(a + k - 1, b - \log \eta)
-$$
+```{=tex}
+\begin{ejemplo}[Modelo conjugado - verosimilitud Normal]
+Como aplicación del modelo anterior, la Figura 8a presenta una muestra aleatoria tamaño 50 de un modelo de mezcla finita con cuatro componentes Normales de parámetros $(-5, 1)$, $(-1, 1)$, $(0, 1)$ y $(5, 1)$, asignando pesos 0.15, 0.25, 0.3 y 0.3, respectivamente.
 
-where $\pi_\eta/(1 - \pi_\eta) = (a + k - 1)/[n (b - \log \eta)]$. Here we introduced an auxiliary variable $\eta$ that satisfies
+Las Figuras 8b, 8c y 8d presentan la estimación de la densidad a través de un DPM con parámetros $M=1$, $m=0$, $\gamma = 100$, $s = 4$ y $S=2$, un KDE utilizando un kernel normal y un modelo de mezcla finita, respectivamente, donde en el último caso el número de componentes fue elegido utilizando AIC.
 
-$$
-\eta | \alpha, k \sim \text{Beta}(\alpha + 1, n)
-$$
-
-* The full conditional of $m$ is given by,
-
-$$
-m | \tau, \pi, \alpha, D_n \equiv m | \pi, \tau \sim N\Big[ x\bar{V}\sum(V_j^*)^{-1}\mu_j^*\,;\, x\tau\bar{V}\Big]
-$$
-
-  where $x = A/(A + \tau \bar{V})$ and $\bar{V}^{-1} = \sum(V_j^*)^{-1}$.
-
-* The full conditional of $\tau$ is given by,
-
-$$
-\tau | \pi, m, \alpha, D_n \equiv \tau | \pi, m \sim \Gamma^{-1}((w + k)/2, (W + K)/2)
-$$
-
-  where $K = \sum_{j=1}^k (\mu_j^* - m)^2/V_j^*$.
-
-* The full conditionals of $\pi$ are given by,
-
-$$
-\pi_i|\pi^{(i)}, m, \tau, \alpha, D_n \sim q_0G_i(\pi_i) + \sum_{j\neq i}
-q_j \delta_{\pi_j}(\pi_i)
-$$
-
-  where $G_i(\pi_i) \equiv N-\Gamma^{-1}(x_i, 1/X; (1 + s)/2, S_i/2)$ and 
-
-$$
-    \begin{aligned}
-    q_0 &\propto \alpha c(s)[1 + (y_i - m)^2/(sM)]^{-(1 + s)/2}/M^{1/2} & \propto \alpha \cdot t_s(m, \sqrt{M})\\
-    q_j &\propto \exp[-(y_i - \mu_j)^2/(2V_j)](2V_j)^{-1/2} &\propto N(\mu_j, V_j) \\
-    \sum_{j=0, j\neq i}^n q_j &= 1 
-    \end{aligned}
-$$
-
-  with
-
-  -   $x_i = (m + \tau y_i)/(1 + \tau)$
-  
-  -   $X = \tau/(1 + \tau)$
-  
-  -   $S_i = S + (y_i - m)^2/(1 + \tau)$
-  
-  -   $M = (1 + \tau)S/s$
-  
-  -   $c(s) = \Gamma((1 + s)/2)\Gamma(s/2)^{-1}s^{-1/2}$
-
-Thus, the algorithm proceeds as follows:
-
-1. Sample initial values in the following way:
-    * Sample $\alpha \sim \Gamma(a, b)$
-    * Sample $\tau \sim \Gamma^{-1}(w/2, W/2)$
-    * Sample $m \sim N(0, 1)$
-    * Sample $\pi$ given $m, \tau$
-2. For $t = 1, ..., N$:
-    * Sample $\eta_{(t)}|\alpha_{(t-1)}, k_{(t-1)}$
-    * Sample $\alpha_{(t)} | \eta_{(t)}, k_{(t-1)}$
-    * Sample $m_{(t)} | \pi_{(t-1)}, \tau_{(t-1)}$
-    * Sample $\tau_{(t)} | \pi_{(t-1)}, m_{(t)}$
-    * Sample $\pi_{i, (t)} | \pi^{(i)}_{(t-1)}, m_{(t)}, \tau_{(t)}, \alpha_{(t)}, D_n$ from its full conditional. Be aware that $\pi^{(i)}_{(t-1)}$ may contain already updated values of the form $\pi_{1, (t)}, ..., \pi_{i-1, (t)}, \pi_{i+1, (t-1)}, ..., \pi_{n, (t-1)}$.
+En este caso, el DPM parece ser más cercano a la densidad real (aunque claramente en la práctica no la conocemos). La implementación del algoritmo y la figura se encuentran en los códigos $\texttt{DpmNorm.jl}$ y $\texttt{examples/04\_DpmNorm.jl}$, respectivamente.
 \end{ejemplo}
 ```
 
-```{julia}
-#| label: fig-galaxias1
-#| echo: false
-#| fig-cap: Velocidades de galaxias
+::: {#fig-densityestimation-normal-py}
+![](figures/DPM%20-%20density%20estimation.png){height=37%}
 
-# include("code/c3_f.jl")
+Estimación de densidad para datos simulados de un modelo de mezcla finita de 4 componentes.
+:::
 
-# velocities = [9172, 9558, 10406, 18419, 18927, 19330, 19440, 19541,
-#     19846, 19914, 19989, 20179, 20221, 20795, 20875, 21492,
-#     21921, 22209, 22314, 22746, 22914, 23263, 23542, 23711,
-#     24289, 24990, 26995, 34279, 9350, 9775, 16084, 18552,
-#     19052, 19343, 19473, 19547, 19856, 19918, 20166, 20196,
-#     20415, 20821, 20986, 21701, 21960, 22242, 22374, 22747,
-#     23206, 23484, 23666, 24129, 24366, 25633, 32065, 9483,
-#     10227, 16170, 18600, 19070, 19349, 19529, 19663, 19863,
-#     19973, 20175, 20215, 20629, 20846, 21137, 21814, 22185,
-#     22249, 22495, 22888, 23241, 23538, 23706, 24285, 24717,
-#     26960, 32789] ./ 1000;
+Ahora, nos podemos preguntar, ¿qué ganamos exactamente al considerar un modelo DPM en vez de modelos tradicionales?. En este sentido, probablemente el primer método que se nos viene a la mente para realizar estimación de densidades es el KDE (se podría argumentar que en realidad es el histograma), el cual considera como hiperparámetro el ancho de banda a utilizar por el kernel, usualmente elegido mediante alguna regla fija. Por otro lado, en el modelo de mezcla finita podemos ajustar diferentes modelos, cada uno con un número de componentes diferentes, eligiendo al final el "mejor modelo" considerando alguna métrica como el AIC, BIC o lppd.
 
-# histogram(velocities, bins=1:40, label="")
+El modelo DPM ofrece tres mejoras, una con respecto a KDE y dos con respecto a un modelo de mezcla finita. Con respecto a KDE, podemos considerar el DPM como una especie de generalización donde no se utiliza un ancho de banda fijo para todo el rango de valores. Con respecto al modelo de mezcla finita las ganancias son un poco más interesantes.
+
+En primer lugar, una vez ajustado el modelo finito el número de componentes queda completamente fijo, mientras que en el DPM siempre dejamos la oportunidad que una nueva observación provenga de una nueva componente aún no poblada, con lo cual obtenemos un modelo que ofrece mayor flexibilidad. Por otro lado, en vez de tener que elegir el número de componentes a través de alguna regla, podemos realizar directamente inferencia **probabilística** con respecto a este parámetro $k$. Como ejemplo, la Figura 9 presenta un histograma con los valores de $k$ para cada una de las muestras de la simulación anterior.
+
+::: {#fig-k-inference}
+![](figures/DPM%20-%20inference%20on%20k.png)
+
+Inferencia sobre el número de componentes. El número real de componentes está representado en rojo, mientras que la recta negra ilustra el promedio del número de componentes obtenidos por la simulación.
+:::
+
+A partir de la Figura 9 podemos notar que nuestro modelo tiende a sobreestimar el número real de componentes. Este comportamiento parece venir del hecho de considerar el parámetro $M$ fijo, donde debemos recordar que este parámetro, junto con el número de observaciones, influye fuertemente en el número de clusters a priori. En particular, si es de nuestro interés realizar inferencia sobre el número de componentes, entonces será deseable introducir este parámetro al modelo, lo cual nos motiva al modelo completo dado en ([-@eq-dpm-mezcla]).
+
+### Problema de sticky-clusters
+
+Antes de integrar al algoritmo la inferencia sobre $M$ y $\eta$, introduciremos un poco de notación motivada por un problema de eficiencia que presenta el algoritmo anterior. Este problema es conocido como *sticky clusters* y se debe a que las probabilidades de transición permiten con una probabilidad muy baja que los parámetros $\theta_i$ cambien a través de las iteraciones, sobre todo cuando los clusters de observaciones son demasiado grandes, lo cual provoca una lenta convergencia a la distribución a posteriori deseada. En la Figura 10 se ilustra este problema, donde se muestran las últimas 250 simulaciones de $\mu_1|\theta_{-1}, \mathbf{y}$ en el ejemplo anterior.
+
+::: {#fig-sticky-clusters}
+![](figures/DPM%20-%20sticky%20clusters.png)
+
+Ilustración del problema de sticky clusters. Vemos que a través de las iteraciones el valor de $\mu_1$ se mantiene en el mismo valor a lo largo de varias ventanas de tiempo.
+:::
+
+Intuitivamente, este problema ocurre ya que el valor de $\theta$ de cada observación contiene dos piezas de información: el cluster al que pertenece la observación, lo cual se mide a partir de la igualdad entre parámetros, y el valor mismo del parámetro, los cuales se actualizan de forma conjunta en cada iteración.
+
+La solución a lo anterior es relativamente simple, y es separar estos dos pedazos de información de alguna manera, lo cual fue el enfoque de Bush y MacEachern [-@bush_semiparametric_1996]. Para esto, denotemos por $c_i$, $i = 1,...,n$, el cluster al que pertenece cada observación, esto es $c_i = c_j$ si $\theta_i = \theta_j$, con la convención que $c_1 = 1$ y los nuevos valores sucesivos que ocurran en $\mathbf{c}$ no pueden saltarse la numeración (por ejemplo, no puede ocurrir que $c_i = 3$ si $c_j \neq 2$ para todo $j < i$). Con esta notación, notamos que existe una relación uno-a-uno entre el vector de parámetros $\theta$ y el vector de parámetros $\mathbf{c} = (c_1, ..., c_n)$ en conjunto con $\theta_1^*, ..., \theta_k^*$, lo cual ilustramos en la Figura 11.
+
+::: {#fig-theta-separated}
+![](figures/DPM%20-%20Separaci%C3%B3n%201.jpg)
+
+Ilustración de la relación uno a uno entre el vector de parámetros latentes $(\theta_1, ..., \theta_n)$ y $(c_1, ..., c_n, \theta_1^*, ..., \theta_k^*)$. En este caso se tiene $n=8$ y $k=3$.
+:::
+
+Con esta separación de la información, tenemos que:
+$$
+p(\theta|\mathbf{y}) = p(\theta^*, \mathbf{c}|\mathbf{y}) = p(\theta^*|\mathbf{c}, \mathbf{y})p(\mathbf{c}|\mathbf{y})
+$$
+
+Con esto, el paso de simular de $\theta|\mathbf{y}$ podemos dividirlo en dos: simular primero de $\mathbf{c}|\mathbf{y}$ y luego de $\theta^*|\mathbf{c}, \mathbf{y}$. Para la segunda distribución tenemos que:
+
+$$
+\begin{aligned}
+  p(\theta^*|\mathbf{c}, \mathbf{y}) &\propto p(\mathbf{y}|\theta)p(\theta^*|\mathbf{c}, \mathbf{y}) \\
+  &= \left[\prod_{i=1}^k \prod_{\{j\colon c_j = i\}} f_{\theta_i^*}(y_j) \right] \prod_{i=1}^k G_\eta(\theta_i^*) \\
+  &= \prod_{i=1}^k \left[G_\eta(\theta_i^*) \prod_{\{j\colon c_j = i\}} f_{\theta_i^*}(y_j)\right]
+\end{aligned}
+$$
+
+Donde la segunda distribución en el producto se obtiene al notar de ([-@eq-dp-marginal]) que un nuevo valor único siempre viene de $G_\eta$. Luego, tenemos que dados $\mathbf{c}$ y $\mathbf{y}$, cada uno de los valores únicos son independientes, obteniendo finalmente que:
+
+$$
+p(\theta_i^*|\mathbf{c}, \mathbf{y}) \propto G_\eta(\theta_i^*)\prod_{\{j\colon c_j = i\}} f_{\theta_i^*}(y_j)
+$$
+
+Con esta información, podemos simular de la distribución deseada muestreando uno por uno $p(\theta_i^*|\mathbf{c}, \mathbf{y})$, $i = 1, ..., k$.
+
+Para simular de $\mathbf{c}|\mathbf{y}$ utilizaremos nuevamente el algoritmo de Gibbs, por lo que necesitamos obtener las distribuciones condicionales completas $c_i|c_{-i}, \mathbf{y}$. Estas distribuciones se pueden obtener directamente de ([-@eq-dpm-simple]) al integrar con respecto a $\theta$. Denotando por $k_{-i}$ el número de valores únicos de $\theta_{-i}$ y por $n_{-i, j}$ el número de observaciones con $c_j = i$, $j\neq i$, obtenemos que:
+
+$$
+p(c_i = j| c_{-i}, \mathbf{y}) \propto \begin{cases}
+  n_{-i, j} \int f_\theta(y_i) dH_{-i}(\theta) & j = 1, ..., k_{-i} \\
+  M\int f_\theta(y_i) dG_\eta(\theta) & j = k_{-i} + 1
+\end{cases}
+$$
+
+donde $H_{-i} \propto G_\eta(\theta) \prod_{\{l\colon c_l = j, l \neq i\}} f_{\theta}(y_l)$ y el caso $j = k_{-i} + 1$ es que el que corresponde a que la observación pertenezca a un cluster que previamente estaba vacío.
+
+### Hiperparámetros aleatorios
+
+Agreguemos ahora la inferencia tanto para $M$ como para $\eta$. Para esto, nos apoyaremos de algunas distribuciones conocidas.
+
+
+Incluyamos ahora en el modelo conjugado con verosimilitud Normal la inferencia sobre $M$ y $\eta$, así como la separación de $\theta$. Tenemos que:
+
+* 
+
+* 
+
+* 
+
+
+```{=tex}
+\begin{ejemplo}[Modelo conjugado completo - datos de galaxias]
+Como aplicación del modelo anterior, la Figura 8a presenta una muestra aleatoria tamaño 50 de un modelo de mezcla finita con cuatro componentes Normales de parámetros $(-5, 1)$, $(-1, 1)$, $(0, 1)$ y $(5, 1)$, asignando pesos 0.15, 0.25, 0.3 y 0.3, respectivamente.
+
+Las Figuras 8b, 8c y 8d presentan la estimación de la densidad a través de un DPM con parámetros $M=1$, $m=0$, $\gamma = 100$, $s = 4$ y $S=2$, un KDE utilizando un kernel normal y un modelo de mezcla finita, respectivamente, donde en el último caso el número de componentes fue elegido utilizando AIC.
+
+En este caso, el DPM parece ser más cercano a la densidad real (aunque claramente en la práctica no la conocemos). La implementación del algoritmo y la figura se encuentran en los códigos $\texttt{DpmNorm.jl}$ y $\texttt{examples/04\_DpmNorm.jl}$, respectivamente.
+\end{ejemplo}
 ```
 
-```{julia}
-#| label: fig-pos-ew
-#| echo: false
-#| fig-cap: Densidades estimadas a posteriori
-#| fig-subcap:
-#|   - Predictiva a posteriori
-#|   - $\alpha$|D
-#| layout-ncol: 2
-#| layout-nrow: 1
 
-# a, b, A, w, W, s, S = 2, 4, 1000, 1, 100, 4, 2;
-# prior_par = (a, b, A, w, W, s, S);
+* Generalización del modelo con verosimilitud Normal
 
-# Random.seed!(219);
-# N = 4000;
-# warmup = 2000;
-# g_eta, g_alpha, g_mt, g_pi = tic_dpm_ew(velocities, prior_par, N, warmup);
+Antes de pasar al caso no conjugado presentaremos una generalización del modelo con verosimilitud Normal a observaciones multidimensionales, el cual utilizaremos en el capítulo de clustering. En este caso, utilizamos una verosimilitud Normal multivariada, que denotaremos por $N_p(\mu_i, \Sigma_i)$, donde $\mu_i$ es el vector p-dimensional de medias y $\Sigma_i$ la matriz de covarianzas. Para esta verosimilitud, una distribución conjugada es la Normal-Wishart-Inversa (NIW):
 
-# n = length(velocities)
-# function cond_dens(y)
-#     s1 = [
-#         g_alpha[i] * pdf(TDist(s), (y - g_mt[i, 1]) / sqrt(1 + g_mt[i, 2] * S / s)) /
-#         sqrt(1 + g_mt[i, 2] * S / s) for i in 1:(N-warmup)
-#     ]
+$$
+\begin{aligned}
+\mathbf{y}_i | \theta_i &\sim \text{N}_p(\mu_i, \Sigma_i) \\
+\theta_1, ..., \theta_n | G &\sim G \\
+G|M, \eta &\sim \text{DP}(M, G_\eta) \\
+G_\eta &= \text{NIW}(\textbf{m}, \gamma, \Psi, \nu) \\
+M &\sim \text{Gamma}(a, b) \\
+\eta &\sim \pi_\eta
+\end{aligned}
+$$
 
-#     s2 = [
-#         sum(map(x -> pdf(Normal(x[1], sqrt(x[2])), y), eachrow(sample)))
-#         for sample in eachslice(g_pi, dims=1)
-#     ]
+donde, al igual que en el caso univariado, $\gamma$ es un parámetro de escala. Además, la parametrización de la distribución Wishart-Inversa es tal que $\text{E}(\Sigma) = \Psi/(\nu - p - 1)$. Luego, tenemos que:
 
-#     dens = (s1 .+ s2) ./ (g_alpha .+ n)
-
-#     return mean(dens)
-# end
-
-# y_grid = range(8, 40, length=500);
-# dens_est = [cond_dens(y) for y in y_grid];
-
-# histogram(velocities, bins=1:40, label="", normalize=true);
-# display(plot!(y_grid, dens_est, label="Densidad estimada", linewidth=2.5))
+\begin{enumerate}
+  \item La distribución de $H_i$ es $\text{NIW}(\textbf{m}', \gamma', \Psi', \nu')$, donde
+  \begin{itemize}
+    \item $\textbf{m}' = (\textbf{m} + \gamma \mathbf{y}_i)/(1 + \gamma)$
+    \item $\gamma' = \gamma (1 + \gamma)$
+    \item $\Psi' = \Psi + (\mathbf{y}_i - \mathbf{m})(\mathbf{y}_i - m)^T/(1 + \gamma)$
+    \item $\nu' = \nu + 1$
+  \end{itemize}
+  \item $r_i = M t_p(\mathbf{y}_i|\nu - p + 1, \mathbf{m}, \sqrt{\Psi(1 + \gamma)/(\nu - p + 1)})$, donde denotamos por $t_p(\mathbf{y}_i|s, \mathbf{m}, \Sigma)$ la densidad de la distribución t multivariada con $s$ grados de libertad, media $m$ y escala $\Sigma$, evaluada en $\mathbf{y}_i$.
+\end{enumerate}
 
 
-# function cond_dens(alpha)
-#     function a_dist(i, alpha)
-#         eta = g_eta[i]
+### Caso no conjugado
 
-#         unique_pi = unique(g_pi[i, :, :], dims=1)
-#         k = size(unique_pi)[1]
-#         odds_w = (a + k - 1) / (n * (b - log(eta)))
-#         weight = odds_w / (1 + odds_w)
-
-#         weight * pdf(Gamma(a + k, 1 / (b - log(eta))), alpha) +
-#         (1 - weight) * pdf(Gamma(a + k - 1, 1 / (b - log(eta))), alpha)
-#     end
-
-#     dens = [a_dist(i, alpha) for i in 1:(N-warmup)]
-#     return mean(dens)
-# end
-
-# alpha_grid = range(0, 3, length=500);
-# dens_est = [cond_dens(alpha) for alpha in alpha_grid]
-# plot(alpha_grid, dens_est, label="Estimated density", linewidth=3);
-# display(plot!(alpha_grid, pdf(Gamma(a, 1 / b), alpha_grid), label="Prior density"))
-```
-
-#### Problema de "sticky-clusters"
-
-Problema: sticky clusters
-
-```{julia}
-#| label: fig-sticky-clusters
-#| echo: false
-#| fig-cap: Simulación a post de un parámetro. Vemos que se queda pegado
-
-# aux_theta = g_pi[1:end, 1, 1]
-# plot(1:500, aux_theta[1:500])
-```
-
-Bush & MacEachern, separación de valores.
-
-**Figura de cómo recuperar valores utilizando las indicadoras de clusters**
+**NOTA**: apuntar al resumen del apéndice para el algoritmo de forma más compacta con toda la notación.
 
 
-
-
-
-### Caso no-conjugado
-
-* No-gaps de MacEachern & Muller
-* Algoritmo 8 de Neal
-
-
-### Otras opciones
-
-Inferencia variacional, DP $\epsilon$-finito.
+## Otros métodos de simulación a posteriori
 
 
 \newpage
@@ -829,6 +770,10 @@ donde R es el retorno del activo, $r_f$ es la tasa de retorno libre de riesgo, $
 $$
 Y_j \equiv r_j - r_{fj} = \alpha + \beta(r_{mj} - r_{fj}) + \varepsilon_j, \quad j = 1,...,n
 $$
+
+# Apéndice
+
+## Resumen algoritmos DPM
 
 \newpage
 # Referencias
