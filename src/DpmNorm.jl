@@ -152,7 +152,7 @@ function DpmNorm2(y, prior_par, iter, init_c="same", warmup=floor(Int64, iter / 
         V_bar = 1 / sum(1 ./ V_unique)
         x = A / (A + γ * V_bar)
         m = rand(Normal((1 - x) * a + x * V_bar * sum(μ_unique ./ V_unique), sqrt(x * γ * V_bar)))
-        K = sum((μ_unique .- m) .^ 2 ./ V_unique)
+        K = sum(((μ_unique .- m) .^ 2) ./ V_unique)
         γ = rand(InverseGamma((w + k) / 2, (W + K) / 2))
 
         # Update c
@@ -170,24 +170,23 @@ function DpmNorm2(y, prior_par, iter, init_c="same", warmup=floor(Int64, iter / 
 
                 y_bar_ = mean(y_clust_)
                 m_j_ = (m + γ * sum(y_clust_)) / (1 + γ * n_j_)
-                γ_j_ = γ / (1 + γ)
+                γ_j_ = γ / (1 + n_j_ * γ)
                 s_j_ = s + n_j_
                 S_j_ = S + n_j_ / (1 + n_j_ * γ) * (y_bar_ - m)^2 + sum((y_clust_ .- y_bar_) .^ 2)
 
                 scale_t = sqrt(S_j_ / s_j_ * (1 + γ_j_))
-                weights[idx] = pdf(TDist(s_j_), (y[i] - m_j_) / scale_t) / scale_t
+                weights[idx] = n_j_ * pdf(TDist(s_j_), (y[i] - m_j_) / scale_t) / scale_t
             end
             # New cluster
             scale_t = sqrt(S / s * (1 + γ))
-            weights[k_ + 1] = pdf(TDist(s), (y[i] - m) / scale_t) / scale_t
+            weights[k_ + 1] = M * pdf(TDist(s), (y[i] - m) / scale_t) / scale_t
             idx_cluster_new = StatsBase.sample(1:(k_ + 1), Weights(weights))
             if idx_cluster_new == (k_ + 1)
-                G_η = NormalInverseGamma(m, γ, s / 2, S / 2)
-                if length(θ_unique) == (k_ + 1)
-                    θ_unique[k_ + 1] = rand(G_η)
-                else
+                if length(θ_unique) == k_
                     c[i] = maximum(c_unique_) + 1
-                    push!(θ_unique, rand(G_η))
+                    push!(θ_unique, rand(NormalInverseGamma(m, γ, s / 2, S / 2)))
+                else
+                    θ_unique[current_c] = rand(NormalInverseGamma(m, γ, s / 2, S / 2))
                 end
             else
                 c[i] = c_unique_[idx_cluster_new]
@@ -205,7 +204,7 @@ function DpmNorm2(y, prior_par, iter, init_c="same", warmup=floor(Int64, iter / 
             y_bar = mean(y_clust)
 
             m_j = (m + γ*sum(y_clust))/(1 + γ * n_j)
-            γ_j = γ / (1 + γ)
+            γ_j = γ / (1 + n_j * γ)
             s_j = s + n_j
             S_j = S + n_j / (1 + n_j * γ) * (y_bar - m)^2 + sum((y_clust .- y_bar) .^ 2)
 
