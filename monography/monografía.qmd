@@ -21,17 +21,6 @@ bibliography: references.bib
 jupyter: julia-1.8
 ---
 
-```{julia}
-#| include: false
-using Random
-using StatsBase
-using Distributions
-using ConjugatePriors
-using ElasticArrays
-using Plots
-using StatsPlots
-```
-
 \newpage
 
 \section*{Prefacio}
@@ -45,6 +34,7 @@ En cuanto a la parte computacional, en R existen diferentes paquetes que impleme
 La monografía incluye una pequeña introducción tanto a la estadística Bayesiana como al enfoque no paramétrico, para así entender cómo se mezclan ambos conceptos. Luego, se presentan los Procesos de Dirichlet (DP), que es probablemente el punto de partida más común en la estadística Bayesiana no paramétrica. Ya entendiendo estos procesos, pasaremos a una extensión que será el enfoque principal de todo este trabajo, que son los Dirichlet Process Mixture Models (DPM), realizando una pequeña revisión histórica de los métodos de simulación desarrollados. Finalmente, veremos la conexión entre estos modelos con los Modelos de Particiones Aleatorias, para luego aplicarlo en el contexto de clustering.
 
 \newpage
+
 # Introducción
 
 El material presentado a continuación se enmarca en el área de la Estadística Bayesiana No-Paramétrica, por lo que, en primer lugar, es una buena idea presentar una breve introducción de ambos conceptos. Lo siguiente no pretende ser una introducción exhaustiva, para lo cual existe bibliografía mucho más adecuada.
@@ -67,9 +57,9 @@ Por otro lado, la incerteza epistemológica, tal como lo dice el nombre, es una 
 
 [^2]: De hecho, el edificio central tiene una altura de 300 metros.
 
-Así, cuando hablamos de cuantificar la incertidumbre con probabilidades, podemos notar que siempre nos hemos estado refiriendo a incertezas ontológicas. En este sentido, las probabilidades se interpretan como la frecuencia de ocurrencia de un evento, considerando un número infinito de repeticiones. Este es el paradigma *frecuentista* de la estadística.
+Así, cuando hablamos de cuantificar la incertidumbre con probabilidades, podemos notar que siempre nos hemos estado refiriendo a incertezas ontológicas. En este sentido, las probabilidades se interpretan como la frecuencia de ocurrencia de un evento, considerando un número infinito de repeticiones, lo cual podemos justificarlo a través de la Ley Fuerte de los Grandes Números. Este es el paradigma *frecuentista* de la estadística.
 
-Ahora, ¿por qué no podemos modelar también las incertezas epistemológicas mediante probabilidades?. Esto es precisamente, de manera justificada, lo que propone el paradigma *Bayesiano*. En este caso ya no podemos interpretar las probabilidades como frecuencias, si no que como una *medida racional de incerteza*, lo cual normalmente dependerá de cada persona.
+Ahora, ¿por qué no podemos modelar también las incertezas epistemológicas mediante probabilidades?. Esto es precisamente, de manera justificada, lo que propone el paradigma *Bayesiano*. En este caso ya no podemos interpretar las probabilidades solo como frecuencias, si no que también como una *medida racional de incerteza*, lo cual normalmente dependerá de cada persona.
 
 ### Modelos Bayesianos
 
@@ -103,7 +93,6 @@ $$ {#eq-posterior-predictive}
 
 donde en la segunda ecuación realizamos el supuesto de independencia condicional entre las observaciones, dado los valores del vector de parámetros $\theta$. Ambos resultados, ([-@eq-posterior]) y ([-@eq-posterior-predictive]), podemos considerarlos como los productos principales para ser utilizados en la inferencia estadística mediante este paradigma.
 
-\newpage
 ```{=tex}
 \begin{ejemplo}[Modelo Normal-Normal]
 Para aterrizar los conceptos anteriores, consideremos el siguiente modelo:
@@ -139,15 +128,15 @@ $$
 $$
 \end{ejemplo}
 ```
-
 El ejemplo anterior muestra una de las características principales de la estadística Bayesiana, que es la combinación de la información a priori con la información de los datos en los resultados a posteriori. En particular, notamos que:
 
-* La media a posteriori corresponde a un promedio ponderado de la media a priori y el promedio muestral.
-* La varianza a posteriori es un promedio armónico de la varianza a priori y la varianza del promedio muestral.
+-   La media a posteriori corresponde a un promedio ponderado de la media a priori y el promedio muestral.
+-   La varianza a posteriori es un promedio armónico de la varianza a priori y la varianza del promedio muestral.
 
 Además, en el ejemplo anterior obtuvimos un resultado bastante conveniente. Al considerar una función de verosimilitud Normal, así como una priori Normal para $\theta$, obtuvimos que la posteriori sigue siendo una distribución Normal. Este tipo de modelos se denominan **conjugados** y serán importantes en los siguientes capítulos. Presentamos la definición formal a continuación.
 
 \newpage
+
 ```{=tex}
 \begin{definicion}[Priori conjugada]
   Decimos que una clase $\mathcal{P}$ de distribuciones a priori es \textbf{conjugada} para la verosimilitud $f(\mathbf{y}|\theta)$ si
@@ -157,7 +146,6 @@ Además, en el ejemplo anterior obtuvimos un resultado bastante conveniente. Al 
   esto es, la distribución a posteriori de $\theta$ sigue teniendo la misma distribución que la priori.
 \end{definicion}
 ```
-
 Los modelos conjugados son convenientes ya que obtenemos resultados analíticamente tractables, siempre y cuando esta clase sea analíticamente tractable, así como generalmente intuitivos. Ahora, nada nos debe restringir a ocupar modelos conjugados. En particular, vemos que, en un principio, tanto para la verosimilitud como para la priori podemos ocupar cualquier distribución de probabilidad, que deberán ser elegidas de acorde al problema.
 
 Lo anterior provocó uno de los cuellos de botella más importantes de la estadística Bayesiana, que frenó su amplio uso en la práctica, donde los modelos necesitaban ser cada vez más realísticos. Principalmente, el problema radica en los cálculos computacionales necesarios para realizar la inferencia a posteriori, que incluye tanto la evaluación de ([-@eq-posterior]) y ([-@eq-posterior-predictive]), las cuales no siempre pueden ser obtenidas de forma analítica.
@@ -167,6 +155,7 @@ Para resolver parcialmente lo anterior se ha recurrido principalmente a métodos
 No solo estos modelos se han ido perfeccionando con el tiempo, si no que también se han desarrollado diferentes softwares que permiten definir nuestros modelos para realizar la simulación a posteriori, sin tener que uno programar toda la maquinaria necesaria. Algunos ejemplos son los lenguajes probabilísticos BUGS, JAGS, Stan, PyMC3 y Turing. Además, existen librerías escritas sobre estos lenguajes probabilísticos, que ayudan aún más a que personas de otras áreas puedan fácilmente ajustar sus modelos.
 
 \newpage
+
 ## Estadística No-Paramétrica
 
 Normalmente, en estadística asumimos
@@ -175,17 +164,17 @@ $$
 y_1,..., y_n | G \overset{i.i.d.}{\sim} G
 $$
 
-Suponemos que la densidad de $G$, $g$, pertenece a 
+Suponemos que la densidad de $G$, $g$, pertenece a
 
 $$
 \mathcal{G} = \{g_\theta\colon \theta \in \Theta \subset \mathbb{R}^p\}
 $$
 
-* Ejemplo
+-   Ejemplo
 
-* Figura
+-   Figura
 
-::: {#fig-np layout-ncol=2}
+::: {#fig-np layout-ncol="2"}
 ![](figures/NP%20-%20Example%201.jpg)
 
 ![](figures/NP%20-%20Example%202.jpg)
@@ -193,14 +182,15 @@ $$
 Necesidad de métodos flexibles
 :::
 
-* Nos gustaría ir un poco más allá: estimación de densidades (figura) y regresión
+-   Nos gustaría ir un poco más allá: estimación de densidades (figura) y regresión
 
 ## Estadística Bayesiana No-Paramétrica
 
 \newpage
+
 # Procesos de Dirichlet
 
-Consideremos, en primer lugar, el problema de estimación de densidades, lo cual en el contexto bayesiano se traduce a la estimación de la posteriori predictiva $p(y_{n+1}|\mathbf{y})$. Específicamente, consideremos una muestra condicionalmente independiente dado $G$, $y_1, ..., y_n$, donde $G$ es una medida de probabilidad no especificada, denotado por $y_1, ..., y_n | G \overset{i.i.d.}{\sim} G$.
+Consideremos, en primer lugar, el problema de estimación de densidades, lo cual en el contexto bayesiano se traduce a la estimación de la posteriori predictiva $p(y_{n+1}|\mathbf{y})$. Específicamente, consideremos una muestra $y_1, ..., y_n$ condicionalmente independiente dado $G$, donde $G$ es una medida de probabilidad no especificada, denotado por $y_1, ..., y_n | G \overset{i.i.d.}{\sim} G$.
 
 Considerando el paradigma Bayesiano, lo anterior debe ser completado con una medida de probabilidad sobre $G$, esto es, sobre el espacio de las medidas de probabilidad. Una de estas opciones es la del Proceso de Dirichlet [@ferguson_bayesian_1973], que probablemente sea uno de los puntos de partida más usuales a los modelos no paramétricos y que tomará una gran importancia en los siguientes capítulos.
 
@@ -220,16 +210,16 @@ $$
 Los parámetros $G_0$ y $M$ se denominan la \textbf{medida de centralización} y la \textbf{precisión}, respectivamente. También se suele denominar $M G_0$ como la \textbf{medida base}.
 \end{definicion}
 ```
-
 ```{=tex}
 \begin{nota}
   En la mayoría de la literatura se suele utilizar $\alpha$ en vez de M. Decidí en este caso utilizar la segunda opción para así tener disponible la nomenclatura $\alpha$ para parámetros de otras distribuciones, como por ejemplo la Gamma.
 \end{nota}
 ```
 
-En su artículo, Ferguson muestra que, bajo ciertas condiciones de regularidad, $G$ existe para todo $G_0$. Además, señala algunas propiedades de los DP, algunas de las cuales se deducen directamente de la definición del proceso al considerar la partición $\{B, B^c\}$.
+Utilizando el Teorema de Extensión de Kolmogorov, Ferguson muestra que, bajo ciertas condiciones de regularidad, $G$ existe para todo $G_0$. Además, señala ciertas propiedades de los DP, algunas de las cuales se deducen directamente de la definición del proceso al considerar la partición $\{B, B^c\}$.
 
 \newpage
+
 ```{=tex}
 \begin{propiedad}[(Propiedades Proceso de Dirichlet)]
   Sea $G \sim \text{DP}(M, G_0$), $B, B_1$ y $B_2$ conjuntos medibles, con $B_1 \cap B_2 = \emptyset$. Luego,
@@ -248,7 +238,6 @@ En su artículo, Ferguson muestra que, bajo ciertas condiciones de regularidad, 
   \end{enumerate}
 \end{propiedad}
 ```
-
 La segunda propiedad nos muestra la razón por la que $G_0$ recibe el nombre de *medida de centralización*. Por otro lado, la tercera propiedad nos da la intuición por la que el parámetro M recibe el nombre de *parámetro de precisión*, al controlar el grado de concentración en la media $G_0(B)$. Por último, la cuarta propiedad nos entrega una característica bastante interesante, y es que la covarianza entre dos conjuntos cualesquiera es siempre negativa. Lo anterior puede ser una característica no deseada, donde esperaríamos que exista una correlación positiva entre conjuntos $B_1$ y $B_2$ cercanos entre sí, pero aquellas extensiones están fuera del alcance de este trabajo.
 
 ```{=tex}
@@ -256,7 +245,6 @@ La segunda propiedad nos muestra la razón por la que $G_0$ recibe el nombre de 
   Algunos se preguntarán, como yo lo hice al empezar a estudiar estos temas, el por qué lo anterior se denomina un \textbf{proceso}. La razón es bastante sencilla, y es que el DP es un proceso estocástico que, en vez de estar indexado por índices comunes como el tiempo o coordenadas geográficas, está indexado por todos los conjuntos medibles, esto es, para cada conjunto medible $B$ tenemos la variable aleatoria $G(B)$.
 \end{nota}
 ```
-
 Una propiedad muy importante, que será central en el transcurso de esta monografía, es que $G$ es casi-seguramente discreta. Este resultado nos dice que $G$ se puede escribir como una suma ponderada de masas puntuales (también denominados *átomos*). Esto es,
 
 $$
@@ -265,7 +253,7 @@ $$
 
 donde $\sum_{h=1}^\infty w_h = 1$ y $\delta_{x}(\cdot)$ denota la medida de Dirac en $x$, i.e. $\delta_x(A) = 1$ si $x\in A$ y $\delta_x(A) = 0$ en caso contrario. En la Figura 2 se ilustra gráficamente un Proceso de Dirichlet. A la izquierda se ilustran los átomos con puntos morados, donde los largos indican el peso que aporta cada uno. A la derecha se muestra cómo se calcularía la probabilidad para un cierto conjunto medible $B$, que es simplemente tomar la suma de las masas de los átomos que se encuentran dentro de este conjunto.
 
-::: {#fig-dp layout-ncol=2}
+::: {#fig-dp layout-ncol="2"}
 ![](figures/DP%20-%20Definition.jpg)
 
 ![](figures/DP%20-%20Definition%202.jpg)
@@ -288,8 +276,7 @@ Por último, Ferguson tambien demuestra que un DP es conjugado para una muestra 
   \end{equation*}
 \end{proposicion}
 ```
-
-Ahora, todo lo anterior aún no nos dice mucho acerca de como trabajar con esta distribución, ya que de momento sólo sabemos que existen tales procesos. En la práctica, se ha trabajado principalmente de dos formas. La primera es marginalizando la medida de probabilidad aleatoria $G$, esto es, trabajar directamente con
+Ahora, todo lo anterior aún no nos dice mucho acerca de como trabajar con esta distribución, ya que de momento sólo sabemos que existen tales procesos. En la práctica, se ha trabajado principalmente de dos formas. La primera es marginalizando la medida de probabilidad aleatoria $G$, esto es, trabajar directamente con:
 
 $$
 p(y_1, ..., y_n) = \int p(y_1, ..., y_n|G) d\pi(G)
@@ -303,22 +290,22 @@ La otra forma es considerar la construcción de un DP mediante una representaci�
 
 Una de las formas de poder trabajar con un Proceso de Dirichlet es, irónicamente, no trabajar con él. En probabilidades esto lo logramos marginalizando con respecto a la medida de la variable que no es de interés.
 
-Considerando una muestra aleatoria $y_1, ..., y_n|G \sim G$, Blackwell y MacQueen  [-@blackwell_ferguson_1973] formulan una representación de la densidad marginal $p(y_1, ..., y_n)$ mediante una construcción por Urnas de Pólya. En particular, sabemos que la densidad marginal conjunta podemos expresarla como
+Considerando una muestra aleatoria $y_1, ..., y_n|G \sim G$, Blackwell y MacQueen [-@blackwell_ferguson_1973] formulan una representación de la distribución marginal $p(y_1, ..., y_n)$ mediante una construcción por Urnas de Pólya. En particular, sabemos que la distribución marginal conjunta podemos expresarla como
 
 $$
 p(y_1, ..., y_n) = p(y_1)\prod_{i=2}^n p(y_i|y_1, ..., y_{i-1})
 $$
 
-y lo que muestran ambos autores es que $p(y_1)$ es la densidad de $G_0$ y que, para $i = 2, ..., n$,
+y lo que muestran ambos autores es que $p(y_1)$ tiene la misma distribución que $G_0$ y que, para $i = 2, ..., n$,
 
 $$
 p(y_i|y_1, ..., y_{i-1}) = \frac{1}{M + i - 1}\sum_{h=1}^{i-1}\delta_{y_h}(y_i) + \frac{M}{M + i - 1}G_0(y_i)
-$${#eq-dp-marginal}
+$$ {#eq-dp-marginal}
 
 Este resultado puede ser interpretado de la siguiente manera, razón por la cuál se asocia a Urnas de Pólya: consideremos una especie de generador de colores $G_0$ y una urna en la cuál iremos depositando pelotas de diferentes colores. Partimos nuestro proceso generando un color y depositando una pelota en la urna de ese mismo color. Luego, seguimos el proceso para $i = 1, 2, ...,$ como:
 
-* Con probabilidad $M/(M + i - 1)$ generamos un nuevo color de $G_0$ y depositamos en la urna una pelota de ese color.
-* En caso contrario, sacamos una pelota al azar de la urna y devolvemos una pelota extra del mismo color.
+-   Con probabilidad $M/(M + i - 1)$ generamos un nuevo color de $G_0$ y depositamos en la urna una pelota de ese color.
+-   En caso contrario, sacamos una pelota al azar de la urna y devolvemos una pelota extra del mismo color.
 
 Lo que muestran Blackwell y MacQueen es que, siguiendo este proceso de forma infinita, el proceso converge a un proceso de Dirichlet, por lo que las densidades marginales finitas coinciden y están dadas por la ecuación ([-@eq-dp-marginal]).
 
@@ -327,16 +314,15 @@ Lo que muestran Blackwell y MacQueen es que, siguiendo este proceso de forma inf
   Esta construcción también recibe el nombre del Proceso del Restaurante Chino (CRP). En este caso, se considera un restaurante de mesas infinitas y que $G_0$ es un generador de comidas. De manera sucesiva entran clientes y los sentamos en una mesa vacía con probabilidad $M/(M + i - 1)$, sirviéndoles un nuevo plato de $G_0$ o, en caso contrario, se elige a otro cliente al azar, sentando al nuevo cliente en la misma mesa, y sirviéndole el mismo plato.
 \end{nota}
 ```
-
 De ([-@eq-dp-marginal]) también se pueden observar tres cosas importantes:
 
-* Dada la intercambiabilidad de $y_1, ..., y_n$, las distribuciones condicionales completas $p(y_i|y_{-i})$ toman la misma forma que para $i = n$ en ([-@eq-dp-marginal]). Estas distribuciones son la pieza clave para realizar simulación a posteriori mediante muestreo de Gibbs.
-* La distribución a priori predictiva toma la misma forma que para $i = n + 1$.
-* Las condicionales ([-@eq-dp-marginal]) se pueden simplificar considerando solo los valores iguales de $y_1, ..., y_{i-1}$ (lo cual tiene probabilidad positiva dada la naturaleza discreta de $G$). Sean $y^{*}_1, ..., y^{*}_k$ los valores únicos y $n_j$, $j=1,...,k$ el número de veces que se repite cada valor. Luego, podemos escribir la distribución marginal de forma equivalente como
+-   Dada la intercambiabilidad de $y_1, ..., y_n$, las distribuciones condicionales completas $p(y_i|y_{-i})$ toman la misma forma que para $i = n$ en ([-@eq-dp-marginal]). Estas distribuciones son la pieza clave para realizar simulación a posteriori mediante muestreo de Gibbs.
+-   La distribución a priori predictiva toma la misma forma que para $i = n + 1$.
+-   Las condicionales ([-@eq-dp-marginal]) se pueden simplificar considerando solo los valores iguales de $y_1, ..., y_{i-1}$ (lo cual tiene probabilidad positiva dada la naturaleza discreta de $G$). Sean $y^{*}_1, ..., y^{*}_k$ los valores únicos y $n_j$, $j=1,...,k$ el número de veces que se repite cada valor. Luego, podemos escribir la distribución marginal de forma equivalente como
 
 $$
 p(y_i|y_1^*, ..., y_k^*) = \frac{1}{M + i - 1}\sum_{j=1}^{k}n_j\delta_{y_j^{*}}(y_i) + \frac{M}{M + i - 1}G_0(y_i)
-$${#eq-dp-marginal-equal}
+$$ {#eq-dp-marginal-equal}
 
 ```{=tex}
 \begin{ejemplo}[Urnas de Pólya]
@@ -345,11 +331,10 @@ $${#eq-dp-marginal-equal}
   Para replicar esta figura, ver el código \texttt{examples/02\_DpData.jl}.
 \end{ejemplo}
 ```
-
 ::: {#fig-dp-urn}
 ![](figures/DP%20-%20Urn.png)
 
-Muestra simulada directamente de la distribución marginal de un proceso de Dirichlet. Es posible ver que, a medida que $M$ aumenta, el histograma se va pareciendo cada vez más a $G_0$, representada en azul. 
+Muestra simulada directamente de la distribución marginal de un proceso de Dirichlet. Es posible ver que, a medida que $M$ aumenta, el histograma se va pareciendo cada vez más a $G_0$, representada en azul.
 :::
 
 ### Stick-Breaking
@@ -357,6 +342,7 @@ Muestra simulada directamente de la distribución marginal de un proceso de Diri
 La construcción anterior entrega la forma de trabajar con procesos de Dirichlet de forma indirecta, por lo que es natural preguntarnos si existirá alguna opción directa. En esta línea, en los años 90 se obtiene un resultado que permite trabajar directamente con estos procesos [@sethuraman_constructive_1994]. Es importante poner énfasis en la fecha de este resultado, ya que el anterior que vimos se dio en 1973, lo cual explica por qué mucho del desarrollo en estos procesos utilizaba la construcción previa.
 
 \newpage
+
 En particular, se demuestra el siguiente teorema.
 
 ```{=tex}
@@ -368,10 +354,9 @@ En particular, se demuestra el siguiente teorema.
   \end{equation*}
 \end{proposicion}
 ```
-
 Esta construcción recibe el nombre de \textbf{stick-breaking}, lo cual puede verse al pensar en los $\upsilon_h$ como las proporciones que se van eliminando de una varilla que inicialmente es de largo 1, mientras que los $w_h$ serían la proporción del total de la varilla que toma como peso para el átomo $m_h$. La Figura 4 presenta una pequeña ilustración de esta construcción.
 
-Ahora, la construcción anterior sigue teniendo un pequeño problema, y es que claramente no podemos repetir el proceso de obtención de pesos y átomos de manera infinita. Una de las formas de evitar este problema es simplemente truncar la representación hasta un número $H$ fijo, fijando $\upsilon_H = 1$, denominado un \textbf{DP finito} [@ishwaran_markov_2000], u obtener los pesos $w_h$ hasta cubrir un cierto número fijo cercano a 1 de probabilidad, denominado un $\boldsymbol\epsilon$-\textbf{DP} [@muliere_approximating_1998].
+Ahora, la construcción anterior sigue teniendo un problema, ya que en la práctica no podemos repetir el proceso de obtención de pesos y átomos de manera infinita. Una de las formas de evitar este problema es simplemente truncar la representación hasta un número $H$ fijo, fijando $\upsilon_H = 1$, denominado un \textbf{DP finito} [@ishwaran_markov_2000], u obtener los pesos $w_h$ hasta cubrir una cierta cantidad de probabilidad cercana a 1, denominado un $\boldsymbol\epsilon$-\textbf{DP} [@muliere_approximating_1998].
 
 ::: {#fig-stickbreaking}
 ![](figures/DP%20-%20Stick%20Breaking.jpg)
@@ -381,18 +366,16 @@ Ilustación del proceso de Stick-Breaking. (a) Inicialmente se parte con una var
 
 ```{=tex}
 \begin{ejemplo}[Stick-Breaking]
-  Para ilustrar esta construcción, en la Figura 5 se presentan simulaciones de procesos de Dirichlet, considerando una medida de centralización Gamma(6, 1) y diferentes valores de $M$. Específicamente, se presentan las simulaciones de $G((0, x))$ (i.e. la función de distribución acumulada).
+  Para ilustrar esta construcción, en la Figura 5 se presentan simulaciones de procesos de Dirichlet, considerando una medida de centralización Gamma(6, 1) y diferentes valores de $M$. Específicamente, se presentan las simulaciones de $G((0, x])$ (i.e. la función de distribución acumulada).
 
   Para replicar esta figura, ver el código \texttt{examples/01\_Dp.jl}.
 \end{ejemplo}
 ```
-
 ::: {#fig-dp-sb-eg}
 ![](figures/DP%20-%20Stick%20Breaking%20eg.png)
 
 Muestras de un proceso de Dirichlet, representadas en gris, junto a la función de distribución acumulada de $G_0$, representada en rojo. Es posible ver cómo las simulaciones se concentran alrededor de $G_0$ y que, a medida que $M$ aumenta, la concentración es mayor, lo que concuerda con las propiedades vistas anteriormente.
 :::
-
 
 ```{=tex}
 \begin{nota}
@@ -414,7 +397,7 @@ donde $c_n(k) = P(k|M = 1, n)$. Además, muestra que:
 
 $$
 E(k|M, n) = \sum_{i=1}^n \frac{M}{M + i - 1} \approx M \left(\log (n/M + 1)\right)
-$${#eq-dp-k}
+$$ {#eq-dp-k}
 
 Estos resultados muestran otra de las formas en que se encuentran "limitados" estos procesos. En particular, puede ser que para algún problema específico el comportamiento de $k$ no sea adecuado o, como vimos anteriormente, que la correlación entre conjuntos sea siempre negativa, independiente de la cercanía entre ellos. Nos interesan entonces generalizaciones o extensiones de los DPs.
 
@@ -436,7 +419,7 @@ y, además, en la misma línea que Antoniak, Pitman entrega la esperanza de $k$ 
 
 $$
 E(k|M, n) = \frac{M}{b}\left(\prod_{j=1}^n \frac{M + b + j - 1}{M + j - 1} - 1\right) \approx \frac{\Gamma(M + 1)}{b\Gamma(M + b)}n^b
-$${#eq-py-k}
+$$ {#eq-py-k}
 
 ```{=tex}
 \begin{ejemplo}[Proceso de Pitman-Yor]
@@ -447,7 +430,6 @@ $${#eq-py-k}
   Para replicar ambas figuras, ver los códigos \texttt{examples/01\_Py.jl} y \texttt{examples/02\_PyData.jl}.
 \end{ejemplo}
 ```
-
 ::: {#fig-urn-py}
 ![](figures/PY%20-%20Urn.png)
 
@@ -461,6 +443,7 @@ Estimaciones empíricas de $E(k)$ mediante simulación tanto para el proceso de 
 :::
 
 \newpage
+
 # Dirichlet Process Mixture Models
 
 ## Introducción y definición
@@ -473,7 +456,7 @@ Una opción es usar alguna medida de probabilidad aleatoria $G$ como la distribu
 
 $$
 f_G(y) = \int f_\theta(y)dG(\theta) = \int f_\theta(y) d \sum_{h=1}^\infty w_h \delta_{m_h}(\theta) = \sum_{h=1}^\infty w_h f_{m_h}(y) 
-$${#eq-dpm-mezcla}
+$$ {#eq-dpm-mezcla}
 
 Luego, notamos que el uso de estas distribuciones entrega una extensión natural de los modelos de mezcla finita a un número infinito de componentes. En este caso se vuelve necesario realizar una pequeña distinción, ya que pese a que consideramos un número infinito de componentes el número de datos es finito y, por lo tanto, tendremos a lo más un número finito de componentes "poblados", donde decimos que dos observaciones $y_i$, $y_j$, $i\neq j$ están en el mismo grupo o \textit{cluster} si los parámetros correspondientes, $\theta_i$ y $\theta_j$ son iguales. De aquí en adelante, cuando hablemos del número de componentes, nos referiremos exclusivamente al número de componentes poblados $k$. Notamos que el número de datos $n$ será siempre una cota superior de este número.
 
@@ -484,7 +467,6 @@ Volviendo al modelo anterior, nos concentraremos en el caso $G \sim \text{DP}(M,
   Esto no fue mencionado anteriormente, pero la distribución de $w = (w_1, w_2, ...)$ en un proceso de Dirichlet, definida sobre el "simplex infinito-dimensional", se denomina la \textbf{distribución de Griffiths-Engen-McCloskey (GEM)}. Así, tenemos que si $w \sim \text{GEM}(1, M)$ y $m_1, m_2, ... \overset{i.i.d.}{\sim} G_0$, entonces $\sum w_h \delta_{m_h}(\cdot) \sim \text{DP}(M, G_0)$. 
 \end{nota}
 ```
-
 De manera equivalente, el modelo dado en ([-@eq-dpm-mezcla]) puede ser escrito a través de un modelo jerárquico, al introducir variables latentes $\theta_i$ para cada una de las observaciones:
 
 $$
@@ -493,7 +475,7 @@ y_i|\theta_i \overset{ind.}&{\sim} f_{\theta_i} \\
 \theta_i|G \overset{i.i.d.}&{\sim} G \\
 G &\sim \text{DP}(M, G_0)
 \end{aligned}
-$${#eq-dpm-simple}
+$$ {#eq-dpm-simple}
 
 De manera aún más general, podemos incluir en el modelo inferencia sobre $M$ y los hiperparámetros de la medida de centralización $G_0$, definiendo una distribución sobre este espacio conjunto, escogidas generalmente de manera independiente. Esto es,
 
@@ -505,7 +487,7 @@ $$
   M &\sim \pi_{M} \\
   \eta &\sim \pi_{\eta}
 \end{aligned}
-$${#eq-dpm}
+$$ {#eq-dpm}
 
 Este último modelo será el enfoque de este capítulo, pero, con el objetivo de aterrizar los resultados, nos concentraremos inicialmente en el modelo ([-@eq-dpm-simple]).
 
@@ -525,21 +507,20 @@ $$
 
 luego, nuestra meta será la obtención de muestras de $\theta_{n+1}$ a posteriori.
 
-La primera opción para obtener estas muestras es a través del típico proceso lineal de simulación en modelos jerárquicos, donde primero simulamos $G$ de su distribución a posteriori, para luego simular $\theta_{n+1}$ de $\theta_{n+1}|G$ (no es necesario pasar por $\theta$ dada la independencia condicional). En esta línea, para poder simular $G$ tenemos el siguiente resultado sobre su distribución a posteriori, luego de marginalizar con respecto a $\theta = (\theta_1, ..., \theta_n)$ [@antoniak_mixtures_1974].
+La primera opción para obtener estas muestras es a través del típico proceso lineal de simulación en modelos jerárquicos, donde primero simulamos $G$ de su distribución a posteriori, para luego simular $\theta_{n+1}$ de $\theta_{n+1}|G$ (no es necesario pasar por $\theta$ dada la independencia condicional). En esta línea, para poder simular $G$ tenemos el siguiente resultado sobre su distribución a posteriori, luego de marginalizar con respecto a $\theta = (\theta_1, ..., \theta_n)$.
 
 ```{=tex}
-\begin{proposicion}
+\begin{proposicion}[(Antoniak, 1974)]
   Considerando el modelo dado en (8), se tiene que
   $$
   G | y \sim \int \text{DP}(MG_0 + \sum_{i=1}^n \delta_{\theta_i})dP(\theta|\mathbf{y})
   $$
 \end{proposicion}
 ```
-
 Ahora, si en el capítulo anterior vimos que era difícil simular de la posteriori de $G$, este caso es aún peor, por lo cual debemos buscar una segunda opción que sí sea feasible para obtener las muestras deseadas. Como en el capítulo anterior, la idea será trabajar con la marginalización con respecto a $G$, i.e. la representación por urnas de Pólya. En este caso, el proceso de simulación consiste en:
 
-1. Simular de $p(\theta|\mathbf{y})$
-2. Simular de $p(\theta_{n+1}|\theta)$
+1.  Simular de $p(\theta|\mathbf{y})$
+2.  Simular de $p(\theta_{n+1}|\theta)$
 
 Notamos que el segundo paso ya sabemos cómo realizarlo, que es utilizando la distribución dada en ([-@eq-dp-marginal]) con $i=n+1$ o, equivalentemente, la dada en ([-@eq-dp-marginal-equal]). Así, lo nuevo en este caso será la obtención de $p(\theta|\mathbf{y})$ junto con la correspondiente forma de simular de esta distribución.
 
@@ -557,13 +538,13 @@ $$
 \end{aligned}
 $$
 
-Finalmente, al normalizar las expresiones anteriores, obtenemos que
+Finalmente, al normalizar las medidas anteriores, obtenemos que
 
 $$
 \theta_i | \theta_{-i}, y_i \sim \sum_{j\neq i}q_{i,j}\delta_{\theta_j} + r_i H_i
-$${#eq-post1}
+$$ {#eq-post1}
 
-donde $H_i$ corresponde a la distribución a posteriori que se obtendría al considerar el modelo $y_i|\theta_i \sim f_{\theta_i}$ y $\theta_i \sim G_0$, esto es, $H_i \propto f_{\theta_i}(y_i)G_0(\theta_i)$, mientras que los pesos $q_{i, j}$ y $r_i$ están dados por 
+donde $H_i$ corresponde a la distribución a posteriori que se obtendría al considerar el modelo $y_i|\theta_i \sim f_{\theta_i}$ y $\theta_i \sim G_0$, esto es, $H_i \propto f_{\theta_i}(y_i)G_0(\theta_i)$, mientras que los pesos $q_{i, j}$ y $r_i$ están dados por
 
 $$
 \begin{aligned}
@@ -580,8 +561,7 @@ A continuación, veremos algunas formas de lidiar con ambos problemas, realizand
 
 Una forma de mitigar el problema de muestrear de $H_i$ es elegir directamente $G_0$ tal que obtengamos una distribución conocida de la cual sepamos muestrear. La forma más simple de hacer esto es utilizar modelos conjugados, esto es, que $H_i \propto f_\theta G_0$ tenga la misma distribución que $G_0$. Esto suele también arreglar el problema de calcular $r_i$ ya que, generalmente, podemos obtener una expresión analítica de la integral correspondiente.
 
-Como ejemplo, consideremos el modelo DPM con verosimilitud $f_{\theta_i}(y_i) \equiv \text{Normal}(y_i|\mu_i, V_i)$, donde denotamos $\theta_i = (\mu_i, V_i)$. En este caso, una de las opciones conjugadas es utilizar una distribución Normal-Gamma-Inversa (NIG):
-$$
+Como ejemplo, consideremos el modelo DPM con verosimilitud $f_{\theta_i}(y_i) \equiv \text{Normal}(y_i|\mu_i, V_i)$, donde denotamos $\theta_i = (\mu_i, V_i)$. En este caso, una de las opciones conjugadas es utilizar una distribución Normal-Gamma-Inversa (NIG): $$
 \begin{aligned}
   y_i | \theta_i &\sim \text{Normal}(\mu_i, V_i) \\
   \theta_i | G &\sim G \\
@@ -590,19 +570,20 @@ $$
 \end{aligned}
 $$
 
-donde $\gamma$ corresponde al parámetro de escala, esto es, $G_0 \equiv \text{Normal}(\mu | m, \gamma V)\cdot \text{IG}(V | s/2, S/2)$. Con esta especificación, obtenemos que:
+donde $\gamma$ es un parámetro de escala, esto es, $G_0 \equiv \text{Normal}(\mu | m, \gamma V)\cdot \text{IG}(V | s/2, S/2)$. Con esta especificación, obtenemos que:
 
+```{=tex}
 \begin{enumerate}
   \item La distribución de $H_i$ es $\text{NIG}(m', \gamma', s'/2, S'/2)$, donde
   \begin{itemize}
     \item $m' = (m + \gamma y_i)/(1 + \gamma)$
-    \item $\gamma' = \gamma (1 + \gamma)$
+    \item $\gamma' = \gamma / (1 + \gamma)$
     \item $s' = s + 1$
     \item $S' = S + (y_i - m)^2/(1 + \gamma)$
   \end{itemize}
-  \item $r_i = M \text{t}(y_i|s, m, \sqrt{S/s (1 + \gamma)})$, donde denotamos por $t(y_i|s, m, \sigma)$ la densidad de la distribución t-Student con $s$ grados de libertad, media $m$ y escala $\sigma$, evaluada en $y_i$.
+  \item $r_i = M \text{t}(y_i|s, m, \sqrt{S/s (1 + \gamma)})$, donde denotamos por $t(y_i|s, m, \sigma)$ la densidad de la distribución t-Student con $s$ grados de libertad, localización $m$ y escala $\sigma$, evaluada en $y_i$.
 \end{enumerate}
-
+```
 ```{=tex}
 \begin{ejemplo}[Modelo conjugado - verosimilitud Normal]
 Como aplicación del modelo anterior, la Figura 8a presenta una muestra aleatoria tamaño 50 de un modelo de mezcla finita con cuatro componentes Normales de parámetros $(-5, 1)$, $(-1, 1)$, $(0, 1)$ y $(5, 1)$, asignando pesos 0.15, 0.25, 0.3 y 0.3, respectivamente.
@@ -612,9 +593,8 @@ Las Figuras 8b, 8c y 8d presentan la estimación de la densidad a través de un 
 En este caso, el DPM parece ser más cercano a la densidad real (aunque claramente en la práctica no la conocemos). La implementación del algoritmo y la figura se encuentran en los códigos $\texttt{DpmNorm.jl}$ y $\texttt{examples/04\_DpmNorm.jl}$, respectivamente.
 \end{ejemplo}
 ```
-
 ::: {#fig-densityestimation-normal-py}
-![](figures/DPM%20-%20density%20estimation.png){height=37%}
+![](figures/DPM%20-%20density%20estimation.png){height="37%"}
 
 Estimación de densidad para datos simulados de un modelo de mezcla finita de 4 componentes.
 :::
@@ -653,28 +633,27 @@ La solución a lo anterior es relativamente simple, y es separar estos dos pedaz
 Ilustración de la relación uno a uno entre el vector de parámetros latentes $(\theta_1, ..., \theta_n)$ y $(c_1, ..., c_n, \theta_1^*, ..., \theta_k^*)$. En este caso se tiene $n=8$ y $k=3$.
 :::
 
-Con esta separación de la información, tenemos que:
-$$
+Con esta separación de la información, tenemos que: $$
 p(\theta|\mathbf{y}) = p(\theta^*, \mathbf{c}|\mathbf{y}) = p(\theta^*|\mathbf{c}, \mathbf{y})p(\mathbf{c}|\mathbf{y})
 $$
 
-Con esto, el paso de simular de $\theta|\mathbf{y}$ podemos dividirlo en dos: simular primero de $\mathbf{c}|\mathbf{y}$ y luego de $\theta^*|\mathbf{c}, \mathbf{y}$. Para la segunda distribución, denotando por $\mathcal{C}_i = \{j\colon c_j = i\}$, tenemos que:
+Con esto, el paso de simular de $\theta|\mathbf{y}$ podemos dividirlo en dos: simular primero de $\mathbf{c}|\mathbf{y}$ y luego de $\theta^*|\mathbf{c}, \mathbf{y}$. Para la segunda distribución, denotando por $\mathcal{C}_j = \{i\colon c_i = j\}$, tenemos que:
 
 $$
 \begin{aligned}
   p(\theta^*|\mathbf{c}, \mathbf{y}) &\propto p(\mathbf{y}|\theta)p(\theta^*|\mathbf{c}) \\
-  &= \left[\prod_{i=1}^k \prod_{j \in \mathcal{C}_i} f_{\theta_i^*}(y_j) \right] \prod_{i=1}^k G_\eta(\theta_i^*) \\
-  &= \prod_{i=1}^k \left[G_\eta(\theta_i^*) \prod_{j \in \mathcal{C}_i} f_{\theta_i^*}(y_j)\right]
+  &= \left[\prod_{j=1}^k \prod_{i \in \mathcal{C}_j} f_{\theta_j^*}(y_i) \right] \prod_{j=1}^k G_\eta(\theta_j^*) \\
+  &= \prod_{j=1}^k \left[G_\eta(\theta_j^*) \prod_{i \in \mathcal{C}_j} f_{\theta_j^*}(y_i)\right]
 \end{aligned}
 $$
 
-Donde la segunda distribución en el producto se obtiene al notar de ([-@eq-dp-marginal]) que un nuevo valor único siempre viene de $G_\eta$. Luego, tenemos que dados $\mathbf{c}$ e $\mathbf{y}$, cada uno de los valores únicos $\theta_i^*$, $i = 1,...,k$, son independientes, obteniendo finalmente que:
+Donde la segunda distribución en el producto se obtiene al notar de ([-@eq-dp-marginal]) que un nuevo valor único siempre viene de $G_\eta$. Luego, tenemos que dados $\mathbf{c}$ e $\mathbf{y}$, cada uno de los valores únicos $\theta_j^*$, $j = 1,...,k$, son independientes, obteniendo finalmente que:
 
 $$
-p(\theta_i^*|\mathbf{c}, \mathbf{y}) \propto G_\eta(\theta_i^*)\prod_{j \in \mathcal{C}_i} f_{\theta_i^*}(y_j)
+p(\theta_j^*|\mathbf{c}, \mathbf{y}) \propto G_\eta(\theta_j^*)\prod_{i \in \mathcal{C}_j} f_{\theta_j^*}(y_i)
 $$
 
-Con esta información, podemos simular de la distribución deseada muestreando uno por uno $p(\theta_i^*|\mathbf{c}, \mathbf{y})$, $i = 1, ..., k$.
+Con esta información, podemos simular de la distribución deseada muestreando uno por uno $p(\theta_j^*|\mathbf{c}, \mathbf{y})$, $j = 1, ..., k$.
 
 Para simular de $\mathbf{c}|\mathbf{y}$ utilizaremos nuevamente el algoritmo de Gibbs, por lo que necesitamos obtener las distribuciones condicionales completas $c_i|c_{-i}, \mathbf{y}$. Estas distribuciones se pueden obtener directamente de ([-@eq-dpm-simple]) al integrar con respecto a $\theta$. Denotando por $k_{-i}$ el número de valores únicos de $\theta_{-i}$, por $\mathcal{C}_{-i, j} = \{l \colon c_l = j, l \neq i\}$ y $n_{-i, j}$ el número de observaciones en este conjunto, obtenemos que:
 
@@ -757,7 +736,6 @@ Finalmente, ya tenemos todo lo necesario para poder realizar inferencia a poster
   En toda esta sección se han introducido bastantes notaciones diferentes que pueden marear bastante, como me pasó a mi. En el Apéndice 1 se resumen los dos algoritmos anteriores, junto con un diccionario de notaciones.
 \end{nota}
 ```
-
 Como ejemplo de lo anterior, extendamos el modelo Normal visto anteriormente con los hiperparámetros $M$ y $\eta$, así como la separación entre $\theta^*$ y $\mathbf{c}$. Así, tenemos el siguiente modelo:
 
 $$
@@ -773,6 +751,7 @@ $$
 
 donde para simplificar las cosas, solo consideramos $\eta = (m, \gamma)$, con una priori conjunta independiente. Obtenemos entonces que:
 
+```{=tex}
 \begin{itemize}
   \item Para $\eta|\theta^*$ tenemos que:
   \begin{enumerate}
@@ -802,7 +781,7 @@ donde para simplificar las cosas, solo consideramos $\eta = (m, \gamma)$, con un
     \item $\int f_\theta(y_i)dG_\eta = t\left(y_i|s, m, \sqrt{\frac{S}{s}(1 + \gamma)}\right)$
   \end{enumerate}
 \end{itemize}
-
+```
 ```{=tex}
 \begin{ejemplo}[Modelo conjugado completo - datos de galaxias]
 Como aplicación del modelo anterior, la Figura 8a presenta una muestra aleatoria tamaño 50 de un modelo de mezcla finita con cuatro componentes Normales de parámetros $(-5, 1)$, $(-1, 1)$, $(0, 1)$ y $(5, 1)$, asignando pesos 0.15, 0.25, 0.3 y 0.3, respectivamente.
@@ -812,8 +791,6 @@ Las Figuras 8b, 8c y 8d presentan la estimación de la densidad a través de un 
 En este caso, el DPM parece ser más cercano a la densidad real (aunque claramente en la práctica no la conocemos). La implementación del algoritmo y la figura se encuentran en los códigos $\texttt{DpmNorm.jl}$ y $\texttt{examples/04\_DpmNorm.jl}$, respectivamente.
 \end{ejemplo}
 ```
-
-
 Antes de pasar al caso no conjugado presentaremos una generalización del modelo con verosimilitud Normal a observaciones multidimensionales, el cual utilizaremos en el capítulo de clustering. En este caso, utilizamos una verosimilitud Normal multivariada, que denotaremos por $N_p(\mu_i, \Sigma_i)$, donde $\mu_i$ es el vector p-dimensional de medias y $\Sigma_i$ la matriz de covarianzas. Para esta verosimilitud, una distribución conjugada es la Normal-Wishart-Inversa (NIW):
 
 $$
@@ -829,6 +806,7 @@ $$
 
 donde, al igual que en el caso univariado, $\gamma$ es un parámetro de escala. Además, la parametrización de la distribución Wishart-Inversa es tal que $\text{E}(\Sigma) = \Psi/(\nu - p - 1)$. Luego, tenemos que:
 
+```{=tex}
 \begin{enumerate}
   \item La distribución de $H_i$ es $\text{NIW}(\textbf{m}', \gamma', \Psi', \nu')$, donde
   \begin{itemize}
@@ -839,23 +817,22 @@ donde, al igual que en el caso univariado, $\gamma$ es un parámetro de escala. 
   \end{itemize}
   \item $r_i = M t_p(\mathbf{y}_i|\nu - p + 1, \mathbf{m}, \sqrt{\Psi(1 + \gamma)/(\nu - p + 1)})$, donde denotamos por $t_p(\mathbf{y}_i|s, \mathbf{m}, \Sigma)$ la densidad de la distribución t multivariada con $s$ grados de libertad, media $m$ y escala $\Sigma$, evaluada en $\mathbf{y}_i$.
 \end{enumerate}
-
-
+```
 ### Caso no conjugado
-
 
 ## Otros métodos de simulación a posteriori
 
-
 \newpage
+
 # Modelos de Particiones Aleatorias y Clustering
 
 \newpage
+
 # Aplicación: Modelo CAPM
 
-* El modelo de valorización de activos financieros (CAPM) fue desarrollado en los años 60 de forma independiente por Jack Treynor, William Sharpe, John Linter y Jan Mossin.
+-   El modelo de valorización de activos financieros (CAPM) fue desarrollado en los años 60 de forma independiente por Jack Treynor, William Sharpe, John Linter y Jan Mossin.
 
-* El modelo propone 
+-   El modelo propone
 
 $$
 \text{E}(R) = r_f + \beta(\text{E}(R_m) - r_f)
@@ -863,28 +840,93 @@ $$
 
 donde R es el retorno del activo, $r_f$ es la tasa de retorno libre de riesgo, $R_m$ es el retorno del mercado y $\beta$ es el riesgo sistemático del activo bajo estudio.
 
-* Normalmente se considera el modelo de regresión
+-   Normalmente se considera el modelo de regresión
 
 $$
 Y_j \equiv r_j - r_{fj} = \alpha + \beta(r_{mj} - r_{fj}) + \varepsilon_j, \quad j = 1,...,n
 $$
 
 \newpage
+
 # Apéndice
 
 ## Resumen algoritmos DPM
 
-Para apoyar en la lectura, en esta sección se presentarán los tres algoritmos MCMC vistos de manera resumida, paso por paso.
+Para apoyar en la lectura, en esta sección se presentarán los tres algoritmos MCMC vistos para el modelo DPM ([-@eq-dpm]) de manera resumida, paso por paso. Se utiliza la siguiente notación:
+
+-   $\theta^*$: valores únicos de $\theta$
+
+-   $k$: número de valores únicos de $\theta$
+
+-   $\mathcal{C}_j$: índices de observaciones pertenecientes al cluster $j$, esto es, $\{i\colon c_i = j\}$
+
+- $n_j$: número de observaciones en $\mathcal{C}_j$
+
+- $k_{-i}$: número de valores únicos de $\theta$ sin considerar $\theta_i$
+
+- $\mathcal{C}_{-i, j}$: índices de observaviones pertenecientes al cluster $j$ sin considerar la i-ésima observación
+
+- $n_{-i, j}$: número de observaciones en $\mathcal{C}_{-i, j}$
+
+-   $H_i(\theta) \propto f_{\theta}(y_i)G_\eta(\theta)$: posteriori obtenida de considerar una priori $G_\eta$ y verosimilitud $f_\theta$ con una única observación $y_i$.
+
+-  $H_{-i, j}(\theta) \propto G_\eta(\theta)\prod_{l \in \mathcal{C}_{-i, j}} f_\theta(y_l)$: posteriori obtenida de considerar una priori $G_\eta$ y verosimilitud $f_\theta$ con todas las observaciones pertenecientes al cluster $j$, sin contar la i-ésima observación.
+
+-   $q_{ij} \propto f_{\theta_j}(y_i)$
+
+-   $r_i \propto M \int f_\theta(y_i)dG_\eta(\theta)$: priori predictiva del modelo con priori $G_\eta$ y verosimilitud $f_\theta$, evaluada en $y_i$.
 
 ### Algoritmo 1 - Estándar
 
+El algoritmo consiste en:
+
+-   Definir valores iniciales de $\theta$
+
+-   Calcular los pesos $r_i$ y las distribuciones $H_i$ **antes** de partir con el algoritmo, ya que son constantes a través de las iteraciones.
+
+-   Para $t = 1, …, T$:
+
+    1.  Para $i = 1, …, n$:
+
+        1.  Calcular los pesos $q_{ij}$, $j \neq i$
+
+        2.  Muestrear de $p(\theta_i|\theta_{-i}, \mathbf{y}) \propto \sum_{j\neq i}q_{ij}\delta_{\theta_j} + r_iH_i$
+
+    2.  Muestrear de $p(\theta_{n+1}|\theta) \propto \sum_{j=1}^k n_j \delta_{\theta_j^*} + MG_\eta$
+
 ### Algoritmo 2 - Sticky-Clusters e hiperparámetros
+
+Ahora realizamos la separación de $\theta$ e incluimos los hiperparámetros $\eta$ y $M$. El algoritmo consiste en:
+
+- Definir valores iniciales de $M, \eta, \mathbf{c}, \theta^*$
+- Para $t = 1, ... T$:
+    
+    1.   Simular $\phi \sim \text{Beta}(M + 1, n)$ y calcular $\pi = (\alpha + k - 1)/[n(\beta - \log(\phi)) + \alpha + k - 1]$
+    2.   Muestrear de  $$M|\phi, k \sim \pi\text{Gamma}(\alpha + k - 1, \beta - \log(\phi)) + (1 - \pi)\text{Gamma}(\alpha + k - 1, \beta - \log(\phi))$$
+    3. Muestrear de $\eta|\theta^* \propto \pi_\eta(\eta) \prod_{j=1}^k G_\eta(\theta_j^*)$
+    4. Para $i = 1, ..., n$:
+
+        4.1 Muestrear de: $$p(c_i = j| c_{-i}, \mathbf{y}) \propto \begin{cases}
+        n_{-i, j} \int f_\theta(y_i) dH_{-i, j}(\theta) & j = 1, ..., k_{-i} \\
+        M\int f_\theta(y_i) dG_\eta(\theta) & j = k_{-i} + 1
+        \end{cases}$$
+        4.2 Reordenar los valores de $\mathbf{c}$
+    
+    5. Para $j=1, ...k$:
+
+        5.1 Muestrear de $p(\theta_j^*|\mathbf{c}, \mathbf{y}) \propto G_\eta(\theta_j^*)\prod_{i\in \mathcal{C}_j} f_{\theta_j^*}(y_i)$
+
+    6. Muestrear de $p(\theta_{n+1}|\theta^*) \propto \sum_{j=1}^k n_j \delta_{\theta_j^*} + M G_\eta$
 
 ### Algoritmo 3 - Caso no conjugado
 
 \newpage
+
 # Referencias
+
+```{=html}
 <!-- ---
 nocite: |
   @*
 --- -->
+```
