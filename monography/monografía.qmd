@@ -561,7 +561,8 @@ A continuación, veremos algunas formas de lidiar con ambos problemas, realizand
 
 Una forma de mitigar el problema de muestrear de $H_i$ es elegir directamente $G_0$ tal que obtengamos una distribución conocida de la cual sepamos muestrear. La forma más simple de hacer esto es utilizar modelos conjugados, esto es, que $H_i \propto f_\theta G_0$ tenga la misma distribución que $G_0$. Esto suele también arreglar el problema de calcular $r_i$ ya que, generalmente, podemos obtener una expresión analítica de la integral correspondiente.
 
-Como ejemplo, consideremos el modelo DPM con verosimilitud $f_{\theta_i}(y_i) \equiv \text{Normal}(y_i|\mu_i, V_i)$, donde denotamos $\theta_i = (\mu_i, V_i)$. En este caso, una de las opciones conjugadas es utilizar una distribución Normal-Gamma-Inversa (NIG): $$
+Como ejemplo, consideremos el modelo DPM con verosimilitud $f_{\theta_i}(y_i) \equiv \text{Normal}(y_i|\mu_i, V_i)$, donde denotamos $\theta_i = (\mu_i, V_i)$. En este caso, una de las opciones conjugadas es utilizar una distribución Normal-Gamma-Inversa (NIG): 
+$$
 \begin{aligned}
   y_i | \theta_i &\sim \text{Normal}(\mu_i, V_i) \\
   \theta_i | G &\sim G \\
@@ -590,9 +591,10 @@ Como aplicación del modelo anterior, la Figura 8a presenta una muestra aleatori
 
 Las Figuras 8b, 8c y 8d presentan la estimación de la densidad a través de un DPM con parámetros $M=1$, $m=0$, $\gamma = 100$, $s = 4$ y $S=2$, un KDE utilizando un kernel normal y un modelo de mezcla finita, respectivamente, donde en el último caso el número de componentes fue elegido utilizando AIC.
 
-En este caso, el DPM parece ser más cercano a la densidad real (aunque claramente en la práctica no la conocemos). La implementación del algoritmo y la figura se encuentran en los códigos $\texttt{DpmNorm.jl}$ y $\texttt{examples/04\_DpmNorm.jl}$, respectivamente.
+En este caso, el DPM parece ser más cercano a la densidad real (aunque claramente en la práctica no la conocemos). La implementación del algoritmo y la figura se encuentran en los códigos $\texttt{DpmNorm.jl}$ y $\texttt{examples/04\_DpmNormA1.jl}$, respectivamente.
 \end{ejemplo}
 ```
+
 ::: {#fig-densityestimation-normal-py}
 ![](figures/DPM%20-%20density%20estimation.png){height="37%"}
 
@@ -633,11 +635,12 @@ La solución a lo anterior es relativamente simple, y es separar estos dos pedaz
 Ilustración de la relación uno a uno entre el vector de parámetros latentes $(\theta_1, ..., \theta_n)$ y $(c_1, ..., c_n, \theta_1^*, ..., \theta_k^*)$. En este caso se tiene $n=8$ y $k=3$.
 :::
 
-Con esta separación de la información, tenemos que: $$
+Con esta separación de la información, tenemos que: 
+$$
 p(\theta|\mathbf{y}) = p(\theta^*, \mathbf{c}|\mathbf{y}) = p(\theta^*|\mathbf{c}, \mathbf{y})p(\mathbf{c}|\mathbf{y})
 $$
 
-Con esto, el paso de simular de $\theta|\mathbf{y}$ podemos dividirlo en dos: simular primero de $\mathbf{c}|\mathbf{y}$ y luego de $\theta^*|\mathbf{c}, \mathbf{y}$. Para la segunda distribución, denotando por $\mathcal{C}_j = \{i\colon c_i = j\}$, tenemos que:
+Luego, el paso de simular de $\theta|\mathbf{y}$ podemos dividirlo en dos: simular primero de $\mathbf{c}|\mathbf{y}$ y luego de $\theta^*|\mathbf{c}, \mathbf{y}$. Para la segunda distribución, denotando por $\mathcal{C}_j = \{i\colon c_i = j\}$, tenemos que:
 
 $$
 \begin{aligned}
@@ -651,7 +654,7 @@ Donde la segunda distribución en el producto se obtiene al notar de ([-@eq-dp-m
 
 $$
 p(\theta_j^*|\mathbf{c}, \mathbf{y}) \propto G_\eta(\theta_j^*)\prod_{i \in \mathcal{C}_j} f_{\theta_j^*}(y_i)
-$$
+$${#eq-theta-a2}
 
 Con esta información, podemos simular de la distribución deseada muestreando uno por uno $p(\theta_j^*|\mathbf{c}, \mathbf{y})$, $j = 1, ..., k$.
 
@@ -662,7 +665,7 @@ p(c_i = j| c_{-i}, \mathbf{y}) \propto \begin{cases}
   n_{-i, j} \int f_\theta(y_i) dH_{-i, j}(\theta) & j = 1, ..., k_{-i} \\
   M\int f_\theta(y_i) dG_\eta(\theta) & j = k_{-i} + 1
 \end{cases}
-$$
+$${#eq-cluster-a2}
 
 donde $H_{-i, j}(\theta) \propto G_\eta(\theta) \prod_{l \in \mathcal{C}_{-i, j}} f_{\theta}(y_l)$ y el caso $j = k_{-i} + 1$ es que el que corresponde a que la observación pertenezca a un cluster que previamente estaba vacío.
 
@@ -704,7 +707,7 @@ $$
 p(\phi|M, k) \propto \phi^M (1 - \phi)^{n-1} \sim \text{Beta}(M + 1, n)
 $$
 
-Por otro lado, tenemos que:
+Mientras que en el segundo caso tenemos que:
 
 $$
 \begin{aligned}
@@ -713,13 +716,15 @@ $$
 \end{aligned}
 $$
 
-de lo cual notamos una similitud con la función de densidad de una distribución Gamma, lo cual nos motiva a utilizar $M \sim \text{Gamma}(\alpha, \beta)$. Así:
+de lo cual notamos una similitud con la función de densidad de una distribución Gamma, lo cual nos motiva a utilizar $M \sim \text{Gamma}(\alpha, \beta)$. Así, utilizando esta distribución a priori, tenemos que:
 
 $$
 \begin{aligned}
   p(M|\phi, k) &\propto M^{\alpha - 1} \exp\{-\beta M\} (M^{k} + M^{k-1}n)\exp\{M\log(\phi)\} \\
-  &\propto M^{\alpha + k - 1}\exp\{-(\beta - \log(\phi))M\} + nM^{\alpha + k - 2} \exp\{-(\beta - \log(\phi))M\} \\
-  &\sim \pi_\phi \text{Gamma}(\alpha + k, \beta - \log(\phi)) + (1 - \pi_\phi) \text{Gamma}(\alpha + k - 1, \beta - \log(\phi))
+  &\propto M^{\alpha + k - 1}\exp\{-(\beta - \log(\phi))M\}  \\
+  &\quad \quad \quad + nM^{\alpha + k - 2} \exp\{-(\beta - \log(\phi))M\} \\
+  &\sim \pi_\phi \text{Gamma}(\alpha + k, \beta - \log(\phi)) + \\
+  &\quad \quad \quad (1 - \pi_\phi) \text{Gamma}(\alpha + k - 1, \beta - \log(\phi))
 \end{aligned}
 $$
 
@@ -736,6 +741,7 @@ Finalmente, ya tenemos todo lo necesario para poder realizar inferencia a poster
   En toda esta sección se han introducido bastantes notaciones diferentes que pueden marear bastante, como me pasó a mi. En el Apéndice 1 se resumen los dos algoritmos anteriores, junto con un diccionario de notaciones.
 \end{nota}
 ```
+
 Como ejemplo de lo anterior, extendamos el modelo Normal visto anteriormente con los hiperparámetros $M$ y $\eta$, así como la separación entre $\theta^*$ y $\mathbf{c}$. Así, tenemos el siguiente modelo:
 
 $$
@@ -753,7 +759,7 @@ donde para simplificar las cosas, solo consideramos $\eta = (m, \gamma)$, con un
 
 ```{=tex}
 \begin{itemize}
-  \item Para $\eta|\theta^*$ tenemos que:
+  \item Para $\eta|\theta^*$:
   \begin{enumerate}
     \item $m|\gamma, \theta^* \sim \text{Normal}\left((1 - x)a + x\bar{V}\sum_{j=1}^k \mu_j^*/V_j^*; x\gamma\bar{V}\right)$
     \item $\gamma|m, \theta^* \sim \text{IG}\left((w + k)/2, (W + K)/2\right)$
@@ -770,55 +776,85 @@ donde para simplificar las cosas, solo consideramos $\eta = (m, \gamma)$, con un
   $$
   donde
   \begin{enumerate}
-    \item $m_j^* = (m + \gamma \sum_{i \in \mathcal{C}_j y_i})/(1 + \gamma n_j)$
-    \item $\gamma_j^* = \gamma/(1 + \gamma)$
+    \item $m_j^* = (m + \gamma \sum_{i \in \mathcal{C}_j} y_i)/(1 + \gamma n_j)$
+    \item $\gamma_j^* = \gamma/(1 + n_j\gamma)$
     \item $s_j^* = s + n_j$
     \item $S_j^* = S + \frac{n_j}{1 + \gamma n_j}(\bar{y}_{\mathcal{C}_j} - m)^2 + \sum_{i \in \mathcal{C}_j} (y_i - \bar{y}_{\mathcal{C}_j})^2$
   \end{enumerate}
   \item La distribución $H_{-i, j}$ es idéntica a la anterior pero considerando $n_{-i, j}$ y $\mathcal{C}_{-i, j}$, obteniendo entonces que:
   \begin{enumerate}
-    \item $\int f_\theta(y_i)dH_{-i, j} = t\left(y_i|s_{-i, j}^*, m_{-i, j}^*, \sqrt{\frac{S_{-i, j}^*}{s_{-i, j}^*}(1 + \gamma^*)}\right)$
+    \item $\int f_\theta(y_i)dH_{-i, j} = t\left(y_i|s_{-i, j}^*, m_{-i, j}^*, \sqrt{\frac{S_{-i, j}^*}{s_{-i, j}^*}(1 + \gamma_{-i, j}^*)}\right)$
     \item $\int f_\theta(y_i)dG_\eta = t\left(y_i|s, m, \sqrt{\frac{S}{s}(1 + \gamma)}\right)$
   \end{enumerate}
 \end{itemize}
 ```
+
 ```{=tex}
 \begin{ejemplo}[Modelo conjugado completo - datos de galaxias]
-Como aplicación del modelo anterior, la Figura 8a presenta una muestra aleatoria tamaño 50 de un modelo de mezcla finita con cuatro componentes Normales de parámetros $(-5, 1)$, $(-1, 1)$, $(0, 1)$ y $(5, 1)$, asignando pesos 0.15, 0.25, 0.3 y 0.3, respectivamente.
+Como un ejemplo de lo anterior, Escobar y West (1995) aplican este modelo a datos que contienen velocidades de 82 galaxias. A través de diferentes fuentes, deciden utilizar como valores iniciales $w = 1$, $W = 100$, $\alpha = 2$, $\beta = 4$, $s = 4$ y $S = 2$, mientras que para $m$ utilizan una priori no informativa, por lo cual consideramos $a = 0$, $A = 1000$. Para el algoritmo, consideramos 1000 iteraciones con un periodo de quema de 500.
 
-Las Figuras 8b, 8c y 8d presentan la estimación de la densidad a través de un DPM con parámetros $M=1$, $m=0$, $\gamma = 100$, $s = 4$ y $S=2$, un KDE utilizando un kernel normal y un modelo de mezcla finita, respectivamente, donde en el último caso el número de componentes fue elegido utilizando AIC.
+En la Figura 12 se presenta tanto la densidad estimada, así como las distribuciones a priori y posteriori de $M$.
 
-En este caso, el DPM parece ser más cercano a la densidad real (aunque claramente en la práctica no la conocemos). La implementación del algoritmo y la figura se encuentran en los códigos $\texttt{DpmNorm.jl}$ y $\texttt{examples/04\_DpmNorm.jl}$, respectivamente.
+La implementación del algoritmo y la figura se encuentran en los códigos $\texttt{DpmNorm.jl}$ y $\texttt{examples/04\_DpmNormA2.jl}$, respectivamente.
 \end{ejemplo}
 ```
-Antes de pasar al caso no conjugado presentaremos una generalización del modelo con verosimilitud Normal a observaciones multidimensionales, el cual utilizaremos en el capítulo de clustering. En este caso, utilizamos una verosimilitud Normal multivariada, que denotaremos por $N_p(\mu_i, \Sigma_i)$, donde $\mu_i$ es el vector p-dimensional de medias y $\Sigma_i$ la matriz de covarianzas. Para esta verosimilitud, una distribución conjugada es la Normal-Wishart-Inversa (NIW):
+
+::: {#fig-galaxies}
+![](figures/DPM%20-%20galaxies%20example.png)
+
+Ejemplo galaxias.
+:::
+
+\newpage
+Antes de pasar al caso no conjugado presentaremos una generalización del modelo con verosimilitud Normal a observaciones multidimensionales, el cual utilizaremos en el capítulo de clustering. En este caso, utilizamos una verosimilitud Normal multivariada, que denotaremos por $\text{N}_p(\mu_i, \Sigma_i)$, donde $\mu_i$ es el vector p-dimensional de medias y $\Sigma_i$ la matriz de covarianzas. Para esta verosimilitud, una distribución conjugada es la Normal-Wishart-Inversa (NIW):
 
 $$
 \begin{aligned}
 \mathbf{y}_i | \theta_i &\sim \text{N}_p(\mu_i, \Sigma_i) \\
-\theta_1, ..., \theta_n | G &\sim G \\
+\theta_i | G &\sim G \\
 G|M, \eta &\sim \text{DP}(M, G_\eta) \\
 G_\eta &= \text{NIW}(\textbf{m}, \gamma, \Psi, \nu) \\
-M &\sim \text{Gamma}(a, b) \\
-\eta &\sim \pi_\eta
+\mathbf{m}, \gamma &\sim \text{N}_p(\mathbf{a}, A)\text{IG}(w/2, W/2) \\
+M &\sim \text{Gamma}(\alpha, \beta)
 \end{aligned}
 $$
 
 donde, al igual que en el caso univariado, $\gamma$ es un parámetro de escala. Además, la parametrización de la distribución Wishart-Inversa es tal que $\text{E}(\Sigma) = \Psi/(\nu - p - 1)$. Luego, tenemos que:
 
 ```{=tex}
-\begin{enumerate}
-  \item La distribución de $H_i$ es $\text{NIW}(\textbf{m}', \gamma', \Psi', \nu')$, donde
-  \begin{itemize}
-    \item $\textbf{m}' = (\textbf{m} + \gamma \mathbf{y}_i)/(1 + \gamma)$
-    \item $\gamma' = \gamma (1 + \gamma)$
-    \item $\Psi' = \Psi + (\mathbf{y}_i - \mathbf{m})(\mathbf{y}_i - m)^T/(1 + \gamma)$
-    \item $\nu' = \nu + 1$
-  \end{itemize}
-  \item $r_i = M t_p(\mathbf{y}_i|\nu - p + 1, \mathbf{m}, \sqrt{\Psi(1 + \gamma)/(\nu - p + 1)})$, donde denotamos por $t_p(\mathbf{y}_i|s, \mathbf{m}, \Sigma)$ la densidad de la distribución t multivariada con $s$ grados de libertad, media $m$ y escala $\Sigma$, evaluada en $\mathbf{y}_i$.
-\end{enumerate}
+\begin{itemize}
+  \item Para $\eta|\theta^*$:
+  \begin{enumerate}
+    \item $\mathbf{m}|\gamma, \theta^* \sim \text{N}_p\left(\Lambda_m[A^{-1}\mathbf{a} + \gamma^{-1}\sum_{j=1}^k (\Sigma_j^*)^{-1}\mu_j^*]; \Lambda_m\right)$
+    \item $\gamma|m, \theta^* \sim \text{IG}\left((w + kp)/2, (W + K)/2\right)$
+  \end{enumerate}
+  donde
+  \begin{enumerate}
+    \item $\Lambda_m = \left[A^{-1} + \gamma^{-1}\sum_{j=1}^k (\Sigma_j^*)^{-1}\right]^{-1}$
+    \item $K = \sum_{j=1}^k (\mathbf{m} - \mu_j^*)^T (\Sigma_j^*)^{-1}(\mathbf{m} - \mu_j^*)$
+  \end{enumerate}
+  \item Para $p(\theta^*_j|\mathbf{c}, \mathbf{y})$ tenemos que
+  $$
+    p(\theta^*_j|\mathbf{c}, \mathbf{y}) \propto \text{NIW}(\mathbf{m}_j^*, \gamma_j^*, \Psi_j^*, \nu_j^*)
+  $$
+  donde
+  \begin{enumerate}
+    \item $\mathbf{m}_j^* = (\mathbf{m} + \gamma \sum_{i \in \mathcal{C}_j} \mathbf{y}_i)/(1 + \gamma n_j)$
+    \item $\gamma_j^* = \gamma/(1 + n_j\gamma)$
+    \item $\nu_j^* = \nu + n_j$
+    \item $\Psi_j^* = \Psi + \frac{n_j}{1 + \gamma n_j}(\bar{\mathbf{y}}_{\mathcal{C}_j} - \mathbf{m})(\bar{\mathbf{y}}_{\mathcal{C}_j} - \mathbf{m})^T + \sum_{i \in \mathcal{C}_j} (\mathbf{y}_i - \bar{y}_{\mathcal{C}_j})(\mathbf{y}_i - \bar{y}_{\mathcal{C}_j})^T$
+  \end{enumerate}
+  \item La distribución $H_{-i, j}$ es idéntica a la anterior pero considerando $n_{-i, j}$ y $\mathcal{C}_{-i, j}$, obteniendo entonces que:
+  \begin{enumerate}
+    \item $\int f_\theta(y_i)dH_{-i, j} = t_p\left(\mathbf{y}_i\Big|\nu_{-i, j}^* - p + 1, \mathbf{m}_{-i, j}^*,\frac{1 + \gamma_{-i, j}}{\nu_{-i, j} - p + 1}\Psi_{-i, j}\right)$
+    \item $\int f_\theta(y_i)dG_\eta = t_p\left(\mathbf{y}_i\Big|\nu - p + 1, \mathbf{m}, \frac{1 + \gamma}{\nu - p + 1}\Psi\right)$
+  \end{enumerate}
+  donde en este caso consideramos la densidad de una distribución $t$ p-variada.
+\end{itemize}
 ```
+
 ### Caso no conjugado
+
 
 ## Otros métodos de simulación a posteriori
 
@@ -901,8 +937,8 @@ Ahora realizamos la separación de $\theta$ e incluimos los hiperparámetros $\e
 - Definir valores iniciales de $M, \eta, \mathbf{c}, \theta^*$
 - Para $t = 1, ... T$:
     
-    1.   Simular $\phi \sim \text{Beta}(M + 1, n)$ y calcular $\pi = (\alpha + k - 1)/[n(\beta - \log(\phi)) + \alpha + k - 1]$
-    2.   Muestrear de  $$M|\phi, k \sim \pi\text{Gamma}(\alpha + k - 1, \beta - \log(\phi)) + (1 - \pi)\text{Gamma}(\alpha + k - 1, \beta - \log(\phi))$$
+    1.   Simular $\phi \sim \text{Beta}(M + 1, n)$ y calcular $\pi_\phi = (\alpha + k - 1)/[n(\beta - \log(\phi)) + \alpha + k - 1]$
+    2.   Muestrear de  $$M|\phi, k \sim \pi_\phi\text{Gamma}(\alpha + k - 1, \beta - \log(\phi)) + (1 - \pi_\phi)\text{Gamma}(\alpha + k - 1, \beta - \log(\phi))$$
     3. Muestrear de $\eta|\theta^* \propto \pi_\eta(\eta) \prod_{j=1}^k G_\eta(\theta_j^*)$
     4. Para $i = 1, ..., n$:
 
@@ -910,7 +946,7 @@ Ahora realizamos la separación de $\theta$ e incluimos los hiperparámetros $\e
         n_{-i, j} \int f_\theta(y_i) dH_{-i, j}(\theta) & j = 1, ..., k_{-i} \\
         M\int f_\theta(y_i) dG_\eta(\theta) & j = k_{-i} + 1
         \end{cases}$$
-        4.2 Reordenar los valores de $\mathbf{c}$
+        4.2 Reordenar los valores de $\mathbf{c}$ junto a $\theta^*$
     
     5. Para $j=1, ...k$:
 

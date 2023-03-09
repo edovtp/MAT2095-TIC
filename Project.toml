@@ -6,6 +6,7 @@ version = "0.1.0"
 [deps]
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 ConjugatePriors = "1624bea9-42b1-5fc1-afd3-e96f729c8d6c"
+DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 ElasticArrays = "fdbdab4c-e67f-52f5-8c3f-e7b388dad3d4"
 FreqTables = "da1fdf0e-e0ff-5433-a45f-9bb5ff651cb1"

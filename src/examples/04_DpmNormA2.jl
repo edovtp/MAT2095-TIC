@@ -2,6 +2,7 @@ using CairoMakie
 using KernelDensity
 using MixFit
 using FreqTables
+using DelimitedFiles
 
 
 include("../helpers.jl");
@@ -24,10 +25,12 @@ velocities = [9172, 9558, 10406, 18419, 18927, 19330, 19440, 19541,
 
 prior_par_random = (0, 1000, 1, 100, 2, 4, 4, 2); # a, A, w, W, α, β, s, S
 Random.seed!(219);
-N = 10000;
-warmup = 8000;
+N = 1000;
+warmup = 500;
 n = length(velocities);
+# velocities10 = reduce(vcat, [velocities for _ in 1:10]);
 @time a2_samples = DpmNorm2(velocities, prior_par_random, N, "same", warmup);
+# writedlm("aux.csv", a2_samples[:c], ",")
 
 # Density estimation
 function cond_dens(y)
@@ -47,7 +50,7 @@ dens_M = [cond_dens_M(M) for M in range(0, 3; length=500)];
 
 begin
     CairoMakie.activate!()
-    fig = Figure(resolution=(1280, 720))
+    fig = Figure(resolution=(1280, 600))
     xrange1 = range(2, 40; length=500)
     xrangeM = range(0, 3; length=500)
 
@@ -63,7 +66,10 @@ begin
     fig
 end
 
-# CairoMakie.save("monography/figures/DPM - galaxies example.png", fig)
+CairoMakie.save("monography/figures/DPM - galaxies example.png", fig)
+
+mean(map(maximum, eachrow(a2_samples[:c])))
+mean(a2_samples[:M])
 #endregion
 
 # Datos A1
@@ -101,4 +107,5 @@ begin
 end
 
 mean(map(maximum, eachrow(aux[:c])))
+mean(aux[:M])
 #endregion
