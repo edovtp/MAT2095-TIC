@@ -791,9 +791,7 @@ donde para simplificar las cosas, solo consideramos $\eta = (m, \gamma)$, con un
 
 ```{=tex}
 \begin{ejemplo}[Modelo conjugado completo - datos de galaxias]
-Como un ejemplo de lo anterior, Escobar y West (1995) aplican este modelo a datos que contienen velocidades de 82 galaxias. A través de diferentes fuentes, deciden utilizar como valores iniciales $w = 1$, $W = 100$, $\alpha = 2$, $\beta = 4$, $s = 4$ y $S = 2$, mientras que para $m$ utilizan una priori no informativa, por lo cual consideramos $a = 0$, $A = 1000$. Para el algoritmo, consideramos 1000 iteraciones con un periodo de quema de 500.
-
-En la Figura 12 se presenta tanto la densidad estimada, así como las distribuciones a priori y posteriori de $M$.
+Como un ejemplo de lo anterior, Escobar y West (1995) aplican este modelo a datos que contienen velocidades de 82 galaxias. A través de diferentes fuentes, deciden utilizar como valores iniciales $w = 1$, $W = 100$, $\alpha = 2$, $\beta = 4$, $s = 4$ y $S = 2$, mientras que para $m$ utilizan una priori no informativa, por lo cual consideramos $a = 0$, $A = 1000$. Para el algoritmo, consideramos 1000 iteraciones con un periodo de quema de 500. En la Figura 12 se presenta tanto la densidad estimada, así como las distribuciones a priori y posteriori de $M$.
 
 La implementación del algoritmo y la figura se encuentran en los códigos $\texttt{DpmNorm.jl}$ y $\texttt{examples/04\_DpmNormA2.jl}$, respectivamente.
 \end{ejemplo}
@@ -802,7 +800,7 @@ La implementación del algoritmo y la figura se encuentran en los códigos $\tex
 ::: {#fig-galaxies}
 ![](figures/DPM%20-%20galaxies%20example.png)
 
-Ejemplo galaxias.
+Ejemplo velocidades de galaxias. Vemos a la izquierda que la densidad parece considerar 5 componentes. En cuanto a la inferencia de $M$, vemos que pareciera estar centrada en 1, pero con una alta densidad en valores menores.
 :::
 
 \newpage
@@ -855,6 +853,34 @@ donde, al igual que en el caso univariado, $\gamma$ es un parámetro de escala. 
 
 ### Caso no conjugado
 
+En la sección anterior utilizamos modelos conjugados para así simular fácilmente de ([-@eq-theta-a2]) y calcular analíticamente las integrales en ([-@eq-cluster-a2]). Pese a esto, en ciertas situaciones nos interesará realizar elecciones arbitrarias tanto de $G_\eta$ como de $f_{\theta}$.
+
+Al realizar esta elección es posible que perdamos las dos ventajas anteriores. Ahora, la simulación no es tan difícil de solucionar, considerando que podemos utilizar, por ejemplo, Metropolis-Hastings, HMC, o en realidad cualquier algoritmo que nos permita muestrear de una distribución arbitraria.
+
+El problema principal entonces son las integrales. Siempre podemos recurrir a métodos numéricos para calcularlas, pero esto no suele ser muy eficiente en estos casos, aumentando demasiado el costo computacional y provocando una lenta convergencia a la distribución a posteriori deseada. En esta línea, hay dos algoritmos importantes que permiten trabajar con el caso no conjugado, los cuales introducen de dos formas diferentes valores de $\theta$ auxiliares que representan clusters vacíos aún no poblados. La diferencia es que el segundo algoritmo sí utiliza estos valores, mientras que el primero solo los incluye para la derivación de las distribuciones deseadas.
+
+Ahora, es necesario realizar una pequeña modificación, ya que estos algoritmos sí consideran los valores de $\theta^*$ actuales para la actualización de $\mathbf{c}$, por lo que el algoritmo de Gibbs utiliza todas las condicionales completas, $p(\theta^*_j|\mathbf{c}, \mathbf{y})$ y $p(c_i|\mathbf{c}_{-i}, \theta^*, \mathbf{y})$. En particular, las distribuciones $p(\theta_j^*|\mathbf{c}, \mathbf{y})$ se mantienen iguales, pero las correspondientes a $c_i$ logran ser modificadas sin tener que calcular las integrales.
+
+El primer algoritmo recibe el nombre de *no gaps*, propuesto por MacEachern y Müller [-@maceachern_estimating_1998]. Este algoritmo es bastante similar al anterior, pero se modifica en parte el caso que $c_i$ representa un cluster de una sola observación, esto es, $c_i \neq c_j$ para todo $j\neq i$. Estas modificaciones permiten reemplazar las integrales por evaluaciones en las verosimilitudes correspondientes.
+
+El segundo algoritmo, conocido como el *Algoritmo 8* de Neal [-@neal_markov_2000], da cuenta de un problema de eficiencia del algoritmo no-gaps con respecto a la asignación de $c_i$ a un nuevo cluster. El algoritmo se deriva de una forma similar pero no idéntica, ya que en este caso sí utiliza las variables $\theta_A$ auxiliares. En particular, la idea es definir un modelo conjunto $q(\theta, \theta_A)$ tal que la distribución marginal sea $p(\theta)$ y la distribución de los $c_i$ no necesite integrar con respecto a alguna distribución de $\theta$. El número de estas componentes auxiliares lo denotaremos por $m$.
+
+Al igual que antes, sea $k_{-i}$ el número de valores únicos de $\theta_{-i}$. Para actualizar $c_i$, la idea será extender el vector $\theta^*$ a un número $h = k_{-i} + m$ de componentes, para lo cual diferenciamos entre dos casos:
+
+* Si $c_i = c_j$ para algún $j \neq i$, esto es, $c_i$ no representa un cluster con una única observación, entonces $\theta^*$ tendrá $k_{-i}$ componentes, por lo cual le agregamos $m$ valores de $G_\eta$
+
+* Si $c_i$ sí representa un cluster de una sola observación, entonces $\theta^*$ tendrá $k_{-i} + 1$ componentes. En este caso, dejamos que $c_i = k_{-i} + 1$ e intercambiamos el $\theta^*$ correspondiente al final. Luego, solo debemos agregar $m - 1$ valores de $G_\eta$.
+
+Luego, las probabilidades en ([-@eq-cluster-a2]) son reemplazadas por:
+
+$$
+p(c_i = j| c_{-i}, \mathbf{y}, \theta^*_1, ..., \theta^*_k, ..., \theta^*_h) \propto \begin{cases}
+  n_{-i, j} f_{\theta^*_j}(y_i) & j = 1, ..., k_{-i} \\
+  \frac{M}{m} f_{\theta^*_j}(y_i) & j = k_{-i} + 1, ..., h
+\end{cases}
+$$
+
+Una vez que muestreamos de la distribución anterior, reordenamos $\mathbf{c}$ junto a $\theta^*$, dejando solo los valores que se encuentran asociados con algún cluster poblado.
 
 ## Otros métodos de simulación a posteriori
 
