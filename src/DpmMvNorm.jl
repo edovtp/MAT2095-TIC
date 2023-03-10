@@ -30,7 +30,7 @@ function DpmMvNorm1f(y::Vector, prior_par, iter, warmup=floor(Int64, iter / 2))
     Ψ_p = [Ψ + (yi - m) * (yi - m)' / (1 + γ) for yi in y]
     prior_Σ = InverseWishart(ν, Ψ)
     post_Σ = [InverseWishart(ν_p, Psi) for Psi in Ψ_p]
-    scale_t = sqrt((1 + γ) / (ν - p + 1) * Ψ)
+    scale_t = (1 + γ) / (ν - p + 1) * Ψ
     r_i = [M * pdf(MvTDist(ν - p + 1, m, scale_t), obs) for obs in y]
 
     # Initial values
@@ -91,7 +91,19 @@ function _rand_nig(m, γ, ν, Ψ)
     return (μ_samp, Σ_samp)
 end
 
-function DpmMvNorm2(y, prior_par, iter, warmup=floor(Int64, iter / 2))
+function _relabel(c, θ_unique)
+    c_re = Vector{Int64}(undef, length(c))
+
+    c_unique = unique(c)
+    θ_re = θ_unique[c_unique]
+    for i in eachindex(c_unique)
+        c_re[c.==c_unique[i]] .= i
+    end
+
+    return c_re, θ_re
+end
+
+function DpmMvNorm2(y, prior_par, iter, init_c="same", warmup=floor(Int64, iter / 2))
     """
     Implementation of Algorithm 2-3 (Neal, 2000) for the Multivariate-Normal model with conjugate
     prior G_η and random hyperparameters. That is,
@@ -140,6 +152,7 @@ function DpmMvNorm2(y, prior_par, iter, warmup=floor(Int64, iter / 2))
 
     # Start of the algorithm
     for n_sample in 1:iter
+        println(n_sample)
         # Update M
         k = length(θ_unique)
         ϕ = rand(Beta(M + 1, n))
@@ -173,8 +186,9 @@ function DpmMvNorm2(y, prior_par, iter, warmup=floor(Int64, iter / 2))
                 m_j_ = (m + γ * sum(y_clust_)) / (1 + γ * n_j_)
                 γ_j_ = γ / (1 + n_j_ * γ)
                 ν_j_ = ν + n_j_
-                Ψ_j_ = Ψ + n_j_ / (1 + n_j_ * γ) * transpose(y_bar_ - m) * (y_bar_ - m) +
-                    sum([(y - y_bar_) * transpose(y - y_bar_) for y in y_clust_])
+                aux1 = n_j_ / (1 + n_j_ * γ) * ((y_bar_ - m) * transpose(y_bar_ - m))
+                aux2 = sum([(y - y_bar_) * transpose(y - y_bar_) for y in y_clust_])
+                Ψ_j_ = Ψ + aux1 + aux2
 
                 scale_t = (1 + γ_j_) / (ν_j_ - p + 1) * Ψ_j_
                 weights[idx] = n_j_ * pdf(MvTDist(ν_j_ - p + 1, m_j_, scale_t), y[i])
@@ -208,7 +222,7 @@ function DpmMvNorm2(y, prior_par, iter, warmup=floor(Int64, iter / 2))
             m_j = (m + γ * sum(y_clust)) / (1 + γ * n_j)
             γ_j = γ / (1 + n_j * γ)
             ν_j = ν + n_j
-            Ψ_j = Ψ + n_j / (1 + n_j * γ) * transpose(y_bar - m) * (y_bar - m) +
+            Ψ_j = Ψ + n_j / (1 + n_j * γ) * ((y_bar - m) * transpose(y_bar - m)) +
                     sum([(y - y_bar) * transpose(y - y_bar) for y in y_clust])
 
             θ_unique[j] = _rand_nig(m_j, γ_j, ν_j, Ψ_j)

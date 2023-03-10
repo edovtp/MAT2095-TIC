@@ -156,7 +156,7 @@ No solo estos modelos se han ido perfeccionando con el tiempo, si no que tambié
 
 \newpage
 
-## Estadística No-Paramétrica
+<!-- ## Estadística No-Paramétrica
 
 Normalmente, en estadística asumimos
 
@@ -186,7 +186,7 @@ Necesidad de métodos flexibles
 
 ## Estadística Bayesiana No-Paramétrica
 
-\newpage
+\newpage -->
 
 # Procesos de Dirichlet
 
@@ -882,15 +882,101 @@ $$
 
 Una vez que muestreamos de la distribución anterior, reordenamos $\mathbf{c}$ junto a $\theta^*$, dejando solo los valores que se encuentran asociados con algún cluster poblado.
 
-## Otros métodos de simulación a posteriori
+Pese a que no es necesario, este algoritmo se encuentra implementado para el caso Normal en el código \texttt{DpmNorm.jl} y para el caso Normal Multivariado en el código \texttt{DpmMvNorm.jl}
 
 \newpage
 
 # Modelos de Particiones Aleatorias y Clustering
 
+## Introducción
+
+Los algoritmos de clustering, que consisten en técnicas para agrupar observaciones similares según sus características, son ampliamente utilizados en el contexto no supervisado, con aplicaciones en diferentes áreas.
+
+En el capítulo anterior, vimos cómo el utilizar un DPM nos permite definir un modelo probabilístico sobre clusters a través de $\mathbf{c}$. En este capítulo, nos enfocaremos en este producto del modelo, y de cómo podemos definir modelos de particiones aleatorias de forma general, así como la conexión entre medidas de probabilidades aleatorias discretas y clustering.
+
+Denotemos por $[n] = \{1, ..., n\}$ las observaciones en un experimento. Una partición es un conjunto $\rho_n = \{\mathcal{C}_1, ..., \mathcal{C}_k\}$ de subconjuntos disjuntos y exhaustivos de $[n]$, esto es, $\mathcal{C}_i \cap \mathcal{C}_j = \emptyset$ para todo $i \neq j$ y $\cup_{j=1}^k \mathcal{C}_j = [n]$. Recordemos que una partición la podemos denotar de manera única con $\mathbf{c}$, donde $c_i = j$ si y sólo si $i \in \mathcal{C}_j$, siempre y cuando los valores en este vector no se salten la numeración.
+
+### Definición mediante medidas discretas
+
+Definimos entonces un modelo de partición aleatoria como una medida de probabilidad sobre el conjunto de todas las particiones posibles de $[n]$, que denotaremos por $\mathcal{P}_n$. Particularmente, este espacio es finito, donde el número de posibles particiones está dado por los números de Bell, que denotaremos por $B_n$.
+
+¿Cómo definir entonces medidas de partición aleatoria? sin darnos cuenta, en el capítulo anterior se definió una de manera indirecta al utilizar un proceso de Dirichlet. De manera general, cualquier medida de distribución aleatoria discreta implica una medida de partición aleatoria, donde los grupos están dados por las igualdades de las observaciones de esta medida.
+
+En particular, podemos obtener explícitamente la medida obtenida a partir de un Proceso de Dirichlet:
+$$
+\begin{aligned}
+  p(\rho_n) &= p(\mathbf{c}) \\
+  &= p(c_1) \prod_{i=2}^n p(c_i|c_1, ..., c_{i-1}) \\
+  &= \frac{M^{k-1}\prod_{j=1}^k(n_j - 1)!}{(M + 1) \cdot\cdot\cdot (M + n - 1)}
+\end{aligned}
+$$
+
+También, obtenemos explícitamente la medida obtenida a partir de un Proceso de Pitman-Yor:
+$$
+p(\rho_n) \propto M(M + b)\cdot\cdot\cdot(M + (k - 1)b)\prod_{j=1}^k (1 - b)(2 - b) \cdot\cdot\cdot ((n_j - 1) - b)
+$$
+
+Ahora, nos podemos preguntar acerca de por qué no trabajar directamente con $\mathcal{P}_n$ en vez de definir la medida de manera indirecta a través de una medida aleatoria discreta. Entre las razones se encuentra principalmente el teorema de representación de Kingman: decimos que una 
+medida sobre $\mathcal{P}_n$ es **intercambiable** si $p(\rho_n) = f(n_1, ..., n_k)$ para alguna función $f$ simétrica y consistente, denominada **EPPF** (exchangeable partition probability function). El teorema nos dice que para toda medida $p(\rho)$ intercambiable existe una medida aleatoria discreta $G$ tal que el modelo sobre $\mathcal{P}_n$ es inducido por $G$. 
+
+### Definición directa
+
+Nos puede interesar también definir modelos de partición aleatoria directamente en el espacio $\mathcal{P}_n$, y no obtener medidas luego de marginalizar con respecto a una medida discreta. Una de estas opciones es la de **modelos de partición producto (PPM)** [@hartigan_partition_1990], las cuales toman la siguiente forma:
+
+$$
+p(\rho_n = \{\mathcal{C}_1, ..., \mathcal{C}_k\}) \propto \prod_{j=1}^k c(\mathcal{C}_j)
+$$
+
+donde las funciones $c$ reciben el nombre de **funciones de cohesión**. De hecho, si utilizamos $c(\mathcal{C}_j) = M(n_j - 1)!$, el modelo que nos queda es justamente el obtenido a partir de un Proceso de Dirichlet.
+
+Otra opción es extender lo anterior para poder incluir covariables en las funciones de cohesión, lo cual se denomina un $\text{PPM}_x$ [@muller_product_2011]. En este caso, tenemos que:
+
+$$
+p(\rho_n = \{\mathcal{C}_1, ..., \mathcal{C}_k\}|X) \propto \prod_{j=1}^k c(\mathcal{C}_j)g(\mathbf{x}_j^*)
+$$
+
+donde $\mathbf{x}_j^* = \{\mathbf{x}_i \colon i \in \mathcal{C}_j\}$ y las funciones $g$ reciben el nombre de **funciones de similitud**.
+
+## Inferencia a posteriori
+
+Una vez que obtenemos la posteriori $p(\rho|\mathbf{y})$ nos podemos preguntar acerca de cómo poder resumir esta distribución en un valor puntual, considerando que no podemos calcular un "promedio" de clusters. Una opción es utilizar la moda a posteriori (MAP), pero está el problema que esta moda suele tener una probabilidad que no es significativamente alta, así como que los siguientes elementos con mayor probabilidad son muy diferentes entre sí.
+
+De manera general, una de las ideas más utilizadas es elegir una partición que minimize alguna función de pérdida con respecto a la medida a posteriori de $\rho$. Si denotamos esta función por $L(\rho, \hat{\rho})$, donde $\rho$ corresponde al verdadero valor y $\hat{\rho}$ nuestra estimación, la idea es encontrar $\hat{\rho}_{\text{post}}$ tal que:
+
+$$
+\hat{\rho}_{\text{post}} = \operatorname*{argmin}_{\hat{\rho}} \int L(\rho, \hat{\rho})dP(\rho|\mathbf{y}) 
+$$
+
+Ahora, calcular esta integral de manera analítica puede ser complejo, por lo que generalmente hacemos uso de muestras de la posteriori $\rho|\mathbf{y}$ (equivalentemente, $\mathbf{c}|\mathbf{y}$). Esto es,
+
+$$
+\hat{\rho}_{\text{post}} = \operatorname*{argmin}_{\hat{\rho}} \left[\frac{1}{T}\sum_{t=1}^T L(\rho^{(t)}, \hat{\rho})\right]
+$$
+
+Algunos ejemplos de funciones de pérdida bastante utilizados en la práctica son:
+
+* **Función de pérdida de Binder**: esta función de pérdida es bastante simple y lo que hace es asignar un costo $a > 0$ a que nuestra estimación no identifique dos observaciones en el mismo grupo cuando sí deberían estarlo, así como un costo $b>0$ en el caso que asigne a dos observaciones al mismo cluster cuando en realidad están separados. Esto es:
+$$
+L_{\text{B}}(\mathbf{c}, \hat{\mathbf{c}}; a, b) = \sum_{i < j} a \mathbb{1}\{c_i = c_j\}\mathbb{1}\{\hat{c}_i \neq \hat{c}_j\} + b \mathbb{1}\{c_i \neq c_j\}\mathbb{1}\{\hat{c}_i = \hat{c}_j\}
+$$
+
+* **Variación de la Información (VI)**: esta función de pérdida utiliza las entropías de $\rho$ y $\hat{\rho}$, así como la información mutua de ambos o, equivalentemente, las entropías individuales y la entropía conjunta. También existe una versión generalizada propuesta por Dahl [-@dahl_search_2022] que introduce pesos $a$ y $b$ en la misma línea que Binder.
+
+El problema principal entonces será la búsqueda de esta partición. Es importante notar que el tamaño del espacio de particiones crece muy rápido con $n$, por lo que una búsqueda exhaustiva estará fuera de nuestros límites. Por ejemplo, para $n=10$ el número de particiones posibles es $B_{10} = 115975$, pero ya para $n=25$ tenemos $B_{25} = 4638590332229999353$. Si nos demorásemos 1 nanosegundo por cada partición, entonces tardaríamos 147 años en encontrar la partición óptima.
+
+Dahl propone dos soluciones a lo anterior. La primera solución realiza la búsqueda y elección solo sobre el conjunto de muestras a posteriori con el método denominado *draws-based latent structure optimization (DLSO)* pero más conocido como el método de clustering de mínimos cuadrados [@do_model-based_2006]. Esta solución es bastante rápida, pero quedamos limitados solo a elegir entre configuraciones que hayan sido muestreadas. 
+
+Una solución a lo anterior es el algoritmo SALSO [@dahl_search_2022] que sí realiza la búsqueda sobre el espacio completo. Este algoritmo se encuentra implementado en el paquete *salso* de R y acepta diferentes funciones de pérdida entre las cuales se encuentran las dos vistas anteriormente. Además, esta librería también permite utilizar el método DLSO. La Figura 12 presenta una aplicación del algoritmo SALSO, donde los datos fueron simulados a partir de 4 componentes, y utilizando tres funciones de pérdida diferentes. Notamos que en los tres casos tendemos a sobreestimar el número real de clusters.
+
+::: {#fig-salso}
+![](figures/SALSO.png)
+
+Cluster estimado a partir del algoritmo SALSO considerando las funciones de pérdida Binder con $a = b$, VI y One Minus Adjusted Rand Index.
+:::
+
 \newpage
 
-# Aplicación: Modelo CAPM
+<!-- # Aplicación: Modelo CAPM
 
 -   El modelo de valorización de activos financieros (CAPM) fue desarrollado en los años 60 de forma independiente por Jack Treynor, William Sharpe, John Linter y Jan Mossin.
 
@@ -908,7 +994,7 @@ $$
 Y_j \equiv r_j - r_{fj} = \alpha + \beta(r_{mj} - r_{fj}) + \varepsilon_j, \quad j = 1,...,n
 $$
 
-\newpage
+\newpage -->
 
 # Apéndice
 
@@ -926,7 +1012,7 @@ Para apoyar en la lectura, en esta sección se presentarán los tres algoritmos 
 
 - $k_{-i}$: número de valores únicos de $\theta$ sin considerar $\theta_i$
 
-- $\mathcal{C}_{-i, j}$: índices de observaviones pertenecientes al cluster $j$ sin considerar la i-ésima observación
+- $\mathcal{C}_{-i, j}$: índices de observaciones pertenecientes al cluster $j$ sin considerar la i-ésima observación
 
 - $n_{-i, j}$: número de observaciones en $\mathcal{C}_{-i, j}$
 
@@ -979,8 +1065,6 @@ Ahora realizamos la separación de $\theta$ e incluimos los hiperparámetros $\e
         5.1 Muestrear de $p(\theta_j^*|\mathbf{c}, \mathbf{y}) \propto G_\eta(\theta_j^*)\prod_{i\in \mathcal{C}_j} f_{\theta_j^*}(y_i)$
 
     6. Muestrear de $p(\theta_{n+1}|\theta^*) \propto \sum_{j=1}^k n_j \delta_{\theta_j^*} + M G_\eta$
-
-### Algoritmo 3 - Caso no conjugado
 
 \newpage
 

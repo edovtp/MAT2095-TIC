@@ -1,40 +1,36 @@
+using CairoMakie
+
 include("../helpers.jl");
 include("../DpmData.jl");
 include("../DpmMvNorm.jl");
+include("../DpData.jl")
 
-## Algorithm 1 - Fixed hyperparameters
-# Recovering parameters
-#region
+
+## A2 - Simulated data
 Random.seed!(219);
-n, M, m, γ, Ψ, ν = 100, 1, [0, 0], 10, [1 0; 0 1], 5;
-data_a1f = DataDpm(n, M, (m, γ, Ψ, ν), "MvNormal");
-components_means = unique([x[1] for x in data_a1f.θ]);
-components_covs = unique([x[2] for x in data_a1f.θ]);
-y1_means = [x[1] for x in components_means];
-y2_means = [x[2] for x in components_means];
-scatter([x[1] for x in data_a1f.y], [x[2] for x in data_a1f.y],
-    label="", xlabel="y1", ylabel="y2");
-scatter!(y1_means, y2_means, label = "Components", color="red")
+n, a, A, w, W, α, β, ν, Ψ = 100, [0, 0], [1 0; 0 1], 4, 4, 2, 4, 5, [1 0; 0 1];
+c1 = MvNormal([0, 0], [[0.5, 0.1] [0.1, 0.5]]);
+c2 = MvNormal([-5, -2], [[0.6, 0] [0, 0.6]]);
+c3 = MvNormal([0, -4], [[6, 0] [0, 0.1]]);
+c4 = MvNormal([5, -5], [[1, -0.5] [-0.5, 1]]);
 
-prior_par = (M, m, γ, Ψ, ν);
-@time test_a1_mvnormf = DpmMvNorm1f(data_a1f.y, prior_par, 10000, 8000);
+data_a2 = vcat(rand(c1, 25)', rand(c2, 25)', rand(c3, 25)', rand(c4, 25)');
+c = repeat([1, 2, 3, 4], inner=25, outer=1);
 
-## μ and Σ
-components_means
-unique(test_a1_mvnormf.μ_samples[end, :])
-μ_means = [mean(c) for c in eachcol(test_a1_mvnormf.μ_samples)];
-scatter([x[1] for x in μ_means], [x[2] for x in μ_means], label = "Simulated");
-scatter!(y1_means, y2_means, label = "Real", color="red")
-components_covs
-unique(test_a1_mvnormf.Σ_samples[end, :])
+# a, A, w, W, α, β, ν, Ψ
+prior_par = ([0, 0], [[10, 0] [0, 10]], 1, 100, 2, 4, 5, [[1, 0] [0, 1]]);
+y = [Vector(a) for a in eachrow(data_a2)];
+N = 1000;
+warmup=500;
+a2_mvnorm = DpmMvNorm2(y, prior_par, N, "same", warmup);
 
-## k (number of components)
-k_sim = map(
-    x -> size(unique(x))[1],
-    eachrow(collect(zip(test_a1_mvnormf.μ_samples, test_a1_mvnormf.Σ_samples)))
-);
-k_mean = mean(k_sim);
-bar(sort(unique(k_sim)), counts(k_sim), label="Sampled values of k");
-vline!([data_a1f.k], label="Real value", linewidth=2, color="red");
-vline!([k_mean], label="Sample mean", linewidth=2, color="blue")
+
+begin
+    CairoMakie.activate!()
+    fig = Figure()
+    ax1 = Axis(fig[1, 1]; xgridvisible=false, ygridvisible=false)
+    sc = scatter!(data_a2[:, 1], data_a2[:, 2]; color=c)
+
+    fig
+end
 #endregion
